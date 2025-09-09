@@ -1,0 +1,555 @@
+# Archivist Module: Data Persistence and Integrity
+
+## Overview
+
+The Archivist module serves as the agent's long-term memory, responsible for efficient data storage, deduplication, and integrity management. It provides a robust local database solution using SQLite, ensuring data remains private and accessible without external dependencies.
+
+## Architecture
+
+### Data Flow Architecture
+
+```
+┌─────────────────────────────────────────────┐
+│         Scored Opportunity Input             │
+│         (from Analyst Module)                │
+└──────────────────┬──────────────────────────┘
+                   ▼
+┌─────────────────────────────────────────────┐
+│         Deduplication Check                  │
+│   • Generate canonical hash                  │
+│   • Check existing records                   │
+│   • Merge duplicate sources                  │
+└──────────────────┬──────────────────────────┘
+                   ▼
+┌─────────────────────────────────────────────┐
+│         Data Validation                      │
+│   • Schema validation                        │
+│   • Constraint checking                      │
+│   • Data sanitization                        │
+└──────────────────┬──────────────────────────┘
+                   ▼
+┌─────────────────────────────────────────────┐
+│         Database Operations                  │
+│   • Insert/Update records                    │
+│   • Maintain relationships                   │
+│   • Update indexes                           │
+└──────────────────┬──────────────────────────┘
+                   ▼
+┌─────────────────────────────────────────────┐
+│         Event Emission                       │
+│   • Notify other modules                     │
+│   • Trigger syncs                            │
+└──────────────────────────────────────────────┘
+```
+
+## Database Design
+
+### Technology Choice: SQLite
+
+SQLite is ideal for this local, single-user application because:
+- **Serverless**: Entire database in single file
+- **Zero-configuration**: No setup required
+- **Portable**: Easy backup and migration
+- **Reliable**: ACID compliant
+- **Efficient**: Fast for local operations
+
+### Database Schema
+
+```sql
+-- Artist Profile Table
+CREATE TABLE artist_profile (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  statement TEXT NOT NULL,
+  themes TEXT, -- JSON array
+  media TEXT, -- JSON array
+  experience_level VARCHAR(50),
+  location VARCHAR(255),
+  keywords TEXT, -- JSON array
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Opportunities Table
+CREATE TABLE opportunities (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title VARCHAR(500) NOT NULL,
+  organization VARCHAR(255),
+  description TEXT,
+  deadline DATE,
+  url VARCHAR(1000),
+  application_fee DECIMAL(10,2),
+  eligibility_criteria TEXT,
+  opportunity_type VARCHAR(50),
+  media_types TEXT, -- JSON array
+  location VARCHAR(255),
+  relevance_score INTEGER,
+  status VARCHAR(50) DEFAULT 'new',
+  source_hash VARCHAR(64) UNIQUE, -- For deduplication
+  metadata TEXT, -- JSON for flexible data
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  
+  INDEX idx_deadline (deadline),
+  INDEX idx_status (status),
+  INDEX idx_relevance (relevance_score),
+  INDEX idx_source_hash (source_hash)
+);
+
+-- Sources Table (for tracking multiple sources)
+CREATE TABLE sources (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  opportunity_id INTEGER NOT NULL,
+  source_url VARCHAR(1000) NOT NULL,
+  source_name VARCHAR(100),
+  discovered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  
+  FOREIGN KEY (opportunity_id) REFERENCES opportunities(id),
+  UNIQUE(opportunity_id, source_url)
+);
+
+-- Application History Table
+CREATE TABLE application_history (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  opportunity_id INTEGER NOT NULL,
+  status VARCHAR(50) NOT NULL,
+  notes TEXT,
+  documents TEXT, -- JSON array of document references
+  submitted_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  
+  FOREIGN KEY (opportunity_id) REFERENCES opportunities(id)
+);
+
+-- User Feedback Table
+CREATE TABLE user_feedback (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  opportunity_id INTEGER NOT NULL,
+  action VARCHAR(50), -- 'accepted', 'rejected', 'saved'
+  feedback_data TEXT, -- JSON
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  
+  FOREIGN KEY (opportunity_id) REFERENCES opportunities(id)
+);
+```
+
+## Core Components
+
+### 1. Database Manager
+
+```typescript
+import { Database } from 'sqlite3';
+import { open } from 'sqlite';
+
+class DatabaseManager {
+  private db: Database;
+  
+  async initialize() {
+    this.db = await open({
+      filename: './data/oppo.db',
+      driver: sqlite3.Database
+    });
+    
+    await this.runMigrations();
+    await this.createIndexes();
+  }
+  
+  async runMigrations() {
+    const migrations = await this.loadMigrations();
+    
+    for (const migration of migrations) {
+      await this.db.exec(migration.sql);
+      await this.recordMigration(migration.version);
+    }
+  }
+  
+  async transaction<T>(callback: (db: Database) => Promise<T>): Promise<T> {
+    await this.db.exec('BEGIN TRANSACTION');
+    
+    try {
+      const result = await callback(this.db);
+      await this.db.exec('COMMIT');
+      return result;
+    } catch (error) {
+      await this.db.exec('ROLLBACK');
+      throw error;
+    }
+  }
+}
+```
+
+### 2. Advanced Deduplication Strategy
+
+```typescript
+import { createHash } from 'crypto';
+
+class DeduplicationService {
+  generateSourceHash(opportunity: OpportunityData): string {
+    // Normalize key fields
+    const normalizedTitle = this.normalizeText(opportunity.title);
+    const normalizedOrg = this.normalizeText(opportunity.organization);
+    const normalizedDate = this.normalizeDate(opportunity.deadline);
+    
+    // Create canonical representation
+    const canonical = `${normalizedTitle}|${normalizedOrg}|${normalizedDate}`;
+    
+    // Generate SHA-256 hash
+    return createHash('sha256').update(canonical).digest('hex');
+  }
+  
+  private normalizeText(text: string): string {
+    return text
+      .toLowerCase()
+      .replace(/[^\w\s]/g, '') // Remove punctuation
+      .replace(/\s+/g, ' ')     // Normalize whitespace
+      .trim();
+  }
+  
+  private normalizeDate(date: Date): string {
+    // Extract YYYY-MM-DD only
+    return date.toISOString().split('T')[0];
+  }
+  
+  async checkDuplicate(opportunity: OpportunityData): Promise<DuplicateResult> {
+    const hash = this.generateSourceHash(opportunity);
+    
+    const existing = await this.db.get(
+      'SELECT * FROM opportunities WHERE source_hash = ?',
+      [hash]
+    );
+    
+    if (existing) {
+      // Add new source to existing opportunity
+      await this.addSource(existing.id, opportunity.url);
+      
+      return {
+        isDuplicate: true,
+        existingId: existing.id,
+        action: 'source_added'
+      };
+    }
+    
+    return {
+      isDuplicate: false,
+      hash: hash
+    };
+  }
+}
+```
+
+### 3. ORM Integration with Prisma
+
+```typescript
+// prisma/schema.prisma
+model Opportunity {
+  id              Int      @id @default(autoincrement())
+  title           String
+  organization    String?
+  description     String?
+  deadline        DateTime?
+  url             String?
+  applicationFee  Decimal?
+  eligibility     String?
+  type            OpportunityType?
+  relevanceScore  Int?
+  status          Status   @default(NEW)
+  sourceHash      String   @unique
+  metadata        Json?
+  
+  sources         Source[]
+  applications    ApplicationHistory[]
+  feedback        UserFeedback[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([deadline])
+  @@index([status])
+  @@index([relevanceScore])
+}
+
+enum OpportunityType {
+  GRANT
+  RESIDENCY
+  EXHIBITION
+  COMPETITION
+  COMMISSION
+}
+
+enum Status {
+  NEW
+  REVIEWING
+  APPLYING
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+```
+
+### 4. Query Interface
+
+```typescript
+class OpportunityRepository {
+  async findUpcomingDeadlines(days: number = 7): Promise<Opportunity[]> {
+    const deadline = new Date();
+    deadline.setDate(deadline.getDate() + days);
+    
+    return await this.prisma.opportunity.findMany({
+      where: {
+        deadline: {
+          gte: new Date(),
+          lte: deadline
+        },
+        status: {
+          in: ['NEW', 'REVIEWING', 'APPLYING']
+        }
+      },
+      orderBy: {
+        deadline: 'asc'
+      }
+    });
+  }
+  
+  async findHighRelevance(threshold: number = 70): Promise<Opportunity[]> {
+    return await this.prisma.opportunity.findMany({
+      where: {
+        relevanceScore: {
+          gte: threshold
+        },
+        status: 'NEW'
+      },
+      orderBy: {
+        relevanceScore: 'desc'
+      },
+      take: 20
+    });
+  }
+  
+  async updateStatus(id: number, status: Status, notes?: string): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.opportunity.update({
+        where: { id },
+        data: { status }
+      }),
+      this.prisma.applicationHistory.create({
+        data: {
+          opportunityId: id,
+          status,
+          notes
+        }
+      })
+    ]);
+  }
+}
+```
+
+## Data Management Features
+
+### 1. Automatic Cleanup
+
+```typescript
+class DataMaintenanceService {
+  async cleanupExpiredOpportunities(): Promise<number> {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const result = await this.db.run(
+      `UPDATE opportunities 
+       SET status = 'EXPIRED' 
+       WHERE deadline < ? 
+       AND status IN ('NEW', 'REVIEWING')`,
+      [thirtyDaysAgo]
+    );
+    
+    return result.changes;
+  }
+  
+  async archiveOldData(): Promise<void> {
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    
+    // Move to archive tables
+    await this.db.exec(`
+      INSERT INTO opportunities_archive 
+      SELECT * FROM opportunities 
+      WHERE created_at < '${oneYearAgo.toISOString()}'
+    `);
+    
+    await this.db.run(
+      'DELETE FROM opportunities WHERE created_at < ?',
+      [oneYearAgo]
+    );
+  }
+}
+```
+
+### 2. Backup Strategy
+
+```typescript
+class BackupService {
+  async createBackup(): Promise<string> {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const backupPath = `./backups/oppo-${timestamp}.db`;
+    
+    // Use SQLite's backup API
+    await this.db.backup(backupPath);
+    
+    // Compress backup
+    await this.compressFile(backupPath);
+    
+    // Rotate old backups
+    await this.rotateBackups();
+    
+    return backupPath;
+  }
+  
+  async restore(backupPath: string): Promise<void> {
+    // Decompress if needed
+    const dbPath = await this.decompressFile(backupPath);
+    
+    // Validate backup integrity
+    await this.validateBackup(dbPath);
+    
+    // Replace current database
+    await this.replaceDatabase(dbPath);
+  }
+}
+```
+
+### 3. Data Export
+
+```typescript
+class ExportService {
+  async exportToJSON(filters?: ExportFilters): Promise<string> {
+    const opportunities = await this.getOpportunities(filters);
+    
+    return JSON.stringify({
+      version: '1.0',
+      exportDate: new Date().toISOString(),
+      count: opportunities.length,
+      data: opportunities
+    }, null, 2);
+  }
+  
+  async exportToCSV(filters?: ExportFilters): Promise<string> {
+    const opportunities = await this.getOpportunities(filters);
+    
+    const csv = new CSVBuilder()
+      .setHeaders([
+        'Title', 'Organization', 'Deadline', 
+        'Status', 'Relevance Score', 'URL'
+      ])
+      .addRows(opportunities)
+      .build();
+    
+    return csv;
+  }
+}
+```
+
+## Performance Optimization
+
+### 1. Indexing Strategy
+
+```sql
+-- Frequently queried fields
+CREATE INDEX idx_deadline_status ON opportunities(deadline, status);
+CREATE INDEX idx_relevance_status ON opportunities(relevance_score DESC, status);
+
+-- Full-text search
+CREATE VIRTUAL TABLE opportunities_fts USING fts5(
+  title, 
+  description, 
+  organization,
+  content=opportunities
+);
+```
+
+### 2. Query Optimization
+
+```typescript
+class QueryOptimizer {
+  async getOpportunitiesWithStats(): Promise<OpportunityWithStats[]> {
+    // Use single query with aggregation instead of N+1
+    return await this.db.all(`
+      SELECT 
+        o.*,
+        COUNT(DISTINCT s.id) as source_count,
+        COUNT(DISTINCT ah.id) as application_count,
+        MAX(ah.created_at) as last_action
+      FROM opportunities o
+      LEFT JOIN sources s ON o.id = s.opportunity_id
+      LEFT JOIN application_history ah ON o.id = ah.opportunity_id
+      GROUP BY o.id
+      ORDER BY o.relevance_score DESC
+      LIMIT 50
+    `);
+  }
+}
+```
+
+## Configuration
+
+```typescript
+export const archivistConfig = {
+  database: {
+    path: './data/oppo.db',
+    walMode: true, // Write-Ahead Logging for better concurrency
+    foreignKeys: true,
+    busyTimeout: 5000
+  },
+  deduplication: {
+    algorithm: 'sha256',
+    fields: ['title', 'organization', 'deadline']
+  },
+  maintenance: {
+    cleanupInterval: '0 0 * * *', // Daily at midnight
+    archiveAfterDays: 365,
+    backupInterval: '0 0 * * 0', // Weekly
+    maxBackups: 4
+  },
+  limits: {
+    maxOpportunities: 10000,
+    maxSourcesPerOpportunity: 10
+  }
+};
+```
+
+## Testing
+
+### Integration Tests
+
+```typescript
+describe('Archivist Module', () => {
+  test('detects and handles duplicates', async () => {
+    const opportunity1 = createTestOpportunity({
+      title: 'Art Grant 2025',
+      organization: 'Art Foundation'
+    });
+    
+    const opportunity2 = createTestOpportunity({
+      title: 'ART GRANT 2025!!!', // Different formatting
+      organization: 'Art Foundation'
+    });
+    
+    await archivist.save(opportunity1);
+    const result = await archivist.save(opportunity2);
+    
+    expect(result.isDuplicate).toBe(true);
+  });
+});
+```
+
+## Dependencies
+
+- **sqlite3**: SQLite driver
+- **@prisma/client**: ORM (optional)
+- **node-cron**: Scheduled tasks
+- **csv-writer**: CSV export
+- **compression**: Backup compression
+
+## Related Documentation
+
+- [Database Schema](../implementation/database-schema.md)
+- [System Architecture](../architecture/system-architecture.md)
+- [Analyst Module](./analyst.md)
