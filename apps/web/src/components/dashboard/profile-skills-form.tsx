@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Plus, X, Save } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -60,6 +60,18 @@ export function ProfileSkillsForm({ profile, onProfileUpdate }: ProfileSkillsFor
     return JSON.stringify(skills.sort()) !== JSON.stringify((profile.skills || []).sort()) ||
            JSON.stringify(interests.sort()) !== JSON.stringify((profile.interests || []).sort());
   };
+
+  // Listen for global save event
+  useEffect(() => {
+    const handleSaveAll = () => {
+      if (hasChanges()) {
+        handleSave();
+      }
+    };
+
+    window.addEventListener('saveAllForms', handleSaveAll);
+    return () => window.removeEventListener('saveAllForms', handleSaveAll);
+  }, [skills, interests]);
 
   const handleSave = async () => {
     try {
@@ -195,25 +207,6 @@ export function ProfileSkillsForm({ profile, onProfileUpdate }: ProfileSkillsFor
           </div>
         )}
 
-        <div className="flex justify-end pt-4">
-          <Button 
-            onClick={handleSave}
-            disabled={loading || !hasChanges()}
-            className="min-w-[120px]"
-          >
-            {loading ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                Save Changes
-              </>
-            )}
-          </Button>
-        </div>
       </CardContent>
     </Card>
   );

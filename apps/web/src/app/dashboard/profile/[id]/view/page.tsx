@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Edit, ExternalLink, User } from 'lucide-react';
+import { ArrowLeft, Edit, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { ArtistProfile } from '@/types/profile';
 import { profileApi } from '@/lib/api';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { SystemPromptPreview } from '@/components/dashboard/system-prompt-preview';
 
 export default function ProfileViewPage() {
   const params = useParams();
@@ -65,20 +66,31 @@ export default function ProfileViewPage() {
     );
   }
 
-  const editButton = (
-    <Button onClick={() => router.push(`/dashboard/profile/${profile.id}`)}>
-      <Edit className="h-4 w-4 mr-2" />
-      Edit Profile
-    </Button>
+  const actionButtons = (
+    <div className="flex space-x-2">
+      <Button 
+        variant="outline" 
+        onClick={() => router.push('/dashboard/profiles')}
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Back to Profiles
+      </Button>
+      <Button onClick={() => router.push(`/dashboard/profile/${profile.id}`)}>
+        <Edit className="h-4 w-4 mr-2" />
+        Edit Profile
+      </Button>
+    </div>
   );
 
   return (
     <DashboardLayout
       currentPage="profiles"
       title={profile.name}
-      action={editButton}
+      action={actionButtons}
     >
-      <div className="max-w-4xl space-y-6">
+      <div className="flex gap-6 w-full">
+        {/* Profile Content */}
+        <div className="flex-1 space-y-6">
         {/* Basic Information */}
         <Card>
           <CardHeader>
@@ -105,20 +117,6 @@ export default function ProfileViewPage() {
               </div>
             </div>
 
-            {profile.website && (
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Website</h3>
-                <a 
-                  href={profile.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline flex items-center space-x-1"
-                >
-                  <span>{profile.website}</span>
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              </div>
-            )}
           </CardContent>
         </Card>
 
@@ -204,26 +202,16 @@ export default function ProfileViewPage() {
 
         <Separator />
 
-        {/* Profile Actions */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-          <div className="text-sm text-muted-foreground">
-            <p>Created: {new Date(profile.createdAt).toLocaleDateString()}</p>
-            <p>Last updated: {new Date(profile.updatedAt).toLocaleDateString()}</p>
-          </div>
-          
-          <div className="flex space-x-3">
-            <Button 
-              variant="outline" 
-              onClick={() => router.push('/dashboard/profiles')}
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Profiles
-            </Button>
-            <Button onClick={() => router.push(`/dashboard/profile/${profile.id}`)}>
-              <Edit className="h-4 w-4 mr-2" />
-              Edit Profile
-            </Button>
-          </div>
+        {/* Profile Metadata */}
+        <div className="text-sm text-muted-foreground">
+          <p>Created: {new Date(profile.createdAt).toLocaleDateString()}</p>
+          <p>Last updated: {new Date(profile.updatedAt).toLocaleDateString()}</p>
+        </div>
+        </div>
+
+        {/* System Prompt Preview Section */}
+        <div className="w-80 xl:w-96 flex-shrink-0">
+          <SystemPromptPreview profile={profile} />
         </div>
       </div>
     </DashboardLayout>

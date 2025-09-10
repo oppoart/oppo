@@ -24,8 +24,8 @@ export const artistCategorySchema = z.enum(artistCategories);
 export const createProfileSchema = z.object({
   name: z.string().min(1, 'Profile name is required').max(100, 'Profile name must be less than 100 characters'),
   mediums: z.array(artistCategorySchema).min(1, 'At least one medium is required').max(5, 'Maximum 5 mediums allowed'),
-  bio: z.string().max(1000, 'Bio must be less than 1000 characters').optional(),
-  artistStatement: z.string().max(2000, 'Artist statement must be less than 2000 characters').optional(),
+  bio: z.string().max(3000, 'Bio must be less than 3000 characters').optional(),
+  artistStatement: z.string().max(5000, 'Artist statement must be less than 5000 characters').optional(),
   skills: z.array(z.string()).max(20, 'Maximum 20 skills allowed').default([]),
   interests: z.array(z.string()).max(20, 'Maximum 20 interests allowed').default([]),
   experience: z.string().max(500, 'Experience must be less than 500 characters').optional(),

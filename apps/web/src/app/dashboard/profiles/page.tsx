@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Plus, User, Edit, Eye } from 'lucide-react';
+import { Plus, User, Edit, Calendar, Globe, Palette } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -112,78 +112,100 @@ export default function ProfilesPage() {
           {/* Profiles Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {profiles.map((profile) => (
-                <Card key={profile.id} className="hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                          <User className="h-5 w-5 text-primary" />
+                <Card 
+                  key={profile.id} 
+                  className="hover:shadow-md transition-shadow aspect-square flex flex-col cursor-pointer"
+                  onClick={() => window.location.href = `/dashboard/profile/${profile.id}/view`}
+                >
+                  <CardHeader className="pb-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start space-x-3 flex-1">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0">
+                          <Palette className="h-6 w-6 text-primary" />
                         </div>
-                        <div>
-                          <CardTitle className="text-base">{profile.name}</CardTitle>
-                          <CardDescription className="text-sm">
-                            {profile.mediums.slice(0, 2).map(m => m.replace(/\b\w/g, l => l.toUpperCase())).join(', ')}
-                            {profile.mediums.length > 2 && ` +${profile.mediums.length - 2} more`}
-                          </CardDescription>
+                        <div className="flex-1 min-w-0">
+                          <CardTitle className="text-lg font-bold truncate">{profile.name}</CardTitle>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {profile.mediums.slice(0, 2).map((medium, index) => (
+                              <Badge key={index} variant="outline" className="text-xs px-2 py-0.5">
+                                {medium.replace(/\b\w/g, l => l.toUpperCase())}
+                              </Badge>
+                            ))}
+                            {profile.mediums.length > 2 && (
+                              <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                                +{profile.mediums.length - 2}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </div>
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="h-8 w-8"
-                        onClick={() => window.location.href = `/dashboard/profile/${profile.id}`}
+                        className="h-8 w-8 flex-shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.location.href = `/dashboard/profile/${profile.id}`;
+                        }}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
                     </div>
                   </CardHeader>
                   
-                  <CardContent className="space-y-4">
+                  <CardContent className="flex-1 flex flex-col justify-between space-y-4">
+                    <div className="space-y-3">
+                      {/* Bio Preview */}
+                      {profile.bio && (
+                        <div>
+                          <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+                            {profile.bio}
+                          </p>
+                        </div>
+                      )}
 
-                    {/* Bio Preview */}
-                    {profile.bio && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {profile.bio}
-                      </p>
-                    )}
+                      {/* Artist Statement Preview */}
+                      {!profile.bio && profile.artistStatement && (
+                        <div>
+                          <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed italic">
+                            "{profile.artistStatement}"
+                          </p>
+                        </div>
+                      )}
 
-                    {/* Skills */}
-                    {profile.skills && profile.skills.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {profile.skills.slice(0, 3).map((skill, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
-                            {skill}
-                          </Badge>
-                        ))}
-                        {profile.skills.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{profile.skills.length - 3} more
-                          </Badge>
+                      {/* Skills */}
+                      {profile.skills && profile.skills.length > 0 && (
+                        <div>
+                          <div className="flex flex-wrap gap-1">
+                            {profile.skills.slice(0, 4).map((skill, index) => (
+                              <Badge key={index} variant="secondary" className="text-xs px-2 py-1">
+                                {skill}
+                              </Badge>
+                            ))}
+                            {profile.skills.length > 4 && (
+                              <Badge variant="outline" className="text-xs px-2 py-1">
+                                +{profile.skills.length - 4}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Footer Info */}
+                    <div className="border-t pt-3 mt-auto">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <div className="flex items-center space-x-1">
+                          <Calendar className="h-3 w-3" />
+                          <span>{new Date(profile.updatedAt).toLocaleDateString()}</span>
+                        </div>
+                        {profile.website && (
+                          <div className="flex items-center space-x-1">
+                            <Globe className="h-3 w-3" />
+                            <span>Portfolio</span>
+                          </div>
                         )}
                       </div>
-                    )}
-
-
-                    {/* Action Buttons */}
-                    <div className="flex space-x-2 pt-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="flex-1"
-                        onClick={() => window.location.href = `/dashboard/profile/${profile.id}`}
-                      >
-                        <Edit className="h-3 w-3 mr-1" />
-                        Edit
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="flex-1"
-                        onClick={() => window.location.href = `/dashboard/profile/${profile.id}/view`}
-                      >
-                        <Eye className="h-3 w-3 mr-1" />
-                        View
-                      </Button>
                     </div>
                   </CardContent>
                 </Card>

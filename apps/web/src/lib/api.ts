@@ -1,5 +1,6 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { ArtistProfile, CreateProfileRequest, UpdateProfileRequest } from '@/types/profile';
+import { handleApiError, isAuthError } from './error-handler';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
@@ -8,6 +9,37 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// Request interceptor for adding auth headers if needed
+api.interceptors.request.use(
+  (config) => {
+    // Add any request modifications here
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor for error handling
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error: AxiosError) => {
+    // Handle authentication errors globally
+    if (isAuthError(error)) {
+      // Redirect to login if not authenticated
+      if (typeof window !== 'undefined' && window.location.pathname !== '/') {
+        window.location.href = '/';
+      }
+    }
+
+    // Process and enhance error
+    const apiError = handleApiError(error, false); // Don't show toast here, let the component decide
+    return Promise.reject(apiError);
+  }
+);
 
 export const profileApi = {
   // Get all artist profiles for user
@@ -47,6 +79,27 @@ export const profileApi = {
   // Delete artist profile
   deleteProfile: async (id: string): Promise<void> => {
     await api.delete(`/api/profiles/${id}`);
+  },
+};
+
+// User preferences API
+export const userApi = {
+  // Get current user info
+  getMe: async () => {
+    const response = await api.get('/api/users/me');
+    return response.data.data;
+  },
+
+  // Get user preferences
+  getPreferences: async () => {
+    const response = await api.get('/api/users/me/preferences');
+    return response.data.data;
+  },
+
+  // Update user preferences
+  updatePreferences: async (preferences: any) => {
+    const response = await api.put('/api/users/me/preferences', { preferences });
+    return response.data.data;
   },
 };
 

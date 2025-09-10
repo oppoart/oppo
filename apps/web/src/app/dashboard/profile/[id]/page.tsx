@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Trash2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArtistProfile } from '@/types/profile';
 import { profileApi } from '@/lib/api';
 import { ProfileBasicInfoForm } from '@/components/dashboard/profile-basic-info-form';
@@ -90,6 +89,12 @@ export default function ProfileEditPage() {
     );
   }
 
+  const handleSaveAll = async () => {
+    // This will trigger saves on all forms
+    const event = new CustomEvent('saveAllForms');
+    window.dispatchEvent(event);
+  };
+
   const actionButtons = (
     <div className="flex space-x-2">
       <Button 
@@ -99,6 +104,14 @@ export default function ProfileEditPage() {
       >
         <Eye className="h-4 w-4 mr-2" />
         View Profile
+      </Button>
+      <Button 
+        size="sm"
+        onClick={handleSaveAll}
+        disabled={saving}
+      >
+        <Save className="h-4 w-4 mr-2" />
+        Save Changes
       </Button>
       <Button 
         variant="destructive" 
@@ -118,38 +131,24 @@ export default function ProfileEditPage() {
       title={profile.name}
       action={actionButtons}
     >
-      <div className="max-w-4xl">
+      <div className="w-full space-y-6">
+        {/* Basic Information */}
+        <ProfileBasicInfoForm 
+          profile={profile} 
+          onProfileUpdate={handleProfileUpdate}
+        />
 
-        {/* Profile Editing Tabs */}
-        <Tabs defaultValue="basic" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
-            <TabsTrigger value="basic" className="text-xs sm:text-sm">Basic Info</TabsTrigger>
-            <TabsTrigger value="skills" className="text-xs sm:text-sm">Skills</TabsTrigger>
-            <TabsTrigger value="statement" className="text-xs sm:text-sm">Statement</TabsTrigger>
-          </TabsList>
+        {/* Skills */}
+        <ProfileSkillsForm 
+          profile={profile} 
+          onProfileUpdate={handleProfileUpdate}
+        />
 
-          <TabsContent value="basic">
-            <ProfileBasicInfoForm 
-              profile={profile} 
-              onProfileUpdate={handleProfileUpdate}
-            />
-          </TabsContent>
-
-          <TabsContent value="skills">
-            <ProfileSkillsForm 
-              profile={profile} 
-              onProfileUpdate={handleProfileUpdate}
-            />
-          </TabsContent>
-
-
-          <TabsContent value="statement">
-            <ProfileStatementForm 
-              profile={profile} 
-              onProfileUpdate={handleProfileUpdate}
-            />
-          </TabsContent>
-        </Tabs>
+        {/* Statement */}
+        <ProfileStatementForm 
+          profile={profile} 
+          onProfileUpdate={handleProfileUpdate}
+        />
       </div>
     </DashboardLayout>
   );

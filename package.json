@@ -20,7 +20,10 @@
     "clean": "turbo clean && rm -rf node_modules",
     "db:push": "pnpm --filter backend db:push",
     "db:migrate": "pnpm --filter backend db:migrate",
-    "db:studio": "pnpm --filter backend db:studio"
+    "db:studio": "pnpm --filter backend db:studio",
+    "env:validate": "./scripts/validate-env.sh",
+    "env:setup": "cp apps/backend/.env.example apps/backend/.env && cp apps/web/.env.local.example apps/web/.env.local && echo '✅ Environment files created. Please edit them with your configuration.'",
+    "start": "npm run env:validate && turbo dev"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

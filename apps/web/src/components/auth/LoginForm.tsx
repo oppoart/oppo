@@ -69,8 +69,17 @@ export function LoginForm() {
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
-            <div className="text-sm text-muted-foreground text-center">
-              For testing, use: <code>artist@oppo.local</code>
+            <div className="flex flex-col gap-2 text-center">
+              <button
+                type="button"
+                onClick={() => window.location.href = '/forgot-password'}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Forgot your access? Request a reset link
+              </button>
+              <div className="text-sm text-muted-foreground">
+                For testing, use: <code>artist@oppo.local</code>
+              </div>
             </div>
           </form>
         </CardContent>

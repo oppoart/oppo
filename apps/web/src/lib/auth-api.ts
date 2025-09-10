@@ -44,6 +44,21 @@ export const auth = {
     const response = await authApi.get('/api/auth/status');
     return response.data;
   },
+
+  requestPasswordReset: async (email: string): Promise<{ success: boolean; message: string }> => {
+    const response = await authApi.post('/api/auth/request-password-reset', { email });
+    return response.data;
+  },
+
+  verifyResetToken: async (token: string, email: string): Promise<{ success: boolean; message: string; user?: any }> => {
+    const response = await authApi.post('/api/auth/verify-reset-token', { token, email });
+    return response.data;
+  },
+
+  resetPassword: async (token: string, email: string): Promise<{ success: boolean; message: string; user?: any }> => {
+    const response = await authApi.post('/api/auth/reset-password', { token, email });
+    return response.data;
+  },
 };
 
 export default authApi;

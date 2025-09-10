@@ -7,32 +7,50 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ArtistProfile } from '@/types/profile';
-import { profileApi } from '@/lib/api';
+import { profileApi, userApi } from '@/lib/api';
 import { ProfileCreationForm } from '@/components/dashboard/profile-creation-form';
+import { WelcomeFlow } from '@/components/onboarding/WelcomeFlow';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function DashboardPage() {
   const [profiles, setProfiles] = useState<ArtistProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [userPreferences, setUserPreferences] = useState<any>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
-    loadProfiles();
+    loadData();
   }, []);
 
-  const loadProfiles = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
-      const data = await profileApi.getProfiles();
-      setProfiles(data);
+      
+      // Load both profiles and preferences
+      const [profilesData, preferencesData] = await Promise.all([
+        profileApi.getProfiles(),
+        userApi.getPreferences().catch(() => null) // Don't fail if preferences fail
+      ]);
+      
+      setProfiles(profilesData);
+      setUserPreferences(preferencesData);
+      
+      // Show welcome flow for new users
+      if (preferencesData && !preferencesData.preferences?.hasSeenOnboarding) {
+        setShowWelcome(true);
+      }
+      
     } catch (err) {
-      setError('Failed to load profiles');
-      console.error('Error loading profiles:', err);
+      setError('Failed to load dashboard data');
+      console.error('Error loading dashboard data:', err);
       toast({
         title: "Error",
-        description: "Failed to load profiles",
+        description: "Failed to load dashboard data",
         variant: "destructive",
       });
     } finally {
@@ -47,6 +65,25 @@ export default function DashboardPage() {
       title: "Success",
       description: "Profile created successfully!",
     });
+  };
+
+  const handleWelcomeClose = async () => {
+    setShowWelcome(false);
+    
+    // Mark onboarding as completed
+    try {
+      await userApi.updatePreferences({ hasSeenOnboarding: true });
+    } catch (error) {
+      console.error('Failed to update onboarding status:', error);
+    }
+  };
+
+  const handleCreateProfileFromOnboarding = () => {
+    setShowCreateDialog(true);
+  };
+
+  const handleOpenSettingsFromOnboarding = () => {
+    window.location.href = '/dashboard/settings';
   };
 
   if (loading) {
@@ -203,6 +240,19 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Welcome flow for new users */}
+      <WelcomeFlow
+        open={showWelcome}
+        onOpenChange={handleWelcomeClose}
+        userName={user?.name || undefined}
+        hasProfiles={profiles.length > 0}
+        hasPreferences={userPreferences?.preferences?.minFundingAmount !== undefined || 
+                       userPreferences?.preferences?.preferredLocations?.length > 0 ||
+                       userPreferences?.preferences?.opportunityTypes?.length > 0}
+        onCreateProfile={handleCreateProfileFromOnboarding}
+        onOpenSettings={handleOpenSettingsFromOnboarding}
+      />
     </DashboardLayout>
   );
 }

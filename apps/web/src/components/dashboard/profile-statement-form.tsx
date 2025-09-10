@@ -1,10 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
@@ -14,7 +13,7 @@ import { profileApi } from '@/lib/api';
 
 const statementSchema = z.object({
   artistStatement: z.string()
-    .max(2000, 'Artist statement must be less than 2000 characters')
+    .max(5000, 'Artist statement must be less than 5000 characters')
     .optional(),
 });
 
@@ -36,6 +35,16 @@ export function ProfileStatementForm({ profile, onProfileUpdate }: ProfileStatem
       artistStatement: profile.artistStatement || '',
     },
   });
+
+  // Listen for global save event
+  useEffect(() => {
+    const handleSaveAll = () => {
+      form.handleSubmit(onSubmit)();
+    };
+
+    window.addEventListener('saveAllForms', handleSaveAll);
+    return () => window.removeEventListener('saveAllForms', handleSaveAll);
+  }, [form]);
 
   const onSubmit = async (data: StatementForm) => {
     try {
@@ -96,7 +105,7 @@ export function ProfileStatementForm({ profile, onProfileUpdate }: ProfileStatem
                     />
                   </FormControl>
                   <FormDescription>
-                    A thoughtful artist statement helps curators, galleries, and grant committees understand your work ({currentLength}/2000 characters)
+                    A thoughtful artist statement helps curators, galleries, and grant committees understand your work ({currentLength}/5000 characters)
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -115,25 +124,6 @@ export function ProfileStatementForm({ profile, onProfileUpdate }: ProfileStatem
               </div>
             )}
 
-            <div className="flex justify-end">
-              <Button 
-                type="submit" 
-                disabled={loading || !hasChanges}
-                className="min-w-[120px]"
-              >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Statement
-                  </>
-                )}
-              </Button>
-            </div>
           </form>
         </Form>
       </CardContent>
