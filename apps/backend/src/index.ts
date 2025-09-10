@@ -1,13 +1,17 @@
-import express from 'express';
+import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
+import prisma from './lib/prisma';
+import authRoutes from './routes/auth';
+import profilesRoutes from './routes/profiles';
 
 // Load environment variables
 dotenv.config();
 
-const app = express();
+const app: Application = express();
 const PORT = process.env.PORT || 3001;
 
 // Security middleware
@@ -25,17 +29,33 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
+// betterAuth handles sessions internally, no need for express-session
+
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    timestamp: new Date().toISOString(),
-    version: process.env.npm_package_version || '0.0.1'
-  });
+app.get('/health', async (req, res) => {
+  try {
+    // Check database connection
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      version: process.env.npm_package_version || '0.0.1',
+      database: 'connected'
+    });
+  } catch (error) {
+    res.status(503).json({ 
+      status: 'error', 
+      timestamp: new Date().toISOString(),
+      version: process.env.npm_package_version || '0.0.1',
+      database: 'disconnected',
+      error: process.env.NODE_ENV === 'development' ? error : 'Database connection failed'
+    });
+  }
 });
 
 // API routes
@@ -43,6 +63,12 @@ app.use('/api', (req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
 });
+
+// Authentication routes
+app.use('/api/auth', authRoutes);
+
+// Artist profiles routes
+app.use('/api/profiles', profilesRoutes);
 
 // Basic API endpoint
 app.get('/api/test', (req, res) => {

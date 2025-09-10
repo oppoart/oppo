@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String        @id @default(cuid())
+  email             String        @unique
+  emailVerified     Boolean       @default(false)
+  name              String?
+  image             String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  profiles          ArtistProfile[]
+  sessions          Session[]
+  accounts          Account[]
+  
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model Account {
+  id                String   @id @default(cuid())
+  userId            String
+  accountId         String
+  providerId        String
+  accessToken       String?
+  refreshToken      String?
+  idToken           String?
+  accessTokenExpiresAt DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope             String?
+  password          String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@map("accounts")
+}
+
+model ArtistProfile {
+  id               String   @id @default(cuid())
+  userId           String
+  name             String
+  mediums          String[] @default(["other"]) // generative art, textile art, new media art, AI art, etc.
+  bio              String?
+  artistStatement  String?
+  skills           String[]
+  interests        String[]
+  experience       String?
+  location         String?
+  website          String?
+  portfolioUrl     String?
+  preferences      Json?
+  settings         Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("artist_profiles")
+}
+
+model Opportunity {
+  id             String             @id @default(cuid())
+  title          String
+  description    String
+  url            String
+  deadline       DateTime?
+  amount         String?
+  location       String?
+  tags           String[]
+  source         String
+  discoveredAt   DateTime           @default(now())
+  relevanceScore Float?
+  applied        Boolean            @default(false)
+  matches        OpportunityMatch[]
+
+  @@map("opportunities")
+}
+
+model OpportunityMatch {
+  id            String      @id @default(cuid())
+  opportunityId String
+  matchScore    Float
+  reasoning     String?
+  createdAt     DateTime    @default(now())
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id])
+
+  @@map("opportunity_matches")
+}
