@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,22 +14,25 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const success = await login(email);
-      if (success) {
+      const result = await login(email);
+      if (result.success) {
         toast({
           title: "Login successful",
           description: "Welcome to OPPO!",
         });
+        // Redirect to dashboard after successful login
+        router.push('/dashboard');
       } else {
         toast({
           title: "Login failed",
-          description: "Invalid email or user not found.",
+          description: result.error || "Invalid email or user not found.",
           variant: "destructive",
         });
       }

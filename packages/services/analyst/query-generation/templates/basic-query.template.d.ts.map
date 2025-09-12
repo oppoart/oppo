@@ -1,0 +1,1 @@
+{"version":3,"file":"basic-query.template.d.ts","sourceRoot":"","sources":["basic-query.template.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,oBAAoB,EAAE,UAAU,EAAE,MAAM,iDAAiD,CAAC;AAEnG,qBAAa,kBAAkB;IAC7B,OAAO,CAAC,aAAa,CAAkB;IAEjC,UAAU,IAAI,OAAO,CAAC,IAAI,CAAC;IAI3B,eAAe,CACnB,eAAe,EAAE,GAAG,EACpB,UAAU,EAAE,UAAU,EACtB,UAAU,EAAE,MAAM,GACjB,OAAO,CAAC,oBAAoB,EAAE,CAAC;CA8DnC"}

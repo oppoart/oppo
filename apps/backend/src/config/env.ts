@@ -19,8 +19,15 @@ const envSchema = z.object({
   BCRYPT_ROUNDS: z.string().transform(Number).default('12'),
   SESSION_TIMEOUT_HOURS: z.string().transform(Number).default('24'),
 
-  // External APIs (optional for Sprint 2, required for Sprint 3)
-  OPENAI_API_KEY: z.string().optional(),
+  // AI Configuration (required for Sprint 1)
+  OPENAI_API_KEY: z.string().min(1, 'OpenAI API key is required'),
+  ANTHROPIC_API_KEY: z.string().optional(),
+  AI_MODEL_PRIMARY: z.string().default('gpt-4'),
+  AI_MODEL_FALLBACK: z.string().default('gpt-3.5-turbo'),
+  AI_MAX_TOKENS: z.string().transform(Number).default('2000'),
+  AI_RATE_LIMIT: z.string().transform(Number).default('100'),
+  
+  // External APIs 
   FIRECRAWL_API_KEY: z.string().optional(),
 
   // Rate Limiting
@@ -102,6 +109,16 @@ export const logConfig = {
   format: isDevelopment ? 'dev' : 'combined',
   // In production, we might want to log to files or external service
   file: isProduction ? '/var/log/oppo/app.log' : null,
+};
+
+// AI configuration
+export const aiConfig = {
+  openaiApiKey: env.OPENAI_API_KEY,
+  anthropicApiKey: env.ANTHROPIC_API_KEY,
+  modelPrimary: env.AI_MODEL_PRIMARY,
+  modelFallback: env.AI_MODEL_FALLBACK,
+  maxTokens: env.AI_MAX_TOKENS,
+  rateLimit: env.AI_RATE_LIMIT,
 };
 
 // Validation helper

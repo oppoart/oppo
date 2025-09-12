@@ -27,7 +27,7 @@ async function main() {
   const profiles = [
     {
       name: 'Digital Art Portfolio',
-      category: 'digital art',
+      mediums: ['generative art', 'new media art', 'AI art'],
       bio: 'Exploring the intersection of technology and creativity through digital mediums.',
       artistStatement: 'My digital art journey focuses on creating immersive experiences that challenge traditional boundaries.',
       skills: ['Digital Painting', 'NFT Creation', '3D Modeling', 'Animation'],
@@ -39,7 +39,7 @@ async function main() {
     },
     {
       name: 'Traditional Art Practice',
-      category: 'traditional art',
+      mediums: ['traditional art', 'fine art'],
       bio: 'Creating contemporary works with classical techniques and materials.',
       artistStatement: 'I believe in the enduring power of traditional mediums to convey modern themes.',
       skills: ['Oil Painting', 'Watercolor', 'Charcoal Drawing', 'Printmaking'],
@@ -51,7 +51,7 @@ async function main() {
     },
     {
       name: 'AI Art Experiments',
-      category: 'AI art',
+      mediums: ['AI art', 'generative art', 'new media art'],
       bio: 'Pushing the boundaries of creativity through artificial intelligence and machine learning.',
       artistStatement: 'Exploring the collaborative relationship between human creativity and artificial intelligence.',
       skills: ['Machine Learning', 'Prompt Engineering', 'Generative Models', 'Data Visualization'],
@@ -87,7 +87,54 @@ async function main() {
     console.log('✅ Created artist profile:', profile.name);
   }
 
-  console.log('🎉 Database seeded successfully with multi-profile structure!');
+  // Add sample opportunities for testing
+  const opportunities = [
+    {
+      title: 'Digital Art Residency at TechSpace Gallery',
+      organization: 'TechSpace Gallery',
+      description: 'A 3-month residency program for digital and new media artists working with emerging technologies.',
+      url: 'https://techspace.gallery/residency',
+      deadline: new Date('2025-03-15'),
+      amount: '$5,000 stipend',
+      location: 'San Francisco, CA',
+      tags: ['residency', 'digital art', 'new media', 'technology'],
+      sourceType: 'websearch',
+      sourceUrl: 'https://techspace.gallery',
+    },
+    {
+      title: 'AI Art Innovation Grant',
+      organization: 'Future Arts Foundation',
+      description: 'Grant program supporting artists exploring artificial intelligence and machine learning in creative practice.',
+      url: 'https://futurearts.org/grants/ai-innovation',
+      deadline: new Date('2025-02-28'),
+      amount: '$10,000',
+      location: 'Remote',
+      tags: ['grant', 'AI art', 'innovation', 'research'],
+      sourceType: 'newsletter',
+      sourceUrl: 'https://futurearts.org',
+    },
+    {
+      title: 'Traditional Painting Exhibition Call',
+      organization: 'Brooklyn Art Center',
+      description: 'Open call for contemporary painters working in traditional mediums.',
+      url: 'https://brooklynart.center/calls/traditional-painting',
+      deadline: new Date('2025-01-31'),
+      amount: 'No fee',
+      location: 'Brooklyn, NY',
+      tags: ['exhibition', 'traditional art', 'painting'],
+      sourceType: 'social',
+      sourceUrl: 'https://instagram.com/brooklynartcenter',
+    },
+  ];
+
+  for (const opportunityData of opportunities) {
+    const opportunity = await prisma.opportunity.create({
+      data: opportunityData,
+    });
+    console.log('✅ Created opportunity:', opportunity.title);
+  }
+
+  console.log('🎉 Database seeded successfully with multi-profile structure and sample opportunities!');
 }
 
 main()

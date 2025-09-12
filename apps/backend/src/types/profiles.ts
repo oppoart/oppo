@@ -8,6 +8,7 @@ export const artistCategories = [
   'AI art',
   'digital art',
   'traditional art',
+  'fine art',
   'sculpture',
   'painting',
   'photography',

@@ -5,6 +5,7 @@ export type ArtistCategory =
   | 'AI art'
   | 'digital art'
   | 'traditional art'
+  | 'fine art'
   | 'sculpture'
   | 'painting'
   | 'photography'
@@ -49,6 +50,7 @@ export const ARTIST_CATEGORIES = [
   { value: 'AI art', label: 'AI Art' },
   { value: 'digital art', label: 'Digital Art' },
   { value: 'traditional art', label: 'Traditional Art' },
+  { value: 'fine art', label: 'Fine Art' },
   { value: 'sculpture', label: 'Sculpture' },
   { value: 'painting', label: 'Painting' },
   { value: 'photography', label: 'Photography' },

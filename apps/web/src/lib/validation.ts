@@ -8,6 +8,7 @@ export const artistMediums = [
   'AI art',
   'digital art',
   'traditional art',
+  'fine art',
   'sculpture',
   'painting',
   'photography',

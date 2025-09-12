@@ -2,15 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Edit, User } from 'lucide-react';
+import { ArrowLeft, Edit, User, FileText, Loader2, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ArtistProfile } from '@/types/profile';
-import { profileApi } from '@/lib/api';
+import { AnalysisResult, AnalysisStats } from '@/types/analyst';
+import { profileApi, analystApi } from '@/lib/api';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { SystemPromptPreview } from '@/components/dashboard/system-prompt-preview';
+import { AnalysisResults } from '@/components/dashboard/analysis-results';
+import { AnalysisStats as AnalysisStatsComponent } from '@/components/dashboard/analysis-stats';
 
 export default function ProfileViewPage() {
   const params = useParams();
@@ -20,9 +23,14 @@ export default function ProfileViewPage() {
   const [profile, setProfile] = useState<ArtistProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [analysisStats, setAnalysisStats] = useState<AnalysisStats | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [showAnalysisTab, setShowAnalysisTab] = useState('profile'); // 'profile', 'queries'
 
   useEffect(() => {
     loadProfile();
+    loadAnalysisStats();
   }, [profileId]);
 
   const loadProfile = async () => {
@@ -35,6 +43,36 @@ export default function ProfileViewPage() {
       console.error('Error loading profile:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadAnalysisStats = async () => {
+    try {
+      const stats = await analystApi.getStats(profileId);
+      setAnalysisStats(stats);
+    } catch (err) {
+      console.error('Error loading analysis stats:', err);
+      // Don't set error state for stats failure - it's not critical
+    }
+  };
+
+  const handleAnalyzeProfile = async () => {
+    if (!profile) return;
+    
+    try {
+      setAnalyzing(true);
+      setError(null);
+      const result = await analystApi.analyze(profileId);
+      setAnalysisResult(result);
+      setShowAnalysisTab('results');
+      
+      // Refresh stats after analysis
+      await loadAnalysisStats();
+    } catch (err: any) {
+      setError(err.message || 'Failed to analyze profile');
+      console.error('Error analyzing profile:', err);
+    } finally {
+      setAnalyzing(false);
     }
   };
 
@@ -75,6 +113,18 @@ export default function ProfileViewPage() {
         <ArrowLeft className="h-4 w-4 mr-2" />
         Back to Profiles
       </Button>
+      <Button 
+        variant="outline"
+        onClick={handleAnalyzeProfile}
+        disabled={analyzing}
+      >
+        {analyzing ? (
+          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+        ) : (
+          <Search className="h-4 w-4 mr-2" />
+        )}
+        {analyzing ? 'Analyzing...' : 'Analyze Profile'}
+      </Button>
       <Button onClick={() => router.push(`/dashboard/profile/${profile.id}`)}>
         <Edit className="h-4 w-4 mr-2" />
         Edit Profile
@@ -88,9 +138,47 @@ export default function ProfileViewPage() {
       title={profile.name}
       action={actionButtons}
     >
-      <div className="flex gap-6 w-full">
-        {/* Profile Content */}
-        <div className="flex-1 space-y-6">
+      <div className="w-full space-y-6">
+        {/* Error Display */}
+        {error && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <p className="text-red-600 text-sm">{error}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Tab Navigation */}
+        <div className="flex border-b border-gray-200">
+          <button
+            className={`px-4 py-2 text-sm font-medium border-b-2 ${
+              showAnalysisTab === 'profile'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+            onClick={() => setShowAnalysisTab('profile')}
+          >
+            <User className="h-4 w-4 mr-2 inline" />
+            Profile Details
+          </button>
+          <button
+            className={`px-4 py-2 text-sm font-medium border-b-2 ${
+              showAnalysisTab === 'queries'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+            onClick={() => setShowAnalysisTab('queries')}
+          >
+            <FileText className="h-4 w-4 mr-2 inline" />
+            Query Types
+          </button>
+        </div>
+
+        <div className="flex gap-6 w-full">
+          {/* Main Content */}
+          <div className="flex-1">
+            {showAnalysisTab === 'profile' && (
+              <div className="space-y-6">
         {/* Basic Information */}
         <Card>
           <CardHeader>
@@ -200,18 +288,132 @@ export default function ProfileViewPage() {
           </Card>
         )}
 
-        <Separator />
+                <Separator />
 
-        {/* Profile Metadata */}
-        <div className="text-sm text-muted-foreground">
-          <p>Created: {new Date(profile.createdAt).toLocaleDateString()}</p>
-          <p>Last updated: {new Date(profile.updatedAt).toLocaleDateString()}</p>
-        </div>
-        </div>
+                {/* Profile Metadata */}
+                <div className="text-sm text-muted-foreground">
+                  <p>Created: {new Date(profile.createdAt).toLocaleDateString()}</p>
+                  <p>Last updated: {new Date(profile.updatedAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+            )}
 
-        {/* System Prompt Preview Section */}
-        <div className="w-80 xl:w-96 flex-shrink-0">
-          <SystemPromptPreview profile={profile} />
+            {showAnalysisTab === 'queries' && (
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Query Types & Syntax</CardTitle>
+                    <CardDescription>
+                      Pre-defined search query templates for finding art opportunities
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Time-based Queries */}
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-900 mb-3">Time-based Queries</h3>
+                      <div className="space-y-2">
+                        <div className="bg-gray-50 p-3 rounded-md">
+                          <code className="text-sm">Latest [medium] Open Calls [month] [year]</code>
+                          <p className="text-xs text-gray-600 mt-1">Example: "Latest painting Open Calls December 2024"</p>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded-md">
+                          <code className="text-sm">[medium] opportunities deadline [month] [year]</code>
+                          <p className="text-xs text-gray-600 mt-1">Example: "sculpture opportunities deadline January 2025"</p>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded-md">
+                          <code className="text-sm">Upcoming [opportunity-type] [month] [year]</code>
+                          <p className="text-xs text-gray-600 mt-1">Example: "Upcoming exhibitions March 2025"</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Opportunity Type Queries */}
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-900 mb-3">Opportunity Types</h3>
+                      <div className="space-y-2">
+                        <div className="bg-gray-50 p-3 rounded-md">
+                          <code className="text-sm">[medium] [grant/award/exhibition/residency] [year]</code>
+                          <p className="text-xs text-gray-600 mt-1">Example: "digital art grants 2025"</p>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded-md">
+                          <code className="text-sm">Open call [medium] [location]</code>
+                          <p className="text-xs text-gray-600 mt-1">Example: "Open call photography New York"</p>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded-md">
+                          <code className="text-sm">[opportunity-type] for emerging artists [year]</code>
+                          <p className="text-xs text-gray-600 mt-1">Example: "Residencies for emerging artists 2025"</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Geographic Queries */}
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-900 mb-3">Geographic Queries</h3>
+                      <div className="space-y-2">
+                        <div className="bg-gray-50 p-3 rounded-md">
+                          <code className="text-sm">[medium] opportunities [city/state/country]</code>
+                          <p className="text-xs text-gray-600 mt-1">Example: "ceramic opportunities California"</p>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded-md">
+                          <code className="text-sm">International [opportunity-type] [medium]</code>
+                          <p className="text-xs text-gray-600 mt-1">Example: "International residencies printmaking"</p>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded-md">
+                          <code className="text-sm">[location] art [grant/competition/exhibition] [year]</code>
+                          <p className="text-xs text-gray-600 mt-1">Example: "European art grants 2025"</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Funding Amount Queries */}
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-900 mb-3">Funding & Prize Queries</h3>
+                      <div className="space-y-2">
+                        <div className="bg-gray-50 p-3 rounded-md">
+                          <code className="text-sm">[amount]+ [medium] grants [year]</code>
+                          <p className="text-xs text-gray-600 mt-1">Example: "$5000+ painting grants 2025"</p>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded-md">
+                          <code className="text-sm">Large [opportunity-type] [medium] funding</code>
+                          <p className="text-xs text-gray-600 mt-1">Example: "Large residency sculpture funding"</p>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded-md">
+                          <code className="text-sm">[medium] prize competition [year]</code>
+                          <p className="text-xs text-gray-600 mt-1">Example: "photography prize competition 2025"</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Theme-based Queries */}
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-900 mb-3">Theme & Subject Queries</h3>
+                      <div className="space-y-2">
+                        <div className="bg-gray-50 p-3 rounded-md">
+                          <code className="text-sm">[theme/subject] [medium] [opportunity-type]</code>
+                          <p className="text-xs text-gray-600 mt-1">Example: "environmental sculpture exhibitions"</p>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded-md">
+                          <code className="text-sm">Contemporary [medium] [location] opportunities</code>
+                          <p className="text-xs text-gray-600 mt-1">Example: "Contemporary ceramics London opportunities"</p>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded-md">
+                          <code className="text-sm">[social-issue] art [grant/exhibition] [year]</code>
+                          <p className="text-xs text-gray-600 mt-1">Example: "climate change art grants 2025"</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </div>
+
+          {/* System Prompt Preview Section - Only show on profile tab */}
+          {showAnalysisTab === 'profile' && (
+            <div className="w-80 xl:w-96 flex-shrink-0">
+              <SystemPromptPreview profile={profile} />
+            </div>
+          )}
         </div>
       </div>
     </DashboardLayout>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Plus, User, TrendingUp, Eye, Palette, ArrowRight } from 'lucide-react';
+import { Plus, User, TrendingUp, Eye, Palette, ArrowRight, Calendar as CalendarIcon } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { ArtistProfile } from '@/types/profile';
 import { profileApi, userApi } from '@/lib/api';
 import { ProfileCreationForm } from '@/components/dashboard/profile-creation-form';
-import { WelcomeFlow } from '@/components/onboarding/WelcomeFlow';
+import { Calendar } from '@/components/dashboard/calendar';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -18,8 +18,6 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(false);
-  const [userPreferences, setUserPreferences] = useState<any>(null);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -31,19 +29,9 @@ export default function DashboardPage() {
     try {
       setLoading(true);
       
-      // Load both profiles and preferences
-      const [profilesData, preferencesData] = await Promise.all([
-        profileApi.getProfiles(),
-        userApi.getPreferences().catch(() => null) // Don't fail if preferences fail
-      ]);
-      
+      // Load profiles
+      const profilesData = await profileApi.getProfiles();
       setProfiles(profilesData);
-      setUserPreferences(preferencesData);
-      
-      // Show welcome flow for new users
-      if (preferencesData && !preferencesData.preferences?.hasSeenOnboarding) {
-        setShowWelcome(true);
-      }
       
     } catch (err) {
       setError('Failed to load dashboard data');
@@ -67,24 +55,6 @@ export default function DashboardPage() {
     });
   };
 
-  const handleWelcomeClose = async () => {
-    setShowWelcome(false);
-    
-    // Mark onboarding as completed
-    try {
-      await userApi.updatePreferences({ hasSeenOnboarding: true });
-    } catch (error) {
-      console.error('Failed to update onboarding status:', error);
-    }
-  };
-
-  const handleCreateProfileFromOnboarding = () => {
-    setShowCreateDialog(true);
-  };
-
-  const handleOpenSettingsFromOnboarding = () => {
-    window.location.href = '/dashboard/settings';
-  };
 
   if (loading) {
     return (
@@ -145,7 +115,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Opportunities</CardTitle>
@@ -158,6 +127,21 @@ export default function DashboardPage() {
             </p>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Calendar Widget */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">Calendar</h2>
+          <Button 
+            variant="outline" 
+            onClick={() => window.location.href = '/dashboard/calendar'}
+          >
+            View Full Calendar
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
+        </div>
+        <Calendar compact />
       </div>
 
       {profiles.length === 0 ? (
@@ -241,18 +225,6 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Welcome flow for new users */}
-      <WelcomeFlow
-        open={showWelcome}
-        onOpenChange={handleWelcomeClose}
-        userName={user?.name || undefined}
-        hasProfiles={profiles.length > 0}
-        hasPreferences={userPreferences?.preferences?.minFundingAmount !== undefined || 
-                       userPreferences?.preferences?.preferredLocations?.length > 0 ||
-                       userPreferences?.preferences?.opportunityTypes?.length > 0}
-        onCreateProfile={handleCreateProfileFromOnboarding}
-        onOpenSettings={handleOpenSettingsFromOnboarding}
-      />
     </DashboardLayout>
   );
 }

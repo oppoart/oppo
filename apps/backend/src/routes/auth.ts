@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
+import crypto from 'crypto';
 import { auth } from '../lib/better-auth';
 import { requireAuth } from '../middleware/auth';
 import { AuthenticatedRequest } from '../types/auth';
@@ -72,6 +73,7 @@ router.post('/login', authLimiter, async (req: Request, res: Response): Promise<
       secure: process.env.NODE_ENV === 'production',
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       sameSite: 'lax',
+      path: '/',
     });
 
     res.json({
@@ -161,14 +163,47 @@ router.get('/me', requireAuth, async (req: AuthenticatedRequest, res: Response):
  */
 router.get('/status', async (req: Request, res: Response): Promise<void> => {
   try {
-    const session = await auth.api.getSession({
-      headers: req.headers as any,
+    // Get session token from cookie
+    const sessionToken = req.cookies['better-auth.session_token'];
+
+    if (!sessionToken) {
+      res.json({
+        success: true,
+        authenticated: false,
+        session: null,
+      });
+      return;
+    }
+
+    // Verify session directly from database
+    const session = await prisma.session.findUnique({
+      where: { token: sessionToken },
+      include: { user: true },
     });
+
+    if (!session || session.expiresAt < new Date()) {
+      res.json({
+        success: true,
+        authenticated: false,
+        session: null,
+      });
+      return;
+    }
 
     res.json({
       success: true,
-      authenticated: !!session,
-      session: session || null,
+      authenticated: true,
+      session: {
+        user: {
+          id: session.user.id,
+          email: session.user.email,
+          name: session.user.name,
+          emailVerified: session.user.emailVerified,
+          image: session.user.image,
+          createdAt: session.user.createdAt,
+          updatedAt: session.user.updatedAt,
+        }
+      },
     });
   } catch (error) {
     console.error('Status check error:', error);
@@ -338,6 +373,7 @@ router.post('/reset-password', authLimiter, validate({ body: resetPasswordSchema
       secure: process.env.NODE_ENV === 'production',
       maxAge: 24 * 60 * 60 * 1000,
       sameSite: 'lax',
+      path: '/',
     });
 
     res.json({

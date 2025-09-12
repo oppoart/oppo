@@ -1,0 +1,252 @@
+{
+  "id": "generic-art-portal-scraper-template",
+  "name": "Generic Art Portal Scraper Template",
+  "description": "Template for scraping generic art portals and opportunity websites",
+  "version": "1.0.0",
+  "author": "Sentinel System",
+  "tags": ["art-portal", "webscraping", "opportunities", "template"],
+  "variables": {
+    "baseUrl": "https://www.callforentry.org",
+    "opportunitiesPath": "/opportunities",
+    "maxPages": 5,
+    "pageDelay": 2000,
+    "itemDelay": 1000,
+    "currentPage": 1
+  },
+  "actions": [
+    {
+      "id": "navigate_to_opportunities",
+      "type": "navigate",
+      "description": "Navigate to opportunities listing page",
+      "value": "${baseUrl}${opportunitiesPath}",
+      "timeout": 30000
+    },
+    {
+      "id": "wait_for_content",
+      "type": "wait",
+      "description": "Wait for opportunity content to load",
+      "selector": ".opportunity, .listing, .entry, article, .post",
+      "timeout": 15000
+    },
+    {
+      "id": "handle_cookies_popup",
+      "type": "conditional",
+      "description": "Handle cookie consent popup if present",
+      "conditions": [
+        {
+          "type": "exists",
+          "selector": "[id*='cookie'], [class*='cookie'], [data-testid*='cookie']"
+        }
+      ],
+      "actions": [
+        {
+          "id": "accept_cookies",
+          "type": "click",
+          "description": "Accept cookies",
+          "selector": "button[id*='accept'], button[class*='accept'], button:contains('Accept')",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "process_pages",
+      "type": "loop",
+      "description": "Process multiple pages of opportunities",
+      "value": "${maxPages}",
+      "conditions": [
+        {
+          "type": "exists",
+          "selector": ".opportunity, .listing, .entry, article, .post"
+        }
+      ],
+      "actions": [
+        {
+          "id": "extract_opportunities_from_page",
+          "type": "extract",
+          "description": "Extract opportunity elements from current page",
+          "selector": ".opportunity, .listing, .entry, article, .post",
+          "variables": {
+            "opportunityElements": "."
+          }
+        },
+        {
+          "id": "process_opportunity_items",
+          "type": "loop",
+          "description": "Process each opportunity on the page",
+          "value": 20,
+          "actions": [
+            {
+              "id": "extract_opportunity_data",
+              "type": "extract",
+              "description": "Extract data from opportunity element",
+              "selector": ".opportunity, .listing, .entry, article, .post",
+              "variables": {
+                "title": "h1, h2, h3, .title, .name textContent",
+                "description": ".description, .summary, .excerpt, p textContent",
+                "link": "a attributes.href",
+                "organization": ".organization, .company, .org textContent",
+                "deadline": ".deadline, .due-date, .expires textContent",
+                "location": ".location, .place, .address textContent",
+                "amount": ".amount, .prize, .funding textContent"
+              }
+            },
+            {
+              "id": "process_opportunity_link",
+              "type": "conditional",
+              "description": "Visit opportunity detail page if link is relative",
+              "conditions": [
+                {
+                  "type": "contains",
+                  "variable": "link",
+                  "value": "/"
+                },
+                {
+                  "type": "not_contains",
+                  "variable": "link",
+                  "value": "http"
+                }
+              ],
+              "actions": [
+                {
+                  "id": "navigate_to_detail",
+                  "type": "navigate",
+                  "description": "Navigate to opportunity detail page",
+                  "value": "${baseUrl}${link}",
+                  "timeout": 20000
+                },
+                {
+                  "id": "extract_detailed_info",
+                  "type": "extract",
+                  "description": "Extract detailed information from opportunity page",
+                  "selector": "body",
+                  "variables": {
+                    "fullDescription": ".content, .description, .details, main textContent",
+                    "requirements": ".requirements, .eligibility textContent",
+                    "contactInfo": ".contact, .email, .phone textContent"
+                  }
+                },
+                {
+                  "id": "go_back",
+                  "type": "evaluate",
+                  "description": "Go back to listing page",
+                  "value": "window.history.back()"
+                },
+                {
+                  "id": "wait_after_back",
+                  "type": "wait",
+                  "description": "Wait for page to load after going back",
+                  "value": 2000
+                }
+              ]
+            },
+            {
+              "id": "wait_between_items",
+              "type": "wait",
+              "description": "Rate limiting delay between items",
+              "value": "${itemDelay}"
+            }
+          ]
+        },
+        {
+          "id": "navigate_to_next_page",
+          "type": "conditional",
+          "description": "Navigate to next page if available",
+          "conditions": [
+            {
+              "type": "exists",
+              "selector": ".next, .pagination a[href*='page'], a:contains('Next')"
+            }
+          ],
+          "actions": [
+            {
+              "id": "click_next_page",
+              "type": "click",
+              "description": "Click next page link",
+              "selector": ".next, .pagination a[href*='page'], a:contains('Next')",
+              "timeout": 10000
+            },
+            {
+              "id": "wait_for_next_page",
+              "type": "wait",
+              "description": "Wait for next page to load",
+              "value": "${pageDelay}"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "extractionRules": [
+    {
+      "field": "title",
+      "selector": "h1, h2, h3, .title, .name",
+      "attribute": "textContent",
+      "required": true
+    },
+    {
+      "field": "description",
+      "selector": ".description, .summary, .excerpt, .content, p",
+      "attribute": "textContent",
+      "required": true
+    },
+    {
+      "field": "url",
+      "selector": "a",
+      "attribute": "href",
+      "transform": "value && !value.startsWith('http') ? baseUrl + value : value",
+      "required": true
+    },
+    {
+      "field": "organization",
+      "selector": ".organization, .company, .org, .institution",
+      "attribute": "textContent",
+      "required": false,
+      "defaultValue": ""
+    },
+    {
+      "field": "deadline",
+      "selector": ".deadline, .due-date, .expires, .date",
+      "attribute": "textContent",
+      "transform": "value ? new Date(value) : undefined",
+      "required": false
+    },
+    {
+      "field": "location",
+      "selector": ".location, .place, .address, .city",
+      "attribute": "textContent",
+      "required": false,
+      "defaultValue": ""
+    },
+    {
+      "field": "amount",
+      "selector": ".amount, .prize, .funding, .salary, .compensation",
+      "attribute": "textContent",
+      "required": false,
+      "defaultValue": ""
+    },
+    {
+      "field": "tags",
+      "selector": ".tag, .tags, .category, .categories, .keyword",
+      "attribute": "textContent",
+      "transform": "value ? [value] : []",
+      "required": false,
+      "defaultValue": []
+    }
+  ],
+  "errorHandling": {
+    "continueOnError": true,
+    "maxRetries": 3,
+    "retryDelay": 2000,
+    "screenshotOnError": true,
+    "logLevel": "info"
+  },
+  "metadata": {
+    "targetSite": "generic",
+    "estimatedDuration": 300,
+    "complexity": "complex",
+    "lastTested": "2025-01-15T00:00:00.000Z",
+    "successRate": 85,
+    "usesBrowser": true,
+    "requiresAuth": false
+  }
+}

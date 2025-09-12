@@ -24,7 +24,7 @@ export function ProfileSelector({ profiles, selectedProfile, onProfileChange }: 
         <User className="h-4 w-4 text-muted-foreground" />
         <span className="font-medium">{profile.name}</span>
         <Badge variant="outline" className="text-xs">
-          {profile.category.replace(/\b\w/g, l => l.toUpperCase())}
+          {profile.mediums[0]?.replace(/\b\w/g, l => l.toUpperCase()) || 'Artist'}
         </Badge>
       </div>
     );
@@ -48,7 +48,7 @@ export function ProfileSelector({ profiles, selectedProfile, onProfileChange }: 
               <div className="flex items-center space-x-2">
                 <span className="font-medium">{selectedProfile.name}</span>
                 <Badge variant="outline" className="text-xs">
-                  {selectedProfile.category.replace(/\b\w/g, l => l.toUpperCase())}
+                  {selectedProfile.mediums[0]?.replace(/\b\w/g, l => l.toUpperCase()) || 'Artist'}
                 </Badge>
               </div>
             ) : (
@@ -62,7 +62,7 @@ export function ProfileSelector({ profiles, selectedProfile, onProfileChange }: 
               <div className="flex items-center space-x-2">
                 <span>{profile.name}</span>
                 <Badge variant="outline" className="text-xs">
-                  {profile.category.replace(/\b\w/g, l => l.toUpperCase())}
+                  {profile.mediums[0]?.replace(/\b\w/g, l => l.toUpperCase()) || 'Artist'}
                 </Badge>
               </div>
             </SelectItem>

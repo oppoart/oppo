@@ -22,6 +22,7 @@ model User {
   accounts          Account[]
   passwordResetTokens PasswordResetToken[]
   activities        UserActivity[]      // Track user interactions
+  queryBuckets      QueryBucket[]       // User's saved search queries
   
   @@map("users")
 }
@@ -251,4 +252,21 @@ model UserActivity {
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_activities")
+}
+
+model QueryBucket {
+  id        String   @id @default(cuid())
+  userId    String
+  profileId String?  // Optional - can be associated with a specific artist profile
+  query     String
+  source    String   @default("manual") // 'manual', 'generated', 'ai'
+  tags      String[] // Optional tags for organization
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relationships
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, query]) // Prevent duplicate queries per user
+  @@map("query_buckets")
 }

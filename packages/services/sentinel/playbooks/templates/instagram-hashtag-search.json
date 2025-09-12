@@ -1,0 +1,174 @@
+{
+  "id": "instagram-hashtag-search-template",
+  "name": "Instagram Hashtag Search Template",
+  "description": "Template for searching Instagram hashtags to discover art opportunities",
+  "version": "1.0.0",
+  "author": "Sentinel System",
+  "tags": ["instagram", "social-media", "hashtag", "template"],
+  "variables": {
+    "hashtag": "artistopportunity",
+    "maxPosts": 20,
+    "baseUrl": "https://www.instagram.com",
+    "scrollDelay": 2000,
+    "postDelay": 1000
+  },
+  "actions": [
+    {
+      "id": "navigate_to_hashtag",
+      "type": "navigate",
+      "description": "Navigate to Instagram hashtag page",
+      "value": "${baseUrl}/explore/tags/${hashtag}/",
+      "timeout": 30000
+    },
+    {
+      "id": "wait_for_posts",
+      "type": "wait",
+      "description": "Wait for posts to load",
+      "selector": "article a[href*='/p/']",
+      "timeout": 10000
+    },
+    {
+      "id": "handle_login_popup",
+      "type": "conditional",
+      "description": "Handle Instagram login popup if present",
+      "conditions": [
+        {
+          "type": "exists",
+          "selector": "[role='dialog']"
+        }
+      ],
+      "actions": [
+        {
+          "id": "close_login_popup",
+          "type": "click",
+          "description": "Close login popup",
+          "selector": "svg[aria-label='Close']",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "scroll_to_load_posts",
+      "type": "loop",
+      "description": "Scroll down to load more posts",
+      "value": 3,
+      "actions": [
+        {
+          "id": "scroll_down",
+          "type": "scroll",
+          "description": "Scroll down the page",
+          "value": 1000
+        },
+        {
+          "id": "wait_after_scroll",
+          "type": "wait",
+          "description": "Wait for new posts to load",
+          "value": "${scrollDelay}"
+        }
+      ]
+    },
+    {
+      "id": "extract_post_links",
+      "type": "extract",
+      "description": "Extract post links from the page",
+      "selector": "article a[href*='/p/']",
+      "variables": {
+        "postLinks": "attributes.href"
+      }
+    },
+    {
+      "id": "process_posts",
+      "type": "loop",
+      "description": "Process each post to extract opportunity data",
+      "value": "${maxPosts}",
+      "actions": [
+        {
+          "id": "navigate_to_post",
+          "type": "evaluate",
+          "description": "Navigate to individual post",
+          "value": "window.location.href = postLinks[currentIndex] || postLinks[0]"
+        },
+        {
+          "id": "wait_for_post_content",
+          "type": "wait",
+          "description": "Wait for post content to load",
+          "selector": "[aria-label*='Caption']",
+          "timeout": 10000,
+          "optional": true
+        },
+        {
+          "id": "extract_post_data",
+          "type": "extract",
+          "description": "Extract post data",
+          "selector": "article",
+          "variables": {
+            "caption": "[aria-label*='Caption'] textContent",
+            "author": "header a textContent",
+            "authorUrl": "header a attributes.href",
+            "postUrl": "window.location.href",
+            "imageUrl": "img[srcset] attributes.srcset"
+          }
+        },
+        {
+          "id": "wait_between_posts",
+          "type": "wait",
+          "description": "Rate limiting delay between posts",
+          "value": "${postDelay}"
+        }
+      ]
+    }
+  ],
+  "extractionRules": [
+    {
+      "field": "title",
+      "selector": "[aria-label*='Caption']",
+      "attribute": "textContent",
+      "transform": "value ? value.substring(0, 100).trim() : 'Instagram Post'",
+      "required": false,
+      "defaultValue": "Instagram Post"
+    },
+    {
+      "field": "description",
+      "selector": "[aria-label*='Caption']",
+      "attribute": "textContent",
+      "required": true
+    },
+    {
+      "field": "url",
+      "selector": "",
+      "transform": "window.location.href",
+      "required": true
+    },
+    {
+      "field": "organization",
+      "selector": "header a",
+      "attribute": "textContent",
+      "required": false,
+      "defaultValue": "Instagram User"
+    },
+    {
+      "field": "tags",
+      "selector": "[aria-label*='Caption']",
+      "attribute": "textContent",
+      "transform": "value ? value.match(/#\\w+/g) || [] : []",
+      "required": false,
+      "defaultValue": []
+    }
+  ],
+  "errorHandling": {
+    "continueOnError": true,
+    "maxRetries": 2,
+    "retryDelay": 2000,
+    "screenshotOnError": true,
+    "logLevel": "warn"
+  },
+  "metadata": {
+    "targetSite": "instagram.com",
+    "estimatedDuration": 180,
+    "complexity": "medium",
+    "lastTested": "2025-01-15T00:00:00.000Z",
+    "successRate": 75,
+    "usesBrowser": true,
+    "requiresAuth": false
+  }
+}

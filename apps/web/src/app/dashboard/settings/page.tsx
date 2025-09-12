@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, Key, Database, Bell, Palette, Target, DollarSign, MapPin, Filter } from 'lucide-react';
+import { ArrowLeft, Save, Key, Database, Bell, Palette, Target, DollarSign, MapPin, Filter, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -42,6 +42,15 @@ export default function SettingsPage() {
   const [enableAutoApplication, setEnableAutoApplication] = useState(false);
   const [applicationStyle, setApplicationStyle] = useState<'formal' | 'casual' | 'artistic'>('formal');
   const [includePortfolioLinks, setIncludePortfolioLinks] = useState(true);
+
+  // AI Configuration Settings
+  const [aiProvider, setAiProvider] = useState<'openai' | 'anthropic'>('openai');
+  const [aiModel, setAiModel] = useState('gpt-4');
+  const [aiTemperature, setAiTemperature] = useState(0.7);
+  const [aiMaxTokens, setAiMaxTokens] = useState(2000);
+  const [enableQueryCache, setEnableQueryCache] = useState(true);
+  const [enableAnalysisCache, setEnableAnalysisCache] = useState(true);
+  const [queryGenerationStyle, setQueryGenerationStyle] = useState<'focused' | 'diverse' | 'creative'>('diverse');
 
   // Load preferences on component mount
   useEffect(() => {
@@ -157,6 +166,33 @@ export default function SettingsPage() {
     }
   };
 
+  const handleSaveAiSettings = async () => {
+    setLoading(true);
+    try {
+      await userApi.updatePreferences({
+        aiProvider,
+        aiModel,
+        aiTemperature,
+        aiMaxTokens,
+        enableQueryCache,
+        enableAnalysisCache,
+        queryGenerationStyle,
+      });
+      toast({
+        title: "Success",
+        description: "AI settings saved successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save AI settings",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const toggleLocation = (location: string) => {
     setPreferredLocations(prev => 
       prev.includes(location) 
@@ -193,8 +229,9 @@ export default function SettingsPage() {
     >
       <div className="max-w-4xl">
         <Tabs defaultValue="opportunities" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-6">
             <TabsTrigger value="opportunities" className="text-xs sm:text-sm">Opportunities</TabsTrigger>
+            <TabsTrigger value="ai" className="text-xs sm:text-sm">AI</TabsTrigger>
             <TabsTrigger value="api" className="text-xs sm:text-sm">API</TabsTrigger>
             <TabsTrigger value="notifications" className="text-xs sm:text-sm">Notifications</TabsTrigger>
             <TabsTrigger value="data" className="text-xs sm:text-sm">Privacy</TabsTrigger>
@@ -379,6 +416,163 @@ export default function SettingsPage() {
                         Save Opportunity Preferences
                       </>
                     )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="ai">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Bot className="h-5 w-5" />
+                  <span>AI Configuration</span>
+                </CardTitle>
+                <CardDescription>
+                  Configure AI models and behavior for opportunity analysis and query generation
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* AI Provider Selection */}
+                <div className="space-y-4">
+                  <Label className="text-base font-medium">AI Provider</Label>
+                  <Select value={aiProvider} onValueChange={(value: 'openai' | 'anthropic') => setAiProvider(value)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select AI Provider" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="openai">OpenAI</SelectItem>
+                      <SelectItem value="anthropic">Anthropic Claude</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm text-muted-foreground">
+                    Choose your preferred AI provider for analysis and query generation
+                  </p>
+                </div>
+
+                <Separator />
+
+                {/* AI Model Selection */}
+                <div className="space-y-4">
+                  <Label className="text-base font-medium">AI Model</Label>
+                  <Select value={aiModel} onValueChange={setAiModel}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select Model" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {aiProvider === 'openai' ? (
+                        <>
+                          <SelectItem value="gpt-4">GPT-4 (Recommended)</SelectItem>
+                          <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo (Faster)</SelectItem>
+                        </>
+                      ) : (
+                        <>
+                          <SelectItem value="claude-3-sonnet-20240229">Claude 3 Sonnet (Recommended)</SelectItem>
+                          <SelectItem value="claude-3-haiku-20240307">Claude 3 Haiku (Faster)</SelectItem>
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm text-muted-foreground">
+                    Higher-tier models provide better analysis but cost more
+                  </p>
+                </div>
+
+                <Separator />
+
+                {/* Generation Settings */}
+                <div className="space-y-6">
+                  <Label className="text-base font-medium">Generation Settings</Label>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="ai-temperature">Creativity Level: {aiTemperature}</Label>
+                      <input
+                        id="ai-temperature"
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.1"
+                        value={aiTemperature}
+                        onChange={(e) => setAiTemperature(Number(e.target.value))}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Lower = more focused, Higher = more creative
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="ai-max-tokens">Max Response Length: {aiMaxTokens}</Label>
+                      <input
+                        id="ai-max-tokens"
+                        type="range"
+                        min="500"
+                        max="4000"
+                        step="500"
+                        value={aiMaxTokens}
+                        onChange={(e) => setAiMaxTokens(Number(e.target.value))}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Longer responses provide more detail but cost more
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-base font-medium">Query Generation Style</Label>
+                    <Select value={queryGenerationStyle} onValueChange={(value: 'focused' | 'diverse' | 'creative') => setQueryGenerationStyle(value)}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select Generation Style" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="focused">Focused - Precise, targeted queries</SelectItem>
+                        <SelectItem value="diverse">Diverse - Balanced variety of queries</SelectItem>
+                        <SelectItem value="creative">Creative - Experimental, broader queries</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Caching Settings */}
+                <div className="space-y-4">
+                  <Label className="text-base font-medium">Performance & Caching</Label>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label htmlFor="enable-query-cache">Enable Query Caching</Label>
+                        <p className="text-sm text-muted-foreground">Cache generated queries to save costs</p>
+                      </div>
+                      <Switch
+                        id="enable-query-cache"
+                        checked={enableQueryCache}
+                        onCheckedChange={setEnableQueryCache}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label htmlFor="enable-analysis-cache">Enable Analysis Caching</Label>
+                        <p className="text-sm text-muted-foreground">Cache opportunity analysis results</p>
+                      </div>
+                      <Switch
+                        id="enable-analysis-cache"
+                        checked={enableAnalysisCache}
+                        onCheckedChange={setEnableAnalysisCache}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <Button onClick={handleSaveAiSettings} disabled={loading}>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save AI Settings
                   </Button>
                 </div>
               </CardContent>

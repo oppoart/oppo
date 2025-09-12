@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { PrismaClient } from '@prisma/client';
-import { ArchivistService } from '../../services/ArchivistService';
+import { ArchivistService } from '../../../../../packages/services/archivist/core/ArchivistService';
 import { OpportunityData } from '../../types/discovery';
 
 // Mock Prisma

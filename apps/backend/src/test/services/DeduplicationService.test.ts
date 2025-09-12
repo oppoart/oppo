@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, jest } from '@jest/globals';
 import { PrismaClient } from '@prisma/client';
-import { DeduplicationService } from '../../services/DeduplicationService';
+import { DeduplicationService } from '../../../../../packages/services/archivist/deduplication/DeduplicationService';
 import { OpportunityData } from '../../types/discovery';
 
 const mockPrisma = {

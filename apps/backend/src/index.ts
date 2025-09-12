@@ -8,6 +8,10 @@ import authRoutes from './routes/auth';
 import profilesRoutes from './routes/profiles';
 import usersRoutes from './routes/users';
 import archivistRoutes from './routes/archivist';
+import analystRoutes from './routes/analyst';
+import researchRoutes from './routes/research';
+import searchRoutes from './routes/search';
+import queryBucketRoutes from './routes/query-bucket';
 import { 
   validateEnvironment, 
   env, 
@@ -87,6 +91,18 @@ app.use('/api/users', usersRoutes);
 
 // Archivist data management routes
 app.use('/api/archivist', archivistRoutes);
+
+// Analyst AI-powered analysis routes
+app.use('/api/analyst', analystRoutes);
+
+// Research dashboard routes
+app.use('/api/research', researchRoutes);
+
+// Search routes (Google Search API)
+app.use('/api/search', searchRoutes);
+
+// Query Bucket routes (save search queries)
+app.use('/api/query-bucket', queryBucketRoutes);
 
 // Basic API endpoint
 app.get('/api/test', (req, res) => {

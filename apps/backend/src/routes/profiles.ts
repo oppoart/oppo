@@ -13,6 +13,7 @@ import {
 import { z } from 'zod';
 import { asyncHandler, NotFoundError, ConflictError, ForbiddenError } from '../middleware/error-handler';
 import { validate } from '../middleware/validation';
+import { aiService } from '../services/ai';
 
 const router: Router = express.Router();
 
@@ -218,6 +219,72 @@ router.delete(
     res.json({
       success: true,
       message: 'Profile deleted successfully',
+    });
+  })
+);
+
+/**
+ * POST /api/profiles/:id/enhance-prompt - Enhance system prompt for profile
+ */
+router.post(
+  '/:id/enhance-prompt',
+  requireAuth,
+  validate(profileParamsSchema, 'params'),
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const { id } = req.params;
+    const userId = req.user!.id;
+
+    // Get profile and verify ownership
+    const profile = await prisma.artistProfile.findUnique({
+      where: { id },
+    });
+
+    if (!profile) {
+      throw new NotFoundError('Profile');
+    }
+
+    if (profile.userId !== userId) {
+      throw new ForbiddenError('Access denied: You can only enhance prompts for your own profiles');
+    }
+
+    // Generate current system prompt (same logic as frontend)
+    const generateSystemPrompt = (profile: any): string => {
+      const sections = [];
+
+      sections.push(`You are an AI assistant representing ${profile.name}, an artist specializing in ${profile.mediums.join(', ')}.`);
+
+      if (profile.bio) {
+        sections.push(`Background: ${profile.bio}`);
+      }
+
+      if (profile.artistStatement) {
+        sections.push(`Artistic Philosophy: ${profile.artistStatement}`);
+      }
+
+      if (profile.skills && profile.skills.length > 0) {
+        sections.push(`Technical Skills: ${profile.skills.join(', ')}`);
+      }
+
+      if (profile.interests && profile.interests.length > 0) {
+        sections.push(`Areas of Interest: ${profile.interests.join(', ')}`);
+      }
+
+      sections.push(`When responding, maintain the voice and perspective of ${profile.name}. Draw upon their expertise in ${profile.mediums.join(', ')} and provide insights that reflect their artistic background and experience.`);
+
+      return sections.join('\n\n');
+    };
+
+    const originalPrompt = generateSystemPrompt(profile);
+
+    // Enhance the prompt using AI
+    const enhancedPrompt = await aiService.enhanceSystemPrompt(originalPrompt, profile);
+
+    res.json({
+      success: true,
+      data: {
+        originalPrompt,
+        enhancedPrompt
+      }
     });
   })
 );

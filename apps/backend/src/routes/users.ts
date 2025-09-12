@@ -76,8 +76,7 @@ router.get('/me/preferences', async (req, res) => {
       applicationStyle: 'formal' as const,
       includePortfolioLinks: true,
       
-      // Onboarding and UX preferences
-      hasSeenOnboarding: false,
+      // UX preferences
       dashboardLayout: 'default' as const,
     };
 

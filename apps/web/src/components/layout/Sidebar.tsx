@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,24 +16,58 @@ import {
   Plus,
   Menu,
   X,
-  Briefcase
+  Briefcase,
+  BookOpen,
+  CheckSquare,
+  Calendar,
+  Globe,
+  Bookmark,
+  Mail,
+  ChevronDown,
+  ChevronRight,
+  Brain,
+  Share2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SidebarProps {
-  currentPage?: 'dashboard' | 'profiles' | 'opportunities' | 'settings';
+  currentPage?: 'dashboard' | 'profiles' | 'opportunities' | 'settings' | 'research' | 'research-web-search' | 'research-llm-search' | 'research-sm-search' | 'research-bookmarks' | 'research-newsletter' | 'tasks' | 'calendar';
+  isCollapsed?: boolean;
+  onToggleCollapse?: (collapsed: boolean) => void;
 }
 
-export function Sidebar({ currentPage = 'dashboard' }: SidebarProps) {
+export function Sidebar({ 
+  currentPage = 'dashboard', 
+  isCollapsed = false, 
+  onToggleCollapse 
+}: SidebarProps) {
   const { user, logout } = useAuth();
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isResearchExpanded, setIsResearchExpanded] = useState(
+    currentPage === 'research' || currentPage === 'research-web-search' || currentPage === 'research-llm-search' || currentPage === 'research-sm-search' || currentPage === 'research-bookmarks' || currentPage === 'research-newsletter'
+  );
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home, current: currentPage === 'dashboard' },
     { name: 'Profiles', href: '/dashboard/profiles', icon: User, current: currentPage === 'profiles' },
     { name: 'Portfolio', href: '/dashboard/portfolio', icon: Briefcase, current: false, badge: 'Soon' },
-    { name: 'Opportunities', href: '/dashboard/opportunities', icon: Search, current: currentPage === 'opportunities', badge: 'Soon' },
+    { 
+      name: 'Research', 
+      href: '#', 
+      icon: BookOpen, 
+      current: currentPage === 'research-web-search' || currentPage === 'research-llm-search' || currentPage === 'research-sm-search' || currentPage === 'research-bookmarks' || currentPage === 'research-newsletter',
+      hasSubmenu: true,
+      submenu: [
+        { name: 'Web Search', href: '/dashboard/research/web-search', icon: Globe, current: currentPage === 'research-web-search' },
+        { name: 'LLM Search', href: '/dashboard/research/llm-search', icon: Brain, current: currentPage === 'research-llm-search' },
+        { name: 'Social Media Search', href: '/dashboard/research/social-media', icon: Share2, current: currentPage === 'research-sm-search' },
+        { name: 'Bookmarks', href: '/dashboard/research/bookmarks', icon: Bookmark, current: currentPage === 'research-bookmarks' },
+        { name: 'Newsletter', href: '/dashboard/research/newsletter', icon: Mail, current: currentPage === 'research-newsletter' },
+      ]
+    },
+    { name: 'Opportunities', href: '/dashboard/opportunities', icon: Search, current: currentPage === 'opportunities' },
+    { name: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare, current: currentPage === 'tasks' },
+    { name: 'Calendar', href: '/dashboard/calendar', icon: Calendar, current: currentPage === 'calendar' },
   ];
 
   const handleLogout = async () => {
@@ -81,7 +116,7 @@ export function Sidebar({ currentPage = 'dashboard' }: SidebarProps) {
             variant="ghost"
             size="icon"
             className="hidden lg:flex"
-            onClick={() => setIsCollapsed(!isCollapsed)}
+            onClick={() => onToggleCollapse?.(!isCollapsed)}
           >
             <Menu className="h-4 w-4" />
           </Button>
@@ -90,28 +125,81 @@ export function Sidebar({ currentPage = 'dashboard' }: SidebarProps) {
         {/* Navigation */}
         <nav className="flex-1 px-3 py-4 space-y-2">
           {navigation.map((item) => (
-            <a
-              key={item.name}
-              href={item.href}
-              className={cn(
-                "flex items-center px-3 py-2 text-sm rounded-lg transition-colors group",
-                item.current
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-muted text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <item.icon className={cn("h-4 w-4", !isCollapsed && "mr-3")} />
-              {!isCollapsed && (
-                <>
-                  <span className="flex-1">{item.name}</span>
-                  {item.badge && (
-                    <Badge variant="secondary" className="ml-auto text-xs">
-                      {item.badge}
-                    </Badge>
+            <div key={item.name}>
+              {item.hasSubmenu ? (
+                <div>
+                  <button
+                    onClick={() => !isCollapsed && setIsResearchExpanded(!isResearchExpanded)}
+                    className={cn(
+                      "flex items-center px-3 py-2 text-sm rounded-lg transition-colors group w-full",
+                      item.current
+                        ? "bg-primary text-primary-foreground"
+                        : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <item.icon className={cn("h-4 w-4", !isCollapsed && "mr-3")} />
+                    {!isCollapsed && (
+                      <>
+                        <span className="flex-1 text-left">{item.name}</span>
+                        {item.badge && (
+                          <Badge variant="secondary" className="ml-auto text-xs">
+                            {item.badge}
+                          </Badge>
+                        )}
+                        {isResearchExpanded ? (
+                          <ChevronDown className="h-4 w-4 ml-2" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 ml-2" />
+                        )}
+                      </>
+                    )}
+                  </button>
+                  
+                  {/* Submenu */}
+                  {!isCollapsed && isResearchExpanded && item.submenu && (
+                    <div className="ml-6 mt-1 space-y-1">
+                      {item.submenu.map((subItem) => (
+                        <Link
+                          key={subItem.name}
+                          href={subItem.href}
+                          className={cn(
+                            "flex items-center px-3 py-2 text-sm rounded-lg transition-colors group",
+                            subItem.current
+                              ? "bg-primary/10 text-primary border-l-2 border-primary"
+                              : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                          )}
+                        >
+                          <subItem.icon className="h-4 w-4 mr-3" />
+                          <span className="flex-1">{subItem.name}</span>
+                        </Link>
+                      ))}
+                    </div>
                   )}
-                </>
+                </div>
+              ) : (
+                <a
+                  href={item.href}
+                  className={cn(
+                    "flex items-center px-3 py-2 text-sm rounded-lg transition-colors group",
+                    item.current
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <item.icon className={cn("h-4 w-4", !isCollapsed && "mr-3")} />
+                  {!isCollapsed && (
+                    <>
+                      <span className="flex-1">{item.name}</span>
+                      {item.badge && (
+                        <Badge variant="secondary" className="ml-auto text-xs">
+                          {item.badge}
+                        </Badge>
+                      )}
+                    </>
+                  )}
+                </a>
               )}
-            </a>
+            </div>
           ))}
         </nav>
 

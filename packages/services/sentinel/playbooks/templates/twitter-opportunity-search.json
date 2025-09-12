@@ -1,0 +1,183 @@
+{
+  "id": "twitter-opportunity-search-template",
+  "name": "Twitter Opportunity Search Template",
+  "description": "Template for searching Twitter/X for art opportunities and grants",
+  "version": "1.0.0",
+  "author": "Sentinel System",
+  "tags": ["twitter", "social-media", "opportunity", "template"],
+  "variables": {
+    "searchTerm": "artist opportunity",
+    "maxTweets": 20,
+    "baseUrl": "https://twitter.com",
+    "scrollDelay": 3000,
+    "tweetDelay": 1500
+  },
+  "actions": [
+    {
+      "id": "navigate_to_search",
+      "type": "navigate",
+      "description": "Navigate to Twitter search page",
+      "value": "${baseUrl}/search?q=${searchTerm}&src=typed_query&f=live",
+      "timeout": 30000
+    },
+    {
+      "id": "handle_login_prompt",
+      "type": "conditional",
+      "description": "Handle login prompt if present",
+      "conditions": [
+        {
+          "type": "exists",
+          "selector": "text='Log in to Twitter'"
+        }
+      ],
+      "actions": [
+        {
+          "id": "continue_without_login",
+          "type": "wait",
+          "description": "Continue without logging in",
+          "value": 2000
+        }
+      ]
+    },
+    {
+      "id": "wait_for_tweets",
+      "type": "wait",
+      "description": "Wait for tweets to load",
+      "selector": "article[data-testid='tweet']",
+      "timeout": 15000
+    },
+    {
+      "id": "scroll_to_load_tweets",
+      "type": "loop",
+      "description": "Scroll down to load more tweets",
+      "value": 5,
+      "actions": [
+        {
+          "id": "scroll_down",
+          "type": "evaluate",
+          "description": "Scroll to bottom of page",
+          "value": "window.scrollTo(0, document.body.scrollHeight)"
+        },
+        {
+          "id": "wait_after_scroll",
+          "type": "wait",
+          "description": "Wait for new tweets to load",
+          "value": "${scrollDelay}"
+        }
+      ]
+    },
+    {
+      "id": "extract_tweet_elements",
+      "type": "extract",
+      "description": "Extract tweet elements from the page",
+      "selector": "article[data-testid='tweet']",
+      "variables": {
+        "tweets": "."
+      }
+    },
+    {
+      "id": "process_tweets",
+      "type": "loop",
+      "description": "Process each tweet to extract opportunity data",
+      "value": "${maxTweets}",
+      "actions": [
+        {
+          "id": "extract_tweet_content",
+          "type": "extract",
+          "description": "Extract tweet content and metadata",
+          "selector": "article[data-testid='tweet']",
+          "variables": {
+            "tweetText": "[data-testid='tweetText'] textContent",
+            "author": "[data-testid='User-Names'] a span textContent",
+            "tweetUrl": "time parentElement attributes.href",
+            "likes": "[data-testid*='like'] span textContent",
+            "retweets": "[data-testid*='retweet'] span textContent"
+          }
+        },
+        {
+          "id": "check_opportunity_keywords",
+          "type": "conditional",
+          "description": "Check if tweet contains opportunity keywords",
+          "conditions": [
+            {
+              "type": "contains",
+              "variable": "tweetText",
+              "value": "opportunity|grant|apply|submit|deadline|call"
+            }
+          ],
+          "actions": [
+            {
+              "id": "extract_external_links",
+              "type": "evaluate",
+              "description": "Extract external links from tweet",
+              "value": "tweetText.match(/(https?:\\/\\/[^\\s]+)/g) || []",
+              "variables": {
+                "externalLinks": "."
+              }
+            }
+          ]
+        },
+        {
+          "id": "wait_between_tweets",
+          "type": "wait",
+          "description": "Rate limiting delay between tweets",
+          "value": "${tweetDelay}"
+        }
+      ]
+    }
+  ],
+  "extractionRules": [
+    {
+      "field": "title",
+      "selector": "[data-testid='tweetText']",
+      "attribute": "textContent",
+      "transform": "value ? value.substring(0, 100).trim() : 'Twitter Post'",
+      "required": false,
+      "defaultValue": "Twitter Post"
+    },
+    {
+      "field": "description",
+      "selector": "[data-testid='tweetText']",
+      "attribute": "textContent",
+      "required": true
+    },
+    {
+      "field": "url",
+      "selector": "time",
+      "attribute": "parentElement.href",
+      "transform": "value ? 'https://twitter.com' + value : window.location.href",
+      "required": true
+    },
+    {
+      "field": "organization",
+      "selector": "[data-testid='User-Names'] a span",
+      "attribute": "textContent",
+      "required": false,
+      "defaultValue": "Twitter User"
+    },
+    {
+      "field": "tags",
+      "selector": "[data-testid='tweetText']",
+      "attribute": "textContent",
+      "transform": "value ? value.match(/#\\w+/g) || [] : []",
+      "required": false,
+      "defaultValue": []
+    }
+  ],
+  "errorHandling": {
+    "continueOnError": true,
+    "maxRetries": 2,
+    "retryDelay": 3000,
+    "screenshotOnError": true,
+    "logLevel": "warn"
+  },
+  "metadata": {
+    "targetSite": "twitter.com",
+    "estimatedDuration": 150,
+    "complexity": "medium",
+    "lastTested": "2025-01-15T00:00:00.000Z",
+    "successRate": 70,
+    "usesBrowser": true,
+    "requiresAuth": false
+  }
+}

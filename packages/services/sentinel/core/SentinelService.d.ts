@@ -1,0 +1,38 @@
+import { OpportunityDiscoverer, SentinelConfig, DiscoveryContext, DiscoveryJobStatus } from './interfaces';
+import { SourceConfigManager } from '../config/SourceConfigManager';
+import { RateLimiter } from '../managers/RateLimiter';
+import { JobScheduler } from '../managers/JobScheduler';
+import { DiscoveryJobManager } from '../managers/DiscoveryJobManager';
+import { OpportunityRepository } from '../../archivist/repositories/OpportunityRepository';
+import { DeduplicationService } from '../../archivist/deduplication/DeduplicationService';
+import { ConsolidatedDiscoveryResult } from '../../../../apps/backend/src/types/discovery';
+export declare class SentinelService {
+    private configManager;
+    private rateLimiter;
+    private jobScheduler;
+    private jobManager;
+    private opportunityRepository;
+    private deduplicationService;
+    private config;
+    private plugins;
+    private isInitialized;
+    constructor(configManager: SourceConfigManager, rateLimiter: RateLimiter, jobScheduler: JobScheduler, jobManager: DiscoveryJobManager, opportunityRepository: OpportunityRepository, deduplicationService: DeduplicationService, config: SentinelConfig);
+    initialize(): Promise<void>;
+    registerDiscoverer(discoverer: OpportunityDiscoverer): Promise<void>;
+    unregisterDiscoverer(discovererName: string): Promise<void>;
+    getDiscoverers(): OpportunityDiscoverer[];
+    getDiscoverer(name: string): OpportunityDiscoverer | undefined;
+    checkHealth(): Promise<Record<string, boolean>>;
+    runDiscovery(context?: DiscoveryContext): Promise<ConsolidatedDiscoveryResult>;
+    runSpecificDiscovery(discovererNames: string[], context?: DiscoveryContext): Promise<ConsolidatedDiscoveryResult>;
+    toggleDiscoverer(discovererName: string, enabled: boolean): Promise<void>;
+    getPluginStats(): Record<string, any>;
+    getJobStatuses(): Promise<DiscoveryJobStatus[]>;
+    shutdown(): Promise<void>;
+    private getEnabledDiscoverersByPriority;
+    private createBatches;
+    private runSingleDiscovery;
+    private updatePluginStats;
+    private processDiscoveredOpportunities;
+}
+//# sourceMappingURL=SentinelService.d.ts.map
