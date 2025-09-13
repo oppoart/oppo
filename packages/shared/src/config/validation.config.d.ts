@@ -127,4 +127,3 @@ export declare const FORM_RULES: {
 export declare function createValidationConfig(): ValidationConfig;
 export { PASSWORD_REQUIREMENTS } from '../config/auth.config';
 export declare const validationConfig: ValidationConfig;
-//# sourceMappingURL=validation.config.d.ts.map

@@ -130,4 +130,3 @@ export declare const AI_COSTS: {
 };
 export declare function createAiConfig(): AiConfig;
 export declare const aiConfig: AiConfig;
-//# sourceMappingURL=ai.config.d.ts.map

@@ -6,10 +6,6 @@ const OpportunityRepository_1 = require("../repositories/OpportunityRepository")
 const DeduplicationService_1 = require("../deduplication/DeduplicationService");
 const discovery_1 = require("../../../../apps/backend/src/types/discovery");
 class ArchivistService extends events_1.EventEmitter {
-    prisma;
-    opportunityRepository;
-    deduplicationService;
-    config;
     constructor(prisma, config = {}) {
         super();
         this.prisma = prisma;

@@ -125,4 +125,3 @@ export declare const SEVERITY_LEVELS: {
     readonly ERROR: "error";
     readonly CRITICAL: "critical";
 };
-//# sourceMappingURL=app.constants.d.ts.map

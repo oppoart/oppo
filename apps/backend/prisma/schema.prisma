@@ -15,6 +15,8 @@ model User {
   image             String?
   preferences       Json?               // User-level preferences for AI matching and notifications
   settings          Json?               // General app settings and configuration
+  linkedinCredentials Json?             // LinkedIn authentication credentials
+  linkedinProfile   Json?               // LinkedIn profile data
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
   profiles          ArtistProfile[]
@@ -23,6 +25,7 @@ model User {
   passwordResetTokens PasswordResetToken[]
   activities        UserActivity[]      // Track user interactions
   queryBuckets      QueryBucket[]       // User's saved search queries
+  bookmarks         Bookmark[]          // User's bookmarked URLs
   
   @@map("users")
 }
@@ -109,9 +112,11 @@ model Opportunity {
   // Discovery System Fields
   sourceType       String             // 'websearch', 'social', 'bookmark', 'newsletter'
   sourceUrl        String?            // Original source URL where found
+  sourceId         String?            // ID of the source that discovered this opportunity
   sourceMetadata   Json?              // API response data, social post info, etc.
   discoveredAt     DateTime           @default(now())
   lastUpdated      DateTime           @default(now()) @updatedAt
+  createdAt        DateTime           @default(now())
   
   // Processing Fields
   relevanceScore   Float?
@@ -129,6 +134,7 @@ model Opportunity {
   starred          Boolean            @default(false) // User bookmarked/starred
   
   // Relationships
+  source           OpportunitySource? @relation(fields: [sourceId], references: [id])
   matches          OpportunityMatch[]
   sourceLinks      OpportunitySourceLink[]
   duplicates       OpportunityDuplicate[] @relation("MasterOpportunity")
@@ -156,6 +162,7 @@ model OpportunitySource {
   type         String        // 'websearch', 'social', 'bookmark', 'newsletter'
   url          String?       // Base URL for scraping sources
   enabled      Boolean       @default(true)
+  active       Boolean       @default(true) // Whether the source is actively being scanned
   lastScanned  DateTime?     // Last successful scan
   successCount Int           @default(0) // Number of successful scans
   errorCount   Int           @default(0) // Number of failed scans
@@ -164,6 +171,7 @@ model OpportunitySource {
   updatedAt    DateTime      @updatedAt
   
   // Relationships
+  opportunities Opportunity[]
   sourceLinks   OpportunitySourceLink[]
   discoveryJobs DiscoveryJob[]
 
@@ -317,4 +325,61 @@ model QueryGenerationHistory {
   @@index([opportunityType])
   @@index([createdAt])
   @@map("query_generation_history")
+}
+
+// Bookmark Management
+model Bookmark {
+  id          String    @id @default(cuid())
+  userId      String
+  url         String
+  title       String?
+  description String?
+  tags        String[]  @default([])
+  lastChecked DateTime?
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relationships
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, url])
+  @@map("bookmarks")
+}
+
+// System Alerts and Monitoring
+model SystemAlert {
+  id          String    @id @default(cuid())
+  type        String    // 'error', 'warning', 'info'
+  title       String
+  message     String
+  source      String?   // Which service/component generated the alert
+  metadata    Json?     // Additional alert data
+  resolved    Boolean   @default(false)
+  resolvedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  
+  @@index([type])
+  @@index([resolved])
+  @@index([createdAt])
+  @@map("system_alerts")
+}
+
+// User Feedback
+model Feedback {
+  id          String    @id @default(cuid())
+  userId      String?
+  type        String    // 'bug', 'feature', 'improvement', 'general'
+  subject     String
+  message     String
+  status      String    @default("new") // 'new', 'reviewing', 'resolved', 'archived'
+  priority    String    @default("medium") // 'low', 'medium', 'high', 'critical'
+  metadata    Json?     // Additional feedback data
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@index([status])
+  @@index([priority])
+  @@index([createdAt])
+  @@map("feedback")
 }

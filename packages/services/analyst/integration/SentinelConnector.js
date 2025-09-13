@@ -3,11 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SentinelConnector = void 0;
 const discovery_1 = require("../../../../apps/backend/src/types/discovery");
 class SentinelConnector {
-    config;
-    sentinelService;
-    isInitialized = false;
-    discoveryCache = new Map();
     constructor(config = {}) {
+        this.isInitialized = false;
+        this.discoveryCache = new Map();
         this.config = {
             timeout: 120000,
             maxRetries: 3,

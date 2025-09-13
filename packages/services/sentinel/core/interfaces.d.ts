@@ -1,4 +1,4 @@
-import { DiscoveryResult, SourceType } from '../../../../apps/backend/src/types/discovery';
+import { DiscoveryResult, SourceType, JobStatus } from '../../../../apps/backend/src/types/discovery';
 export interface DiscoverySourceConfig {
     enabled: boolean;
     priority: 'low' | 'medium' | 'high';
@@ -55,7 +55,7 @@ export interface ScheduledJob {
 export interface DiscoveryJobStatus {
     id: string;
     discovererName: string;
-    status: 'pending' | 'running' | 'completed' | 'failed';
+    status: JobStatus;
     startTime?: Date;
     endTime?: Date;
     error?: string;
@@ -70,4 +70,3 @@ export interface SentinelConfig {
     schedulingEnabled: boolean;
     sources: Record<string, DiscoverySourceConfig>;
 }
-//# sourceMappingURL=interfaces.d.ts.map

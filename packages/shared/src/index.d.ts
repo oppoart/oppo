@@ -18,4 +18,3 @@ export * from './constants';
 export * from './constants/app.constants';
 export * from './constants/opportunity.constants';
 export * from './constants/search.constants';
-//# sourceMappingURL=index.d.ts.map

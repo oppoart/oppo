@@ -15,7 +15,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   error: AuthError | null;
   retryCount: number;
-  login: (email: string) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   clearError: () => void;
   refresh: () => Promise<void>;
@@ -50,8 +50,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       clearError();
       
       const response = await auth.me();
-      if (response.success && response.user) {
-        setUser(response.user);
+      if (response.success && response.data) {
+        setUser(response.data);
         setRetryCount(0);
       } else {
         setUser(null);
@@ -92,12 +92,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const login = async (email: string): Promise<{ success: boolean; error?: string }> => {
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
       setError(null);
-      const response = await auth.login(email);
-      if (response.success && response.user) {
-        setUser(response.user);
+      const response = await auth.login(email, password);
+      if (response.success && response.data?.user) {
+        setUser(response.data.user);
         return { success: true };
       }
       return { 

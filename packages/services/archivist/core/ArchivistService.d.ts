@@ -99,4 +99,3 @@ export declare class ArchivistService extends EventEmitter {
     }>;
     shutdown(): Promise<void>;
 }
-//# sourceMappingURL=ArchivistService.d.ts.map

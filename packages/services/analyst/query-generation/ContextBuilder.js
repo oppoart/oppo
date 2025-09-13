@@ -1,11 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ContextBuilder = void 0;
-const discovery_1 = require("../../../../apps/backend/src/types/discovery");
+const types_1 = require("./types");
 class ContextBuilder {
-    config;
-    isInitialized = false;
     constructor(aiProvider = 'openai') {
+        this.isInitialized = false;
         this.config = {
             aiProvider,
             includePersonalInfo: true,
@@ -38,11 +37,12 @@ class ContextBuilder {
                 searchObjectives,
                 contextualHints,
                 constraints,
-                expectedOutputFormat: this.getExpectedOutputFormat()
+                expectedOutputFormat: this.getExpectedOutputFormat(),
+                profileAnalysis: analysis
             };
         }
         catch (error) {
-            throw new discovery_1.AIServiceError(`Failed to build AI context: ${error}`, this.config.aiProvider, 'context-building', { profileId: profile.id });
+            throw new types_1.AIServiceError(`Failed to build AI context: ${error}`, this.config.aiProvider, 'context-building', { profileId: profile.id });
         }
     }
     createProfileSummary(profile, analysis) {

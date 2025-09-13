@@ -12,25 +12,25 @@ export declare const TaskSchema: z.ZodObject<{
     dueDate: z.ZodOptional<z.ZodDate>;
     userId: z.ZodString;
 }, "strip", z.ZodTypeAny, {
-    status: "pending" | "in_progress" | "completed" | "cancelled";
-    id: string;
-    createdAt: Date;
-    updatedAt: Date;
-    userId: string;
-    title: string;
-    priority: "low" | "medium" | "high" | "urgent";
-    description?: string | undefined;
-    dueDate?: Date | undefined;
+    description?: string;
+    title?: string;
+    userId?: string;
+    id?: string;
+    createdAt?: Date;
+    updatedAt?: Date;
+    status?: "completed" | "pending" | "in_progress" | "cancelled";
+    priority?: "low" | "medium" | "high" | "urgent";
+    dueDate?: Date;
 }, {
-    status: "pending" | "in_progress" | "completed" | "cancelled";
-    id: string;
-    createdAt: Date;
-    updatedAt: Date;
-    userId: string;
-    title: string;
-    priority: "low" | "medium" | "high" | "urgent";
-    description?: string | undefined;
-    dueDate?: Date | undefined;
+    description?: string;
+    title?: string;
+    userId?: string;
+    id?: string;
+    createdAt?: Date;
+    updatedAt?: Date;
+    status?: "completed" | "pending" | "in_progress" | "cancelled";
+    priority?: "low" | "medium" | "high" | "urgent";
+    dueDate?: Date;
 }>;
 export declare const CreateTaskSchema: z.ZodObject<{
     title: z.ZodString;
@@ -38,15 +38,15 @@ export declare const CreateTaskSchema: z.ZodObject<{
     priority: z.ZodDefault<z.ZodEnum<["low", "medium", "high", "urgent"]>>;
     dueDate: z.ZodOptional<z.ZodDate>;
 }, "strip", z.ZodTypeAny, {
-    title: string;
-    priority: "low" | "medium" | "high" | "urgent";
-    description?: string | undefined;
-    dueDate?: Date | undefined;
+    description?: string;
+    title?: string;
+    priority?: "low" | "medium" | "high" | "urgent";
+    dueDate?: Date;
 }, {
-    title: string;
-    description?: string | undefined;
-    priority?: "low" | "medium" | "high" | "urgent" | undefined;
-    dueDate?: Date | undefined;
+    description?: string;
+    title?: string;
+    priority?: "low" | "medium" | "high" | "urgent";
+    dueDate?: Date;
 }>;
 export declare const UpdateTaskSchema: z.ZodObject<{
     title: z.ZodOptional<z.ZodString>;
@@ -56,17 +56,17 @@ export declare const UpdateTaskSchema: z.ZodObject<{
 } & {
     status: z.ZodOptional<z.ZodEnum<["pending", "in_progress", "completed", "cancelled"]>>;
 }, "strip", z.ZodTypeAny, {
-    status?: "pending" | "in_progress" | "completed" | "cancelled" | undefined;
-    title?: string | undefined;
-    description?: string | undefined;
-    priority?: "low" | "medium" | "high" | "urgent" | undefined;
-    dueDate?: Date | undefined;
+    description?: string;
+    title?: string;
+    status?: "completed" | "pending" | "in_progress" | "cancelled";
+    priority?: "low" | "medium" | "high" | "urgent";
+    dueDate?: Date;
 }, {
-    status?: "pending" | "in_progress" | "completed" | "cancelled" | undefined;
-    title?: string | undefined;
-    description?: string | undefined;
-    priority?: "low" | "medium" | "high" | "urgent" | undefined;
-    dueDate?: Date | undefined;
+    description?: string;
+    title?: string;
+    status?: "completed" | "pending" | "in_progress" | "cancelled";
+    priority?: "low" | "medium" | "high" | "urgent";
+    dueDate?: Date;
 }>;
 export declare const UserSchema: z.ZodObject<{
     id: z.ZodString;
@@ -75,17 +75,17 @@ export declare const UserSchema: z.ZodObject<{
     createdAt: z.ZodDate;
     updatedAt: z.ZodDate;
 }, "strip", z.ZodTypeAny, {
-    email: string;
-    id: string;
-    name: string;
-    createdAt: Date;
-    updatedAt: Date;
+    name?: string;
+    id?: string;
+    createdAt?: Date;
+    updatedAt?: Date;
+    email?: string;
 }, {
-    email: string;
-    id: string;
-    name: string;
-    createdAt: Date;
-    updatedAt: Date;
+    name?: string;
+    id?: string;
+    createdAt?: Date;
+    updatedAt?: Date;
+    email?: string;
 }>;
 export declare const ApiResponseSchema: z.ZodObject<{
     success: z.ZodBoolean;
@@ -93,15 +93,15 @@ export declare const ApiResponseSchema: z.ZodObject<{
     error: z.ZodOptional<z.ZodString>;
     timestamp: z.ZodString;
 }, "strip", z.ZodTypeAny, {
-    success: boolean;
-    timestamp: string;
-    error?: string | undefined;
+    error?: string;
     data?: unknown;
+    success?: boolean;
+    timestamp?: string;
 }, {
-    success: boolean;
-    timestamp: string;
-    error?: string | undefined;
+    error?: string;
     data?: unknown;
+    success?: boolean;
+    timestamp?: string;
 }>;
 export type Task = z.infer<typeof TaskSchema>;
 export type CreateTask = z.infer<typeof CreateTaskSchema>;
@@ -110,4 +110,3 @@ export type TaskStatusType = z.infer<typeof TaskStatus>;
 export type TaskPriorityType = z.infer<typeof TaskPriority>;
 export type User = z.infer<typeof UserSchema>;
 export type ApiResponse = z.infer<typeof ApiResponseSchema>;
-//# sourceMappingURL=types.d.ts.map

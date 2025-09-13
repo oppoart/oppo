@@ -45,4 +45,3 @@ export declare class DiscoveryJobManager {
     private moveJobToHistory;
     private calculateRecentActivity;
 }
-//# sourceMappingURL=DiscoveryJobManager.d.ts.map

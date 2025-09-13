@@ -113,4 +113,3 @@ export declare const scraperConfigs: {
     bing: ScraperConfig;
     default: ScraperConfig;
 };
-//# sourceMappingURL=scraper.config.d.ts.map

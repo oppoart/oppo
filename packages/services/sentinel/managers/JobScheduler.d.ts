@@ -28,4 +28,3 @@ export declare class JobScheduler {
     private executeJob;
     private getNextRunTime;
 }
-//# sourceMappingURL=JobScheduler.d.ts.map

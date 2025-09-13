@@ -41,4 +41,3 @@ export declare class SemanticScorer {
     };
     shutdown(): Promise<void>;
 }
-//# sourceMappingURL=SemanticScorer.d.ts.map

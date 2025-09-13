@@ -3,9 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AnalystApi = void 0;
 const AnalystService_1 = require("../core/AnalystService");
 class AnalystApi {
-    analystService;
-    isInitialized = false;
     constructor(config) {
+        this.isInitialized = false;
         this.analystService = new AnalystService_1.AnalystService(config.prisma, {
             aiProvider: config.aiProvider || 'openai',
             enablePersonalization: true

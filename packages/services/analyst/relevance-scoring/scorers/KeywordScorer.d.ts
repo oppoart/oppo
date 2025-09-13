@@ -47,4 +47,3 @@ export declare class KeywordScorer {
     updateConfig(config: Partial<KeywordScorerConfig>): void;
     shutdown(): Promise<void>;
 }
-//# sourceMappingURL=KeywordScorer.d.ts.map

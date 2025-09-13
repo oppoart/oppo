@@ -2,26 +2,25 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.KeywordScorer = void 0;
 class KeywordScorer {
-    config;
-    isInitialized = false;
-    stemCache = new Map();
-    keywordWeights = {
-        medium: 3.0,
-        skill: 2.5,
-        interest: 2.0,
-        experience: 1.8,
-        location: 1.5,
-        general: 1.0
-    };
-    fieldWeights = {
-        title: 3.0,
-        tags: 2.5,
-        organization: 2.0,
-        description: 1.0,
-        location: 0.8,
-        amount: 0.5
-    };
     constructor(config = {}) {
+        this.isInitialized = false;
+        this.stemCache = new Map();
+        this.keywordWeights = {
+            medium: 3.0,
+            skill: 2.5,
+            interest: 2.0,
+            experience: 1.8,
+            location: 1.5,
+            general: 1.0
+        };
+        this.fieldWeights = {
+            title: 3.0,
+            tags: 2.5,
+            organization: 2.0,
+            description: 1.0,
+            location: 0.8,
+            amount: 0.5
+        };
         this.config = {
             enableStemming: true,
             caseSensitive: false,

@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ScoringModels = void 0;
 class ScoringModels {
-    static models = new Map();
     static getDefaultModel() {
         return {
             id: 'default-v1',
@@ -34,4 +33,5 @@ class ScoringModels {
     }
 }
 exports.ScoringModels = ScoringModels;
+ScoringModels.models = new Map();
 //# sourceMappingURL=ScoringModels.js.map

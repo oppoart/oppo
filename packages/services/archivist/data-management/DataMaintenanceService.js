@@ -37,12 +37,10 @@ exports.DataMaintenanceService = void 0;
 const cron = __importStar(require("node-cron"));
 const events_1 = require("events");
 class DataMaintenanceService extends events_1.EventEmitter {
-    prisma;
-    scheduledTasks = new Map();
-    config;
     constructor(prisma, config = {}) {
         super();
         this.prisma = prisma;
+        this.scheduledTasks = new Map();
         this.config = {
             cleanupInterval: '0 2 * * *',
             archiveAfterDays: 90,

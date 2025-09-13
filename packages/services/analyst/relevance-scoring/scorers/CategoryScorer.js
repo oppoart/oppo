@@ -2,7 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CategoryScorer = void 0;
 class CategoryScorer {
-    isInitialized = false;
+    constructor() {
+        this.isInitialized = false;
+    }
     async initialize() {
         this.isInitialized = true;
     }

@@ -44,4 +44,3 @@ export declare class SentinelConnector {
     private generateMockDiscoveryResults;
     private generateMockTags;
 }
-//# sourceMappingURL=SentinelConnector.d.ts.map

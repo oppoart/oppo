@@ -2,9 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RateLimiter = void 0;
 class RateLimiter {
-    buckets = new Map();
-    globalLimits = new Map();
-    isInitialized = false;
+    constructor() {
+        this.buckets = new Map();
+        this.globalLimits = new Map();
+        this.isInitialized = false;
+    }
     async initialize() {
         this.globalLimits.set('default', 60);
         this.globalLimits.set('api.firecrawl.dev', 60);
@@ -118,16 +120,11 @@ class RateLimiter {
 }
 exports.RateLimiter = RateLimiter;
 class TokenBucket {
-    requestsPerMinute;
-    bucketSize;
-    tokens;
-    lastRefill;
-    consumedTokens = 0;
-    blockedRequests = 0;
-    lastAccess;
     constructor(requestsPerMinute, bucketSize) {
         this.requestsPerMinute = requestsPerMinute;
         this.bucketSize = bucketSize;
+        this.consumedTokens = 0;
+        this.blockedRequests = 0;
         this.bucketSize = bucketSize || Math.max(requestsPerMinute * 2, 10);
         this.tokens = this.bucketSize;
         this.lastRefill = Date.now();

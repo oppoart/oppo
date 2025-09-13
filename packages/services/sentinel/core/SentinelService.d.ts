@@ -35,4 +35,3 @@ export declare class SentinelService {
     private updatePluginStats;
     private processDiscoveredOpportunities;
 }
-//# sourceMappingURL=SentinelService.d.ts.map

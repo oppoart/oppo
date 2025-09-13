@@ -52,4 +52,3 @@ export declare class ArchivistConnector {
     private validateOpportunity;
     private filterOpportunities;
 }
-//# sourceMappingURL=ArchivistConnector.d.ts.map

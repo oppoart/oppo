@@ -3,10 +3,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.DiscoveryJobManager = void 0;
 const crypto_1 = require("crypto");
 class DiscoveryJobManager {
-    jobs = new Map();
-    jobHistory = [];
-    maxHistorySize = 1000;
-    isInitialized = false;
+    constructor() {
+        this.jobs = new Map();
+        this.jobHistory = [];
+        this.maxHistorySize = 1000;
+        this.isInitialized = false;
+    }
     async initialize() {
         console.log('DiscoveryJobManager initialized');
         this.isInitialized = true;

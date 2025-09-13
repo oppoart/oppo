@@ -37,9 +37,6 @@ exports.DataExportService = void 0;
 const fs_1 = require("fs");
 const path = __importStar(require("path"));
 class DataExportService {
-    prisma;
-    exportDir;
-    backupDir;
     constructor(prisma, baseDir = './data') {
         this.prisma = prisma;
         this.exportDir = path.join(baseDir, 'exports');

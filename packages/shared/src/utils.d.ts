@@ -6,4 +6,3 @@ export declare function generateId(): string;
 export declare function capitalize(str: string): string;
 export declare function truncate(text: string, length: number): string;
 export declare function sleep(ms: number): Promise<void>;
-//# sourceMappingURL=utils.d.ts.map

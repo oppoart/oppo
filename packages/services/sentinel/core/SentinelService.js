@@ -2,15 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SentinelService = void 0;
 class SentinelService {
-    configManager;
-    rateLimiter;
-    jobScheduler;
-    jobManager;
-    opportunityRepository;
-    deduplicationService;
-    config;
-    plugins = new Map();
-    isInitialized = false;
     constructor(configManager, rateLimiter, jobScheduler, jobManager, opportunityRepository, deduplicationService, config) {
         this.configManager = configManager;
         this.rateLimiter = rateLimiter;
@@ -19,6 +10,8 @@ class SentinelService {
         this.opportunityRepository = opportunityRepository;
         this.deduplicationService = deduplicationService;
         this.config = config;
+        this.plugins = new Map();
+        this.isInitialized = false;
     }
     async initialize() {
         if (this.isInitialized) {

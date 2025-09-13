@@ -21,4 +21,3 @@ export declare class RateLimiter {
     private getBucket;
     private startCleanupInterval;
 }
-//# sourceMappingURL=RateLimiter.d.ts.map

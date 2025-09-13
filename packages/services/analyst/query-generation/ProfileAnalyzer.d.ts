@@ -1,4 +1,4 @@
-import { ArtistProfile } from '@prisma/client';
+import { ArtistProfile } from './QueryGeneratorService';
 export interface ProfileAnalysis {
     primaryMediums: string[];
     secondaryMediums: string[];
@@ -36,4 +36,3 @@ export declare class ProfileAnalyzer {
     private determineOpportunityTypes;
     private determineFundingPreferences;
 }
-//# sourceMappingURL=ProfileAnalyzer.d.ts.map

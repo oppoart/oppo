@@ -889,7 +889,7 @@ QA Engineer (0.5)      - Testing and quality assurance
 ## Deployment Strategy
 
 ### Development Environment
-- Local SQLite database
+- Cloud PostgreSQL database (Railway)
 - Local Next.js development server
 - Manual testing and validation
 

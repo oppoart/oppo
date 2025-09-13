@@ -49,14 +49,14 @@ export declare const AUTH_RATE_LIMITS: {
 export declare const OAUTH_PROVIDERS: {
     readonly GOOGLE: {
         readonly ENABLED: boolean;
-        readonly CLIENT_ID: string | undefined;
-        readonly CLIENT_SECRET: string | undefined;
+        readonly CLIENT_ID: string;
+        readonly CLIENT_SECRET: string;
         readonly CALLBACK_URL: "/api/auth/google/callback";
     };
     readonly GITHUB: {
         readonly ENABLED: boolean;
-        readonly CLIENT_ID: string | undefined;
-        readonly CLIENT_SECRET: string | undefined;
+        readonly CLIENT_ID: string;
+        readonly CLIENT_SECRET: string;
         readonly CALLBACK_URL: "/api/auth/github/callback";
     };
 };
@@ -75,4 +75,3 @@ export declare const AUTH_ERRORS: {
 };
 export declare function createAuthConfig(env?: string): AuthConfig;
 export declare const authConfig: AuthConfig;
-//# sourceMappingURL=auth.config.d.ts.map

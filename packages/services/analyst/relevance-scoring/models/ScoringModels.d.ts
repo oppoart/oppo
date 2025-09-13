@@ -12,4 +12,3 @@ export declare class ScoringModels {
     static getModel(id: string): ScoringModel | undefined;
     static listModels(): ScoringModel[];
 }
-//# sourceMappingURL=ScoringModels.d.ts.map

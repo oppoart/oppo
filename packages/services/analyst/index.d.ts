@@ -20,4 +20,3 @@ export type { QueryGeneratorConfig, QueryGenerationRequest, QueryGenerationResul
 export type { ScoringConfig, ScoringWeights, ScoringResult, BatchScoringResult } from './relevance-scoring/RelevanceScoringEngine';
 export type { ProfileAnalysis } from './query-generation/ProfileAnalyzer';
 export { AnalystService as default } from './core/AnalystService';
-//# sourceMappingURL=index.d.ts.map

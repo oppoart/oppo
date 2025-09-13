@@ -110,4 +110,3 @@ export declare const API_MESSAGES: {
 };
 export declare function createApiConfig(env?: string): ApiConfig;
 export declare const apiConfig: ApiConfig;
-//# sourceMappingURL=api.config.d.ts.map

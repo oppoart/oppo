@@ -37,10 +37,9 @@ exports.SourceConfigManager = void 0;
 const fs_1 = require("fs");
 const path = __importStar(require("path"));
 class SourceConfigManager {
-    config = {};
-    configFile;
-    isInitialized = false;
     constructor(configPath) {
+        this.config = {};
+        this.isInitialized = false;
         this.configFile = configPath || path.join(process.cwd(), 'config', 'discovery-sources.json');
     }
     async initialize() {

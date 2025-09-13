@@ -7,4 +7,3 @@ export declare class LocationScorer {
     healthCheck(): Promise<boolean>;
     shutdown(): Promise<void>;
 }
-//# sourceMappingURL=LocationScorer.d.ts.map

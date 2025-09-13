@@ -39,4 +39,3 @@ export declare const PRISMA_OPTIONS: {
     readonly errorFormat: "pretty" | "minimal";
 };
 export declare const databaseConfig: DatabaseConfig;
-//# sourceMappingURL=database.config.d.ts.map

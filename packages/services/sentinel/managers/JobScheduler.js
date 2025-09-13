@@ -37,9 +37,10 @@ exports.JobScheduler = void 0;
 const cron = __importStar(require("node-cron"));
 const crypto_1 = require("crypto");
 class JobScheduler {
-    jobs = new Map();
-    isInitialized = false;
-    onJobExecute;
+    constructor() {
+        this.jobs = new Map();
+        this.isInitialized = false;
+    }
     async initialize() {
         console.log('JobScheduler initialized');
         this.isInitialized = true;

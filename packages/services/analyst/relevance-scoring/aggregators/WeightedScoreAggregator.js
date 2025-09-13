@@ -2,9 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WeightedScoreAggregator = void 0;
 class WeightedScoreAggregator {
-    weights;
-    isInitialized = false;
     constructor(weights) {
+        this.isInitialized = false;
         this.weights = weights;
     }
     async initialize() {

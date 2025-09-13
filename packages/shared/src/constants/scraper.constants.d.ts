@@ -46,4 +46,3 @@ export declare const DEFAULT_TIMEOUTS: {
     readonly ELEMENT_WAIT: 2000;
     readonly PROCESSING_DELAY: 2000;
 };
-//# sourceMappingURL=scraper.constants.d.ts.map

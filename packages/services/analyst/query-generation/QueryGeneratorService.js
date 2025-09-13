@@ -6,22 +6,14 @@ const ContextBuilder_1 = require("./ContextBuilder");
 const QueryOptimizer_1 = require("./QueryOptimizer");
 const basic_query_template_1 = require("./templates/basic-query.template");
 const semantic_query_template_1 = require("./templates/semantic-query.template");
-const discovery_1 = require("../../../../apps/backend/src/types/discovery");
+const types_1 = require("./types");
 class QueryGeneratorService {
-    prisma;
-    profileAnalyzer;
-    contextBuilder;
-    queryOptimizer;
-    basicTemplate;
-    semanticTemplate;
-    config;
-    queryCache = new Map();
-    constructor(prisma, config = {}) {
-        this.prisma = prisma;
+    constructor(config = {}) {
+        this.queryCache = new Map();
         this.config = {
             aiProvider: 'openai',
             timeout: 30000,
-            maxQueriesPerSource: 5,
+            maxQueriesPerSource: 20,
             useSemanticEnhancement: true,
             cacheResults: true,
             ...config
@@ -36,11 +28,13 @@ class QueryGeneratorService {
         console.log('Initializing Query Generation Service...');
         try {
             await this.contextBuilder.initialize();
+            await this.queryOptimizer.initialize();
+            await this.basicTemplate.initialize();
             await this.semanticTemplate.initialize();
             console.log('Query Generation Service initialized successfully');
         }
         catch (error) {
-            throw new discovery_1.AIServiceError(`Failed to initialize QueryGeneratorService: ${error}`, 'query-generator', 'initialization');
+            throw new types_1.AIServiceError(`Failed to initialize QueryGeneratorService: ${error}`, 'query-generator', 'initialization');
         }
     }
     async generateQueries(profile, sources, maxQueries) {
@@ -69,7 +63,7 @@ class QueryGeneratorService {
             const allQueries = [];
             const sourceDistribution = {};
             for (const sourceType of targetSources) {
-                const sourceQueries = await this.generateQueriesForSource(sourceType, profile, aiContext, profileAnalysis, Math.min(maxQueries || this.config.maxQueriesPerSource, this.config.maxQueriesPerSource));
+                const sourceQueries = await this.generateQueriesForSource(sourceType, profile, aiContext, profileAnalysis, maxQueries || this.config.maxQueriesPerSource);
                 allQueries.push(...sourceQueries);
                 sourceDistribution[sourceType] = sourceQueries.length;
             }
@@ -88,7 +82,7 @@ class QueryGeneratorService {
             return result;
         }
         catch (error) {
-            throw new discovery_1.AIServiceError(`Query generation failed: ${error}`, this.config.aiProvider, 'query-generation', { profileId: profile.id });
+            throw new types_1.AIServiceError(`Query generation failed: ${error}`, this.config.aiProvider, 'query-generation', { profileId: profile.id });
         }
     }
     async generateQueriesForSource(sourceType, profile, aiContext, profileAnalysis, maxQueries) {

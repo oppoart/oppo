@@ -15,4 +15,3 @@ export declare class WeightedScoreAggregator {
     updateWeights(newWeights: ScoringWeights): void;
     getWeights(): ScoringWeights;
 }
-//# sourceMappingURL=WeightedScoreAggregator.d.ts.map

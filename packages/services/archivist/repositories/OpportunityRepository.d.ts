@@ -46,4 +46,3 @@ export declare class OpportunityRepository {
         errors: string[];
     }>;
 }
-//# sourceMappingURL=OpportunityRepository.d.ts.map

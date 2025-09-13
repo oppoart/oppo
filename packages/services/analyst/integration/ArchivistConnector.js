@@ -4,12 +4,9 @@ exports.ArchivistConnector = void 0;
 const ArchivistService_1 = require("../../archivist/core/ArchivistService");
 const discovery_1 = require("../../../../apps/backend/src/types/discovery");
 class ArchivistConnector {
-    prisma;
-    config;
-    archivistService;
-    isInitialized = false;
     constructor(prisma, config = {}) {
         this.prisma = prisma;
+        this.isInitialized = false;
         this.config = {
             minRelevanceThreshold: 0.3,
             batchSize: 20,

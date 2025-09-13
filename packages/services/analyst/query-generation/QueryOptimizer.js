@@ -2,7 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.QueryOptimizer = void 0;
 class QueryOptimizer {
-    isInitialized = false;
+    constructor() {
+        this.isInitialized = false;
+    }
     async initialize() {
         this.isInitialized = true;
     }

@@ -128,9 +128,9 @@ This is where the system transitions from simple automation to true "agent" beha
 
 **Core Concept:** A Retrieval-Augmented Generation (RAG) agent will be created.
 
-1. **Data Retrieval and Indexing:** The artist's profile and all high-relevance opportunities stored in the SQLite database by the Archivist are imported into a LlamaIndex vector store. This creates a knowledge base the agent can query.
+1. **Data Retrieval and Indexing:** The artist's profile and all high-relevance opportunities stored in the PostgreSQL database by the Archivist are imported into a LlamaIndex vector store. This creates a knowledge base the agent can query.
 2. **Defining Tools:** The agent will be provided with "tools" - functions it can decide to call. This concept is also central to LangChain.27 Example tools:
-   * get_upcoming_deadline_opportunities(): A tool that queries the SQLite database to get opportunities with deadlines within the next 7 days.
+   * get_upcoming_deadline_opportunities(): A tool that queries the PostgreSQL database to get opportunities with deadlines within the next 7 days.
    * search_web(query): A tool that uses a search API to find new information on demand.
    * summarize_opportunity(opportunity_id): A tool that uses an LLM to provide a concise summary of a long opportunity description.
 3. **Agent Loop:** The Orchestrator can pose high-level questions to the LlamaIndex agent like "Create a weekly summary of the top 3 most relevant grants for oil painters." The agent autonomously:
@@ -147,11 +147,11 @@ This structure combines a "low-level" automation layer for routine data collecti
 
 This section covers the design of the local database that ensures data is stored efficiently, accurately, and without duplication.
 
-### **5.1. Database Selection: SQLite for a Serverless, Locally-Focused Application**
+### **5.1. Database Selection: PostgreSQL for Cloud-Native Scalability**
 
-For a local, single-user desktop application, a client-server database like PostgreSQL or MySQL is unnecessary. **SQLite** is ideal for this scenario. It's serverless, meaning the entire database exists in a single file (.db) within the application directory.28 This greatly simplifies setup and data management for the end user.
+For a modern, cloud-deployed application that needs to scale and handle concurrent access, **PostgreSQL** is the optimal choice. PostgreSQL provides enterprise-grade reliability, excellent performance, and advanced features like JSON columns, full-text search, and vector extensions that are essential for AI-powered applications.
 
-The sqlite3 Node.js package provides a direct and simple API for all necessary database operations.28
+Cloud hosting on Railway provides automatic backups, scaling, and managed database operations, making PostgreSQL the superior choice for production deployment.
 
 ### **5.2. Proposed Database Schema**
 
@@ -198,8 +198,8 @@ Implementation will include the following steps:
 1. **Authentication:** Guide the user through creating a Notion integration and providing the API key to the application.
 2. **Database Connection:** The user will specify a Notion database they want to synchronize. The application will use the Notion API to read this database's properties.
 3. **Two-Way Synchronization Logic:**
-   * **Application to Notion:** When a new high-relevance opportunity is saved to the local SQLite database, a page is created in the linked Notion database with relevant properties (Title, Deadline, URL, Status).
-   * **Notion to Application:** The application periodically queries the Notion database for changes. If the artist updates a page's 'Status' property in Notion (e.g., from "Applying" to "Submitted"), the application detects this change and updates the corresponding record in the local SQLite database. This allows the artist to use the interface they're most comfortable with. Notion API documentation provides clear examples for page creation and updating.41
+   * **Application to Notion:** When a new high-relevance opportunity is saved to the PostgreSQL database, a page is created in the linked Notion database with relevant properties (Title, Deadline, URL, Status).
+   * **Notion to Application:** The application periodically queries the Notion database for changes. If the artist updates a page's 'Status' property in Notion (e.g., from "Applying" to "Submitted"), the application detects this change and updates the corresponding record in the PostgreSQL database. This allows the artist to use the interface they're most comfortable with. Notion API documentation provides clear examples for page creation and updating.41
 
 ---
 
@@ -209,7 +209,7 @@ This section presents a practical, step-by-step plan that breaks the project int
 
 * **Phase 1: Backend Foundation and Core Data Model**
   * Create a new **NestJS** project.
-  * Define the **SQLite** database schema using a tool like Prisma or TypeORM for easier migrations.
+  * Define the **PostgreSQL** database schema using Prisma for type-safe database operations and migrations.
   * Create basic CRUD APIs for manually managing opportunities.
 * **Phase 2: Sentinel - Manual Scraping**
   * Implement **Firecrawl** and **Playwright** scripts.
@@ -238,7 +238,7 @@ This report has outlined the architecture of a modular, AI-driven, and privacy-f
 | Layer | Proposed Technology | Rationale / Role |
 | :---- | :---- | :---- |
 | Backend Framework | NestJS | Modular, opinionated architecture provides scalability and ease of maintenance for a complex agent system. |
-| Database | SQLite | Serverless, file-based structure simplifies setup and management for a local desktop application. |
+| Database | PostgreSQL | Cloud-native database with enterprise features, scalability, and managed hosting on Railway. |
 | ORM | Prisma / TypeORM | Facilitates database schema management and migrations. |
 | Web Scraping | Firecrawl, Playwright | Fast API-based scraping for structured sites and full browser automation for dynamic sites. |
 | AI/Semantic Search | transformers.js | Provides on-device, privacy-preserving semantic analysis for matching artist profile with opportunities. |

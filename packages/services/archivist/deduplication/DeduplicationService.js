@@ -37,7 +37,6 @@ exports.DeduplicationService = void 0;
 const crypto_1 = require("crypto");
 const stringSimilarity = __importStar(require("string-similarity"));
 class DeduplicationService {
-    prisma;
     constructor(prisma) {
         this.prisma = prisma;
     }

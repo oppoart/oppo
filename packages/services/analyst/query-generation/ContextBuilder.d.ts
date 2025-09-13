@@ -1,4 +1,4 @@
-import { ArtistProfile } from '@prisma/client';
+import { ArtistProfile } from './QueryGeneratorService';
 import { ProfileAnalysis } from './ProfileAnalyzer';
 export interface AIContext {
     systemPrompt: string;
@@ -34,4 +34,3 @@ export declare class ContextBuilder {
     getConfig(): ContextBuilderConfig;
     shutdown(): Promise<void>;
 }
-//# sourceMappingURL=ContextBuilder.d.ts.map

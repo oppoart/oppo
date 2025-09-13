@@ -2,9 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProfileAnalyzer = void 0;
 class ProfileAnalyzer {
-    mediumAliases;
-    skillCategories;
-    locationParser;
     constructor() {
         this.mediumAliases = new Map([
             ['painting', ['oil painting', 'acrylic', 'watercolor', 'mixed media painting', 'abstract painting']],

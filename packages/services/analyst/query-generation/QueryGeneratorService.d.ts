@@ -1,5 +1,16 @@
-import { PrismaClient, ArtistProfile } from '@prisma/client';
-import { SourceType, SearchQueryContext, GeneratedSearchQuery } from '../../../../apps/backend/src/types/discovery';
+export interface ArtistProfile {
+    id: string;
+    name: string;
+    mediums: string[];
+    skills: string[];
+    interests: string[];
+    experience: string;
+    location?: string;
+    bio?: string;
+    artistStatement?: string;
+    userId: string;
+}
+import { SourceType, SearchQueryContext, GeneratedSearchQuery } from './types';
 export interface QueryGeneratorConfig {
     aiProvider: 'openai' | 'anthropic' | 'google';
     timeout: number;
@@ -22,7 +33,6 @@ export interface QueryGenerationResult {
     cacheHit: boolean;
 }
 export declare class QueryGeneratorService {
-    private prisma;
     private profileAnalyzer;
     private contextBuilder;
     private queryOptimizer;
@@ -30,7 +40,7 @@ export declare class QueryGeneratorService {
     private semanticTemplate;
     private config;
     private queryCache;
-    constructor(prisma: PrismaClient, config?: Partial<QueryGeneratorConfig>);
+    constructor(config?: Partial<QueryGeneratorConfig>);
     initialize(): Promise<void>;
     generateQueries(profile: ArtistProfile, sources?: SourceType[], maxQueries?: number): Promise<string[]>;
     generateQueriesWithMetadata(request: QueryGenerationRequest): Promise<QueryGenerationResult>;
@@ -46,4 +56,3 @@ export declare class QueryGeneratorService {
     healthCheck(): Promise<boolean>;
     shutdown(): Promise<void>;
 }
-//# sourceMappingURL=QueryGeneratorService.d.ts.map

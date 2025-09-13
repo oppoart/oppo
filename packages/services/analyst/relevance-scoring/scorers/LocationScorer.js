@@ -2,7 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LocationScorer = void 0;
 class LocationScorer {
-    isInitialized = false;
+    constructor() {
+        this.isInitialized = false;
+    }
     async initialize() {
         this.isInitialized = true;
     }

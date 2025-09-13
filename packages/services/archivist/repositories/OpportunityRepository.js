@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OpportunityRepository = void 0;
 class OpportunityRepository {
-    prisma;
     constructor(prisma) {
         this.prisma = prisma;
     }

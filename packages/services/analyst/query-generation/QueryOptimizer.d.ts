@@ -1,8 +1,7 @@
-import { GeneratedSearchQuery } from '../../../../apps/backend/src/types/discovery';
+import { GeneratedSearchQuery } from './types';
 export declare class QueryOptimizer {
     private isInitialized;
     initialize(): Promise<void>;
     optimizeQueries(queries: GeneratedSearchQuery[], profileAnalysis: any, maxQueries?: number): Promise<GeneratedSearchQuery[]>;
     private removeDuplicates;
 }
-//# sourceMappingURL=QueryOptimizer.d.ts.map

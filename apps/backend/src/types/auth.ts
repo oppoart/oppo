@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { Request } from 'express';
-import { BetterAuthSession, BetterAuthUser } from '../lib/better-auth';
+import { BetterAuthSession, BetterAuthUser } from '../shared/auth/better-auth';
 
 // Validation schemas
 export const emailSignInSchema = z.object({

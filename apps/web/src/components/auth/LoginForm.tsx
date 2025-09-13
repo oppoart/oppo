@@ -10,7 +10,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
 export function LoginForm() {
-  const [email, setEmail] = useState('artist@oppo.local'); // Default to test user
+  const [email, setEmail] = useState('test@oppo.local'); // Default to test user we created
+  const [password, setPassword] = useState('password123'); // Default test password
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const { toast } = useToast();
@@ -21,7 +22,7 @@ export function LoginForm() {
     setIsLoading(true);
 
     try {
-      const result = await login(email);
+      const result = await login(email, password);
       if (result.success) {
         toast({
           title: "Login successful",
@@ -32,7 +33,7 @@ export function LoginForm() {
       } else {
         toast({
           title: "Login failed",
-          description: result.error || "Invalid email or user not found.",
+          description: result.error || "Invalid email or password.",
           variant: "destructive",
         });
       }
@@ -70,6 +71,18 @@ export function LoginForm() {
                 placeholder="Enter your email"
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={isLoading}
+                placeholder="Enter your password"
+              />
+            </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
@@ -82,7 +95,7 @@ export function LoginForm() {
                 Forgot your access? Request a reset link
               </button>
               <div className="text-sm text-muted-foreground">
-                For testing, use: <code>artist@oppo.local</code>
+                For testing, use: <code>test@oppo.local</code> / <code>password123</code>
               </div>
             </div>
           </form>

@@ -7,4 +7,3 @@ export declare class CategoryScorer {
     healthCheck(): Promise<boolean>;
     shutdown(): Promise<void>;
 }
-//# sourceMappingURL=CategoryScorer.d.ts.map

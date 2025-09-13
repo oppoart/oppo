@@ -43,7 +43,7 @@ Start with the [Introduction](./introduction.md) to understand the project's vis
 ## Technology Highlights
 
 - **Backend**: NestJS with TypeScript
-- **Database**: SQLite for local storage
+- **Database**: PostgreSQL for cloud-native scalability
 - **AI/ML**: transformers.js for on-device processing
 - **Automation**: LlamaIndex.ts for RAG capabilities
 - **Frontend**: React/Next.js with modern UI components

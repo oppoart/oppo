@@ -3,10 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SemanticScorer = void 0;
 const discovery_1 = require("../../../../../apps/backend/src/types/discovery");
 class SemanticScorer {
-    config;
-    embeddingCache = new Map();
-    isInitialized = false;
     constructor(aiProvider = 'openai') {
+        this.embeddingCache = new Map();
+        this.isInitialized = false;
         this.config = {
             aiProvider,
             embeddingModel: this.getDefaultEmbeddingModel(aiProvider),

@@ -37,4 +37,3 @@ export declare class AnalystApi {
     }>;
     shutdown(): Promise<void>;
 }
-//# sourceMappingURL=analyst.d.ts.map

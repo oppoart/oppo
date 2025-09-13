@@ -23,4 +23,3 @@ export declare class SourceConfigManager {
     private saveConfiguration;
     private getDefaultConfiguration;
 }
-//# sourceMappingURL=SourceConfigManager.d.ts.map

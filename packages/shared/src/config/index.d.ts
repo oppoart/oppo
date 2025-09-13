@@ -8,4 +8,3 @@ export * from './rate-limit.config';
 export * from './ai.config';
 export * from './types';
 export { validateConfig } from './validator';
-//# sourceMappingURL=index.d.ts.map

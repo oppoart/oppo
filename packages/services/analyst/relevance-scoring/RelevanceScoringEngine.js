@@ -9,18 +9,10 @@ const ExperienceScorer_1 = require("./scorers/ExperienceScorer");
 const WeightedScoreAggregator_1 = require("./aggregators/WeightedScoreAggregator");
 const discovery_1 = require("../../../../apps/backend/src/types/discovery");
 class RelevanceScoringEngine {
-    prisma;
-    semanticScorer;
-    keywordScorer;
-    categoryScorer;
-    locationScorer;
-    experienceScorer;
-    scoreAggregator;
-    config;
-    isInitialized = false;
-    scoreCache = new Map();
     constructor(prisma, config = {}) {
         this.prisma = prisma;
+        this.isInitialized = false;
+        this.scoreCache = new Map();
         this.config = {
             aiProvider: 'openai',
             timeout: 60000,

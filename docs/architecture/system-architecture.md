@@ -195,15 +195,15 @@ The application consists of five main modules, each responsible for specific tas
 **Role**: The agent's long-term memory
 
 **Responsibilities**:
-- Managing data persistence in SQLite
+- Managing data persistence in PostgreSQL
 - Implementing deduplication strategies
 - Ensuring data integrity and consistency
 - Handling database migrations and updates
 - Providing efficient query interfaces
 
 **Key Technologies**:
-- SQLite for local database
-- Prisma/TypeORM for ORM functionality
+- PostgreSQL for cloud database
+- Prisma for type-safe ORM functionality
 - SHA-256 hashing for deduplication
 
 ### 5. Liaison (User Interface and External Integrations)

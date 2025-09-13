@@ -170,4 +170,3 @@ export declare const LOADING_STATES: {
 };
 export declare function createUiConfig(): UiConfig;
 export declare const uiConfig: UiConfig;
-//# sourceMappingURL=ui.config.d.ts.map

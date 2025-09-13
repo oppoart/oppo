@@ -104,7 +104,7 @@ export declare const RATE_LIMIT_SKIP: {
 };
 export declare const RATE_LIMIT_STORAGE: {
     readonly TYPE: string;
-    readonly REDIS_URL: string | undefined;
+    readonly REDIS_URL: string;
     readonly KEY_PREFIX: "rate_limit:";
     readonly CLEANUP_INTERVAL: number;
 };
@@ -112,6 +112,5 @@ export declare function createRateLimitConfig(): RateLimitConfig;
 export declare function createRateLimiter(endpoint?: string): {
     windowMs: number;
     maxRequests: number;
-} | undefined;
+};
 export declare const rateLimitConfig: RateLimitConfig;
-//# sourceMappingURL=rate-limit.config.d.ts.map
