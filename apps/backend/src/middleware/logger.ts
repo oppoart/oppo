@@ -1,5 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { env } from '../config/env';
+import { requestIdMiddleware, requestLoggingMiddleware, userContextMiddleware, securityLoggingMiddleware } from '../lib/logging/middleware/RequestLoggingMiddleware';
+import { logger } from '../lib/logging/Logger';
+import { metricsCollector } from '../lib/monitoring/MetricsCollector';
 
 interface LogData {
   timestamp: string;
@@ -74,8 +77,11 @@ const sanitizeData = (data: any): any => {
   return data;
 };
 
-// Request logging middleware
-export const requestLogger = (req: Request, res: Response, next: NextFunction) => {
+// Enhanced request logging middleware using the new comprehensive system
+export const requestLogger = requestLoggingMiddleware;
+
+// Legacy request logger for backward compatibility
+export const legacyRequestLogger = (req: Request, res: Response, next: NextFunction) => {
   const startTime = Date.now();
   const timestamp = new Date().toISOString();
   
@@ -173,8 +179,14 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
   next();
 };
 
-// Error logging middleware
+// Enhanced error logging - now handled by the comprehensive error system
 export const errorLogger = (err: Error, req: Request, res: Response, next: NextFunction) => {
+  // The new error handler system handles all error logging
+  next(err);
+};
+
+// Legacy error logging middleware
+export const legacyErrorLogger = (err: Error, req: Request, res: Response, next: NextFunction) => {
   const timestamp = new Date().toISOString();
   
   const errorLog: LogData = {
@@ -205,8 +217,17 @@ export const errorLogger = (err: Error, req: Request, res: Response, next: NextF
   next(err);
 };
 
-// Performance monitoring middleware
+// Enhanced performance monitoring - now handled by the comprehensive monitoring system
 export const performanceMonitor = (req: Request, res: Response, next: NextFunction) => {
+  // Performance tracking is now handled by the performanceTrackingHandler in error-handler.ts
+  next();
+};
+
+// Export new middleware components
+export { requestIdMiddleware, userContextMiddleware, securityLoggingMiddleware };
+
+// Legacy performance monitoring middleware
+export const legacyPerformanceMonitor = (req: Request, res: Response, next: NextFunction) => {
   const startTime = process.hrtime.bigint();
   
   // Store original end method

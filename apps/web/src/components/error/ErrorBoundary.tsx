@@ -47,16 +47,95 @@ class ErrorBoundary extends Component<Props, State> {
       this.props.onError(error, errorInfo);
     }
 
-    // Log to error reporting service in production
-    if (process.env.NODE_ENV === 'production') {
-      // TODO: Add error reporting service integration (e.g., Sentry)
-      console.error('Production error:', {
-        error: error.toString(),
-        stack: error.stack,
-        componentStack: errorInfo.componentStack,
+    // Log to error reporting service
+    this.reportError(error, errorInfo);
+  }
+
+  private reportError = async (error: Error, errorInfo: ErrorInfo) => {
+    const errorReport = {
+      message: error.message,
+      stack: error.stack,
+      componentStack: errorInfo.componentStack,
+      timestamp: new Date().toISOString(),
+      userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : '',
+      url: typeof window !== 'undefined' ? window.location.href : '',
+      userId: this.getUserId(),
+    };
+
+    try {
+      // Multiple error reporting strategies
+      await Promise.allSettled([
+        this.reportToSentry(error, errorInfo),
+        this.reportToCustomAPI(errorReport),
+        this.reportToLocalStorage(errorReport),
+      ]);
+    } catch (reportingError) {
+      console.error('Failed to report error:', reportingError);
+    }
+  };
+
+  private reportToSentry = async (error: Error, errorInfo: ErrorInfo) => {
+    // Check if Sentry is available (can be dynamically imported)
+    if (typeof window !== 'undefined' && (window as any).Sentry) {
+      const Sentry = (window as any).Sentry;
+      Sentry.withScope((scope: any) => {
+        scope.setTag('errorBoundary', true);
+        scope.setContext('errorInfo', {
+          componentStack: errorInfo.componentStack,
+        });
+        Sentry.captureException(error);
       });
     }
-  }
+  };
+
+  private reportToCustomAPI = async (errorReport: any) => {
+    if (process.env.NODE_ENV === 'production') {
+      try {
+        await fetch('/api/errors/report', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(errorReport),
+        });
+      } catch (apiError) {
+        console.warn('Failed to report error to API:', apiError);
+      }
+    }
+  };
+
+  private reportToLocalStorage = (errorReport: any) => {
+    try {
+      if (typeof window !== 'undefined') {
+        const key = `error_${Date.now()}`;
+        const errors = JSON.parse(localStorage.getItem('errorReports') || '[]');
+        errors.push({ key, ...errorReport });
+        
+        // Keep only last 10 errors to prevent storage overflow
+        const recentErrors = errors.slice(-10);
+        localStorage.setItem('errorReports', JSON.stringify(recentErrors));
+      }
+    } catch (storageError) {
+      console.warn('Failed to store error locally:', storageError);
+    }
+  };
+
+  private getUserId = (): string | null => {
+    // Try to get user ID from various sources
+    if (typeof window !== 'undefined') {
+      // Check localStorage/sessionStorage for user data
+      try {
+        const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          return user?.id || user?.email || null;
+        }
+      } catch {
+        // Ignore parsing errors
+      }
+    }
+    return null;
+  };
 
   private handleReset = () => {
     this.setState({

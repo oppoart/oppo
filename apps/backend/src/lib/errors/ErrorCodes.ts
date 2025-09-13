@@ -1,0 +1,280 @@
+// Standardized error codes for the OPPO application
+export const ErrorCodes = {
+  // Authentication & Authorization (1000-1999)
+  UNAUTHORIZED: 'AUTH_1001',
+  FORBIDDEN: 'AUTH_1002',
+  INVALID_CREDENTIALS: 'AUTH_1003',
+  TOKEN_EXPIRED: 'AUTH_1004',
+  INVALID_TOKEN: 'AUTH_1005',
+  SESSION_EXPIRED: 'AUTH_1006',
+  ACCOUNT_LOCKED: 'AUTH_1007',
+  ACCOUNT_DISABLED: 'AUTH_1008',
+  MFA_REQUIRED: 'AUTH_1009',
+  INVALID_MFA_CODE: 'AUTH_1010',
+  PASSWORD_POLICY_VIOLATION: 'AUTH_1011',
+  INSUFFICIENT_PERMISSIONS: 'AUTH_1012',
+
+  // Validation & Input (2000-2999)
+  VALIDATION_ERROR: 'VAL_2001',
+  INVALID_INPUT: 'VAL_2002',
+  MISSING_REQUIRED_FIELD: 'VAL_2003',
+  INVALID_FORMAT: 'VAL_2004',
+  VALUE_OUT_OF_RANGE: 'VAL_2005',
+  INVALID_EMAIL: 'VAL_2006',
+  INVALID_PHONE: 'VAL_2007',
+  INVALID_URL: 'VAL_2008',
+  INVALID_DATE: 'VAL_2009',
+  INVALID_UUID: 'VAL_2010',
+  FILE_TOO_LARGE: 'VAL_2011',
+  INVALID_FILE_TYPE: 'VAL_2012',
+  DUPLICATE_VALUE: 'VAL_2013',
+
+  // Resource & Data (3000-3999)
+  NOT_FOUND: 'RES_3001',
+  RESOURCE_EXISTS: 'RES_3002',
+  RESOURCE_DELETED: 'RES_3003',
+  RESOURCE_LOCKED: 'RES_3004',
+  RESOURCE_EXPIRED: 'RES_3005',
+  RESOURCE_LIMIT_EXCEEDED: 'RES_3006',
+  INSUFFICIENT_STORAGE: 'RES_3007',
+  QUOTA_EXCEEDED: 'RES_3008',
+  VERSION_CONFLICT: 'RES_3009',
+  CONCURRENT_MODIFICATION: 'RES_3010',
+
+  // Database & Persistence (4000-4999)
+  DATABASE_ERROR: 'DB_4001',
+  DATABASE_CONNECTION_ERROR: 'DB_4002',
+  DATABASE_TIMEOUT: 'DB_4003',
+  TRANSACTION_FAILED: 'DB_4004',
+  CONSTRAINT_VIOLATION: 'DB_4005',
+  FOREIGN_KEY_VIOLATION: 'DB_4006',
+  UNIQUE_CONSTRAINT_VIOLATION: 'DB_4007',
+  CHECK_CONSTRAINT_VIOLATION: 'DB_4008',
+  DEADLOCK_DETECTED: 'DB_4009',
+  MIGRATION_FAILED: 'DB_4010',
+  BACKUP_FAILED: 'DB_4011',
+  RESTORE_FAILED: 'DB_4012',
+
+  // External Services & APIs (5000-5999)
+  EXTERNAL_SERVICE_ERROR: 'EXT_5001',
+  EXTERNAL_SERVICE_UNAVAILABLE: 'EXT_5002',
+  EXTERNAL_SERVICE_TIMEOUT: 'EXT_5003',
+  API_RATE_LIMIT_EXCEEDED: 'EXT_5004',
+  INVALID_API_RESPONSE: 'EXT_5005',
+  WEBHOOK_FAILED: 'EXT_5006',
+  INTEGRATION_ERROR: 'EXT_5007',
+  THIRD_PARTY_AUTH_FAILED: 'EXT_5008',
+  PAYMENT_FAILED: 'EXT_5009',
+  NOTIFICATION_FAILED: 'EXT_5010',
+
+  // System & Infrastructure (6000-6999)
+  INTERNAL_SERVER_ERROR: 'SYS_6001',
+  SERVICE_UNAVAILABLE: 'SYS_6002',
+  MAINTENANCE_MODE: 'SYS_6003',
+  CONFIGURATION_ERROR: 'SYS_6004',
+  DEPENDENCY_ERROR: 'SYS_6005',
+  MEMORY_ERROR: 'SYS_6006',
+  DISK_FULL: 'SYS_6007',
+  CPU_OVERLOAD: 'SYS_6008',
+  NETWORK_ERROR: 'SYS_6009',
+  SSL_ERROR: 'SYS_6010',
+  ENCRYPTION_ERROR: 'SYS_6011',
+  DECRYPTION_ERROR: 'SYS_6012',
+
+  // Business Logic (7000-7999)
+  BUSINESS_RULE_VIOLATION: 'BIZ_7001',
+  WORKFLOW_ERROR: 'BIZ_7002',
+  STATE_TRANSITION_ERROR: 'BIZ_7003',
+  APPROVAL_REQUIRED: 'BIZ_7004',
+  OPERATION_NOT_ALLOWED: 'BIZ_7005',
+  PRECONDITION_FAILED: 'BIZ_7006',
+  POSTCONDITION_FAILED: 'BIZ_7007',
+  INVARIANT_VIOLATION: 'BIZ_7008',
+  DOMAIN_ERROR: 'BIZ_7009',
+  CALCULATION_ERROR: 'BIZ_7010',
+
+  // Security (8000-8999)
+  SECURITY_VIOLATION: 'SEC_8001',
+  SUSPICIOUS_ACTIVITY: 'SEC_8002',
+  MALICIOUS_REQUEST: 'SEC_8003',
+  XSS_ATTEMPT: 'SEC_8004',
+  SQL_INJECTION_ATTEMPT: 'SEC_8005',
+  CSRF_TOKEN_INVALID: 'SEC_8006',
+  IP_BLOCKED: 'SEC_8007',
+  BRUTE_FORCE_DETECTED: 'SEC_8008',
+  PRIVILEGE_ESCALATION: 'SEC_8009',
+  DATA_BREACH_DETECTED: 'SEC_8010',
+  ENCRYPTION_REQUIRED: 'SEC_8011',
+  WEAK_PASSWORD: 'SEC_8012',
+
+  // Communication & Messaging (9000-9999)
+  MESSAGE_QUEUE_ERROR: 'MSG_9001',
+  EMAIL_SEND_FAILED: 'MSG_9002',
+  SMS_SEND_FAILED: 'MSG_9003',
+  PUSH_NOTIFICATION_FAILED: 'MSG_9004',
+  WEBSOCKET_ERROR: 'MSG_9005',
+  CHAT_ERROR: 'MSG_9006',
+  VOICE_CALL_FAILED: 'MSG_9007',
+  VIDEO_CALL_FAILED: 'MSG_9008',
+  FILE_UPLOAD_FAILED: 'MSG_9009',
+  FILE_DOWNLOAD_FAILED: 'MSG_9010',
+} as const;
+
+export type ErrorCode = typeof ErrorCodes[keyof typeof ErrorCodes];
+
+// Error categories for filtering and handling
+export const ErrorCategories = {
+  AUTHENTICATION: [
+    ErrorCodes.UNAUTHORIZED,
+    ErrorCodes.FORBIDDEN,
+    ErrorCodes.INVALID_CREDENTIALS,
+    ErrorCodes.TOKEN_EXPIRED,
+    ErrorCodes.INVALID_TOKEN,
+    ErrorCodes.SESSION_EXPIRED,
+    ErrorCodes.ACCOUNT_LOCKED,
+    ErrorCodes.ACCOUNT_DISABLED,
+    ErrorCodes.MFA_REQUIRED,
+    ErrorCodes.INVALID_MFA_CODE,
+    ErrorCodes.PASSWORD_POLICY_VIOLATION,
+    ErrorCodes.INSUFFICIENT_PERMISSIONS,
+  ],
+  VALIDATION: [
+    ErrorCodes.VALIDATION_ERROR,
+    ErrorCodes.INVALID_INPUT,
+    ErrorCodes.MISSING_REQUIRED_FIELD,
+    ErrorCodes.INVALID_FORMAT,
+    ErrorCodes.VALUE_OUT_OF_RANGE,
+    ErrorCodes.INVALID_EMAIL,
+    ErrorCodes.INVALID_PHONE,
+    ErrorCodes.INVALID_URL,
+    ErrorCodes.INVALID_DATE,
+    ErrorCodes.INVALID_UUID,
+    ErrorCodes.FILE_TOO_LARGE,
+    ErrorCodes.INVALID_FILE_TYPE,
+    ErrorCodes.DUPLICATE_VALUE,
+  ],
+  RESOURCE: [
+    ErrorCodes.NOT_FOUND,
+    ErrorCodes.RESOURCE_EXISTS,
+    ErrorCodes.RESOURCE_DELETED,
+    ErrorCodes.RESOURCE_LOCKED,
+    ErrorCodes.RESOURCE_EXPIRED,
+    ErrorCodes.RESOURCE_LIMIT_EXCEEDED,
+    ErrorCodes.INSUFFICIENT_STORAGE,
+    ErrorCodes.QUOTA_EXCEEDED,
+    ErrorCodes.VERSION_CONFLICT,
+    ErrorCodes.CONCURRENT_MODIFICATION,
+  ],
+  DATABASE: [
+    ErrorCodes.DATABASE_ERROR,
+    ErrorCodes.DATABASE_CONNECTION_ERROR,
+    ErrorCodes.DATABASE_TIMEOUT,
+    ErrorCodes.TRANSACTION_FAILED,
+    ErrorCodes.CONSTRAINT_VIOLATION,
+    ErrorCodes.FOREIGN_KEY_VIOLATION,
+    ErrorCodes.UNIQUE_CONSTRAINT_VIOLATION,
+    ErrorCodes.CHECK_CONSTRAINT_VIOLATION,
+    ErrorCodes.DEADLOCK_DETECTED,
+    ErrorCodes.MIGRATION_FAILED,
+    ErrorCodes.BACKUP_FAILED,
+    ErrorCodes.RESTORE_FAILED,
+  ],
+  EXTERNAL: [
+    ErrorCodes.EXTERNAL_SERVICE_ERROR,
+    ErrorCodes.EXTERNAL_SERVICE_UNAVAILABLE,
+    ErrorCodes.EXTERNAL_SERVICE_TIMEOUT,
+    ErrorCodes.API_RATE_LIMIT_EXCEEDED,
+    ErrorCodes.INVALID_API_RESPONSE,
+    ErrorCodes.WEBHOOK_FAILED,
+    ErrorCodes.INTEGRATION_ERROR,
+    ErrorCodes.THIRD_PARTY_AUTH_FAILED,
+    ErrorCodes.PAYMENT_FAILED,
+    ErrorCodes.NOTIFICATION_FAILED,
+  ],
+  SYSTEM: [
+    ErrorCodes.INTERNAL_SERVER_ERROR,
+    ErrorCodes.SERVICE_UNAVAILABLE,
+    ErrorCodes.MAINTENANCE_MODE,
+    ErrorCodes.CONFIGURATION_ERROR,
+    ErrorCodes.DEPENDENCY_ERROR,
+    ErrorCodes.MEMORY_ERROR,
+    ErrorCodes.DISK_FULL,
+    ErrorCodes.CPU_OVERLOAD,
+    ErrorCodes.NETWORK_ERROR,
+    ErrorCodes.SSL_ERROR,
+    ErrorCodes.ENCRYPTION_ERROR,
+    ErrorCodes.DECRYPTION_ERROR,
+  ],
+  BUSINESS: [
+    ErrorCodes.BUSINESS_RULE_VIOLATION,
+    ErrorCodes.WORKFLOW_ERROR,
+    ErrorCodes.STATE_TRANSITION_ERROR,
+    ErrorCodes.APPROVAL_REQUIRED,
+    ErrorCodes.OPERATION_NOT_ALLOWED,
+    ErrorCodes.PRECONDITION_FAILED,
+    ErrorCodes.POSTCONDITION_FAILED,
+    ErrorCodes.INVARIANT_VIOLATION,
+    ErrorCodes.DOMAIN_ERROR,
+    ErrorCodes.CALCULATION_ERROR,
+  ],
+  SECURITY: [
+    ErrorCodes.SECURITY_VIOLATION,
+    ErrorCodes.SUSPICIOUS_ACTIVITY,
+    ErrorCodes.MALICIOUS_REQUEST,
+    ErrorCodes.XSS_ATTEMPT,
+    ErrorCodes.SQL_INJECTION_ATTEMPT,
+    ErrorCodes.CSRF_TOKEN_INVALID,
+    ErrorCodes.IP_BLOCKED,
+    ErrorCodes.BRUTE_FORCE_DETECTED,
+    ErrorCodes.PRIVILEGE_ESCALATION,
+    ErrorCodes.DATA_BREACH_DETECTED,
+    ErrorCodes.ENCRYPTION_REQUIRED,
+    ErrorCodes.WEAK_PASSWORD,
+  ],
+  COMMUNICATION: [
+    ErrorCodes.MESSAGE_QUEUE_ERROR,
+    ErrorCodes.EMAIL_SEND_FAILED,
+    ErrorCodes.SMS_SEND_FAILED,
+    ErrorCodes.PUSH_NOTIFICATION_FAILED,
+    ErrorCodes.WEBSOCKET_ERROR,
+    ErrorCodes.CHAT_ERROR,
+    ErrorCodes.VOICE_CALL_FAILED,
+    ErrorCodes.VIDEO_CALL_FAILED,
+    ErrorCodes.FILE_UPLOAD_FAILED,
+    ErrorCodes.FILE_DOWNLOAD_FAILED,
+  ],
+} as const;
+
+// Helper functions
+export const getErrorCategory = (errorCode: ErrorCode): keyof typeof ErrorCategories | null => {
+  for (const [category, codes] of Object.entries(ErrorCategories)) {
+    if ((codes as readonly ErrorCode[]).includes(errorCode)) {
+      return category as keyof typeof ErrorCategories;
+    }
+  }
+  return null;
+};
+
+export const isRetryableError = (errorCode: ErrorCode): boolean => {
+  const retryableErrors = [
+    ErrorCodes.DATABASE_TIMEOUT,
+    ErrorCodes.EXTERNAL_SERVICE_TIMEOUT,
+    ErrorCodes.EXTERNAL_SERVICE_UNAVAILABLE,
+    ErrorCodes.NETWORK_ERROR,
+    ErrorCodes.SERVICE_UNAVAILABLE,
+    ErrorCodes.DEADLOCK_DETECTED,
+    ErrorCodes.API_RATE_LIMIT_EXCEEDED,
+  ];
+  
+  return retryableErrors.includes(errorCode as any);
+};
+
+export const isClientError = (errorCode: ErrorCode): boolean => {
+  const category = getErrorCategory(errorCode);
+  return category === 'VALIDATION' || category === 'AUTHENTICATION' || category === 'RESOURCE';
+};
+
+export const isServerError = (errorCode: ErrorCode): boolean => {
+  const category = getErrorCategory(errorCode);
+  return category === 'SYSTEM' || category === 'DATABASE' || category === 'EXTERNAL';
+};

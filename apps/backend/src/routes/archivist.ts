@@ -7,14 +7,17 @@ import {
   OpportunityApiResponse, 
   validateOpportunityData 
 } from '../types/discovery';
-import { 
-  getMockOpportunities, 
-  getMockOpportunitiesByType, 
-  getMockOpportunitiesByRelevance, 
-  searchMockOpportunities 
-} from '../data/mockOpportunities';
 import { z } from 'zod';
 import rateLimit from 'express-rate-limit';
+// Import shared configuration and constants
+import {
+  PAGINATION_DEFAULTS,
+  HTTP_STATUS,
+  API_MESSAGES,
+  RATE_LIMIT_WINDOWS,
+  paginationSchema,
+  searchSchema
+} from '@oppo/shared';
 
 const router: Router = Router();
 const prisma = new PrismaClient();
@@ -24,24 +27,23 @@ const archivistService = new ArchivistService(prisma);
 const maintenanceService = new DataMaintenanceService(prisma);
 const exportService = new DataExportService(prisma);
 
-// Rate limiting for intensive operations
+// Rate limiting for intensive operations using shared configuration
 const heavyOperationLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: RATE_LIMIT_WINDOWS.FIFTEEN_MINUTES,
   max: 5, // Limit each IP to 5 requests per windowMs
-  message: 'Too many intensive operations, please try again later.'
+  message: API_MESSAGES.ERROR.RATE_LIMITED,
 });
 
-// Validation schemas
-const opportunityQuerySchema = z.object({
-  page: z.string().transform(Number).optional(),
-  limit: z.string().transform(Number).optional(),
+// Validation schemas using shared configuration
+const opportunityQuerySchema = paginationSchema.extend({
   status: z.string().optional(),
   minRelevanceScore: z.string().transform(Number).optional(),
   search: z.string().optional(),
   tags: z.string().optional(),
   starred: z.string().transform(val => val === 'true').optional(),
   deadlineAfter: z.string().transform(str => new Date(str)).optional(),
-  deadlineBefore: z.string().transform(str => new Date(str)).optional()
+  deadlineBefore: z.string().transform(str => new Date(str)).optional(),
+  type: z.string().optional() // Add type filter
 });
 
 const exportFiltersSchema = z.object({
@@ -69,19 +71,43 @@ router.get('/opportunities', async (req: Request, res: Response) => {
   try {
     const query = opportunityQuerySchema.parse(req.query);
     
-    // For now, use mock data since the database might not have opportunities yet
-    let opportunities: any[] = [];
+    // Query opportunities from database
+    const whereClause: any = {};
     
-    // Apply filters to mock data
+    // Apply search filter
     if (query.search) {
-      opportunities = searchMockOpportunities(query.search, query.limit || 50);
-    } else if (query.type) {
-      opportunities = getMockOpportunitiesByType(query.type, query.limit || 50);
-    } else if (query.minRelevanceScore) {
-      opportunities = getMockOpportunitiesByRelevance(query.minRelevanceScore, query.limit || 50);
-    } else {
-      opportunities = getMockOpportunities(query.limit || 50, ((query.page || 1) - 1) * (query.limit || 50));
+      whereClause.OR = [
+        { title: { contains: query.search, mode: 'insensitive' } },
+        { description: { contains: query.search, mode: 'insensitive' } },
+        { organization: { contains: query.search, mode: 'insensitive' } },
+        { tags: { has: query.search } }
+      ];
     }
+    
+    // Apply type filter
+    if (query.type) {
+      whereClause.category = { equals: query.type, mode: 'insensitive' };
+    }
+    
+    // Apply relevance score filter
+    if (query.minRelevanceScore) {
+      whereClause.relevanceScore = { gte: query.minRelevanceScore };
+    }
+
+    const opportunities = await prisma.opportunity.findMany({
+      where: whereClause,
+      take: query.limit || PAGINATION_DEFAULTS.LIMIT,
+      skip: ((query.page || PAGINATION_DEFAULTS.PAGE) - 1) * (query.limit || PAGINATION_DEFAULTS.LIMIT),
+      orderBy: [
+        { relevanceScore: 'desc' },
+        { createdAt: 'desc' }
+      ],
+      include: {
+        user: {
+          select: { name: true, email: true }
+        }
+      }
+    });
 
     // Apply additional filters
     if (query.deadlineBefore) {
@@ -98,34 +124,29 @@ router.get('/opportunities', async (req: Request, res: Response) => {
       );
     }
 
-    // Add IDs and timestamps to mock data
-    const opportunitiesWithIds = opportunities.map((opp, index) => ({
-      ...opp,
-      id: `mock-${Date.now()}-${index}`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }));
+    // Opportunities already have IDs and timestamps from database
 
-    const total = opportunitiesWithIds.length;
+    // Get total count for pagination
+    const total = await prisma.opportunity.count({ where: whereClause });
 
     const response: OpportunityApiResponse = {
       success: true,
-      message: 'Opportunities retrieved successfully',
-      data: opportunitiesWithIds,
+      message: API_MESSAGES.SUCCESS.FETCHED,
+      data: opportunities,
       pagination: {
-        page: query.page || 1,
-        limit: query.limit || 50,
+        page: query.page || PAGINATION_DEFAULTS.PAGE,
+        limit: query.limit || PAGINATION_DEFAULTS.LIMIT,
         total: total,
-        pages: Math.ceil(total / (query.limit || 50))
+        pages: Math.ceil(total / (query.limit || PAGINATION_DEFAULTS.LIMIT))
       }
     };
 
     res.json(response);
   } catch (error) {
     console.error('Error retrieving opportunities:', error);
-    res.status(500).json({
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message: 'Failed to retrieve opportunities',
+      message: API_MESSAGES.ERROR.SERVER_ERROR,
       data: null
     });
   }
@@ -139,14 +160,20 @@ router.get('/opportunities/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     
-    // For mock data, find by ID or return first opportunity
-    const allOpportunities = getMockOpportunities(1000, 0);
-    const opportunity = allOpportunities.find(opp => opp.title.toLowerCase().includes(id.toLowerCase())) || allOpportunities[0];
+    // Query opportunity from database by ID
+    const opportunity = await prisma.opportunity.findUnique({
+      where: { id },
+      include: {
+        user: {
+          select: { name: true, email: true }
+        }
+      }
+    });
     
     if (!opportunity) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         success: false,
-        message: 'Opportunity not found',
+        message: API_MESSAGES.ERROR.NOT_FOUND,
         data: null
       });
     }
@@ -303,20 +330,28 @@ router.delete('/opportunities/:id', async (req: Request, res: Response) => {
 router.get('/opportunities/high-relevance', async (req: Request, res: Response) => {
   try {
     const threshold = parseFloat(req.query.threshold as string) || 0.7;
-    const opportunities = getMockOpportunitiesByRelevance(threshold, 20);
-    
-    // Add IDs and timestamps to mock data
-    const opportunitiesWithIds = opportunities.map((opp, index) => ({
-      ...opp,
-      id: `mock-high-${Date.now()}-${index}`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }));
+    const opportunities = await prisma.opportunity.findMany({
+      where: {
+        relevanceScore: {
+          gte: threshold
+        }
+      },
+      take: 20,
+      orderBy: [
+        { relevanceScore: 'desc' },
+        { createdAt: 'desc' }
+      ],
+      include: {
+        user: {
+          select: { name: true, email: true }
+        }
+      }
+    });
 
     res.json({
       success: true,
       message: 'High relevance opportunities retrieved',
-      data: opportunitiesWithIds
+      data: opportunities
     });
   } catch (error) {
     console.error('Error retrieving high relevance opportunities:', error);

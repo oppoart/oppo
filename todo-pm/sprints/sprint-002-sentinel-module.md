@@ -120,7 +120,7 @@ The Sentinel module follows a modular, folder-based architecture for easy plugin
 
 ### 🎯 **Epic 2: Source-Specific Scrapers** (16 tasks)
 
-#### **Story 2.1: Art Portal Integration**
+#### **Story 2.1: BookmArt Portal Integration**
 - [x] **SEN-005a**: Create `scrapers/art-portals/artconnect.ts` - ArtConnect.com scraper ✅
   - Priority: **High**
   - Estimate: 3 hours

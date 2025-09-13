@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Play, Pause, Clock, Settings, BarChart3, Mail, CheckCircle, XCircle, AlertTriangle, RefreshCw, Target, Eye, Zap } from 'lucide-react';
 
 interface ReceivedEmail {
@@ -24,6 +25,7 @@ interface EmailAnalyzerProps {
 }
 
 export function EmailAnalyzer({ emails, selectedEmails, onUpdateEmailStatus }: EmailAnalyzerProps) {
+  const router = useRouter();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [autoAnalyzeEnabled, setAutoAnalyzeEnabled] = useState(true);
   const [analysisMode, setAnalysisMode] = useState('opportunities');
@@ -300,7 +302,7 @@ export function EmailAnalyzer({ emails, selectedEmails, onUpdateEmailStatus }: E
                     Analyze More Emails
                   </button>
                   <button 
-                    onClick={() => {/* TODO: Navigate to opportunities */}}
+                    onClick={() => router.push('/dashboard/opportunities')}
                     className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md font-medium"
                   >
                     View Opportunities

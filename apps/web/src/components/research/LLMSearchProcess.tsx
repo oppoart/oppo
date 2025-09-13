@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Brain, Zap, Sparkles, Cpu, Play, Pause, Clock, Settings, BarChart3 } from 'lucide-react';
 
 interface LLMSearchProcessProps {
@@ -8,6 +9,7 @@ interface LLMSearchProcessProps {
 }
 
 export function LLMSearchProcess({ queryBucket }: LLMSearchProcessProps) {
+  const router = useRouter();
   const [activeService, setActiveService] = useState('perplexity');
   const [isSearching, setIsSearching] = useState(false);
   const [scheduleEnabled, setScheduleEnabled] = useState(true);
@@ -277,7 +279,7 @@ export function LLMSearchProcess({ queryBucket }: LLMSearchProcessProps) {
                     Run New AI Search
                   </button>
                   <button 
-                    onClick={() => {/* TODO: Navigate to opportunities */}}
+                    onClick={() => router.push('/dashboard/opportunities')}
                     className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-medium"
                   >
                     View AI Insights

@@ -1,11 +1,19 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { queryGenerationService, analysisService } from '../services/ai-services';
 import { requireAuth } from '../middleware/auth';
 import { validate } from '../middleware/validation';
 import { z } from 'zod';
 
-const router = Router();
+// Extend Request interface to include user property
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id: string;
+    email: string;
+  };
+}
+
+const router: Router = Router();
 const prisma = new PrismaClient();
 
 // Validation schemas
@@ -36,7 +44,7 @@ const scoreOpportunitiesSchema = z.object({
 router.post('/analyze', 
   requireAuth, 
   validate({ body: runAnalysisSchema }),
-  async (req, res) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       const { artistProfileId, sources, maxQueries, priority } = req.body;
       
@@ -51,10 +59,11 @@ router.post('/analyze',
       });
 
       if (!profile || profile.user.id !== req.user?.id) {
-        return res.status(403).json({
+        res.status(403).json({
           success: false,
           error: 'Access denied to this profile'
         });
+        return;
       }
 
       // Convert Prisma profile to our service interface
@@ -105,7 +114,7 @@ router.post('/analyze',
 router.post('/generate-queries',
   requireAuth,
   validate({ body: generateQueriesSchema }),
-  async (req, res) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       const { artistProfileId, maxQueries, sourceTypes } = req.body;
       
@@ -120,10 +129,11 @@ router.post('/generate-queries',
       });
 
       if (!profile || profile.user.id !== req.user?.id) {
-        return res.status(403).json({
+        res.status(403).json({
           success: false,
           error: 'Access denied to this profile'
         });
+        return;
       }
 
       // Convert Prisma profile to our service interface
@@ -171,7 +181,7 @@ router.post('/generate-queries',
 router.post('/score-opportunities',
   requireAuth,
   validate({ body: scoreOpportunitiesSchema }),
-  async (req, res) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       const { artistProfileId, opportunityIds } = req.body;
       
@@ -186,10 +196,11 @@ router.post('/score-opportunities',
       });
 
       if (!profile || profile.user.id !== req.user?.id) {
-        return res.status(403).json({
+        res.status(403).json({
           success: false,
           error: 'Access denied to this profile'
         });
+        return;
       }
 
       // Convert Prisma profile to our service interface
@@ -204,20 +215,39 @@ router.post('/score-opportunities',
         bio: profile.bio || undefined
       };
 
-      // Fetch the opportunities from database
-      // TODO: This assumes opportunities are stored in a table - adjust based on actual schema
-      const opportunities = await prisma.opportunity?.findMany({
-        where: { id: { in: opportunityIds } }
-      }) || [];
+      // Fetch the opportunities from database using the actual Opportunity model
+      const opportunities = await prisma.opportunity.findMany({
+        where: { 
+          id: { in: opportunityIds } 
+        },
+        include: {
+          matches: true,
+          sourceLinks: {
+            include: {
+              source: true
+            }
+          }
+        }
+      });
 
       if (opportunities.length === 0) {
-        return res.json({
+        res.json({
           success: true,
           data: { scores: [] }
         });
+        return;
       }
 
-      const scores = await analysisService.scoreOpportunities(opportunities, artistProfile);
+      // Transform opportunities to match expected interface
+      const transformedOpportunities = opportunities.map(opp => ({
+        ...opp,
+        deadline: opp.deadline ? opp.deadline.toISOString() : undefined,
+        location: opp.location || undefined,
+        organization: opp.organization || undefined,
+        amount: opp.amount || undefined
+      }));
+      
+      const scores = await analysisService.scoreOpportunities(transformedOpportunities, artistProfile);
 
       res.json({
         success: true,
@@ -237,7 +267,7 @@ router.post('/score-opportunities',
  * GET /api/analyst/stats/:profileId
  * Get analysis statistics for an artist profile
  */
-router.get('/stats/:profileId', requireAuth, async (req, res) => {
+router.get('/stats/:profileId', requireAuth, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { profileId } = req.params;
     

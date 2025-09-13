@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Search, Globe, Zap, Shield, Play, Pause, Clock, Settings, BarChart3 } from 'lucide-react';
-import { searchApi } from '@/lib/api';
+import { searchApi, deduplicationApi, profileApi } from '@/lib/api';
 
 interface SearchProcessProps {
   queryBucket: string[];
@@ -31,6 +31,26 @@ export function SearchProcess({ queryBucket }: SearchProcessProps) {
     }>;
   } | null>(null);
   const [searchCompleted, setSearchCompleted] = useState(false);
+  const [isPipelineRunning, setIsPipelineRunning] = useState(false);
+  const [pipelineResults, setPipelineResults] = useState(null);
+  const [selectedProfile, setSelectedProfile] = useState(null);
+  const [availableProfiles, setAvailableProfiles] = useState([]);
+
+  // Load available profiles
+  useEffect(() => {
+    const loadProfiles = async () => {
+      try {
+        const profiles = await profileApi.getProfiles();
+        setAvailableProfiles(profiles);
+        if (profiles.length > 0 && !selectedProfile) {
+          setSelectedProfile(profiles[0].id);
+        }
+      } catch (error) {
+        console.error('Failed to load profiles:', error);
+      }
+    };
+    loadProfiles();
+  }, [selectedProfile]);
 
   // Load schedule settings from localStorage
   useEffect(() => {
@@ -180,14 +200,24 @@ export function SearchProcess({ queryBucket }: SearchProcessProps) {
                   resultsFound = searchResult.results.length;
                   break;
                 case 'yandex':
-                  // TODO: Implement Yandex search when available
-                  console.log('Yandex search not implemented yet');
-                  resultsFound = Math.floor(Math.random() * 10) + 3; // Placeholder
+                  try {
+                    searchResult = await searchApi.yandexSearch(currentQuery, { num: 20 });
+                    resultsFound = searchResult.results.length;
+                  } catch (error) {
+                    console.warn('Yandex search API not available, falling back to Google:', error);
+                    searchResult = await searchApi.searchArtOpportunities(currentQuery, { num: 20 });
+                    resultsFound = searchResult.results.length;
+                  }
                   break;
                 case 'bing':
-                  // TODO: Implement Bing search when available  
-                  console.log('Bing search not implemented yet');
-                  resultsFound = Math.floor(Math.random() * 8) + 2; // Placeholder
+                  try {
+                    searchResult = await searchApi.bingSearch(currentQuery, { num: 20 });
+                    resultsFound = searchResult.results.length;
+                  } catch (error) {
+                    console.warn('Bing search API not available, falling back to Google:', error);
+                    searchResult = await searchApi.searchArtOpportunities(currentQuery, { num: 20 });
+                    resultsFound = searchResult.results.length;
+                  }
                   break;
                 case 'duckduckgo':
                   // DuckDuckGo is shown as paused in UI
@@ -205,14 +235,15 @@ export function SearchProcess({ queryBucket }: SearchProcessProps) {
                 resultsFound: prev.resultsFound + resultsFound,
                 searchLog: [...prev.searchLog, {
                   query: currentQuery,
-                  step: 'Completed',
+                  step: `Found ${resultsFound} search results`,
                   results: resultsFound,
-                  timestamp: new Date()
+                  timestamp: new Date(),
+                  searchResults: searchResult.results // Store actual search results
                 }]
               } : null);
 
-              // Store results for future use (could save to context/database)
-              console.log(`Found ${resultsFound} results for "${currentQuery}"`);
+              // Log for debugging
+              console.log(`Found ${resultsFound} search results for "${currentQuery}"`, searchResult.results);
               
             } catch (error) {
               console.error(`Search failed for "${currentQuery}":`, error);
@@ -256,6 +287,59 @@ export function SearchProcess({ queryBucket }: SearchProcessProps) {
     setIsSearching(false);
     setSearchCompleted(false);
     setSearchProgress(null);
+    setIsPipelineRunning(false);
+    setPipelineResults(null);
+  };
+
+  const handleStartPipeline = async () => {
+    if (!selectedProfile || !searchProgress?.searchLog.length) {
+      console.error('No profile selected or no search results available');
+      return;
+    }
+
+    setIsPipelineRunning(true);
+    
+    try {
+      console.log('🚀 Starting full pipeline processing...');
+      
+      // Collect all search results from completed searches
+      const allSearchResults = searchProgress.searchLog
+        .filter(log => log.searchResults)
+        .flatMap(log => log.searchResults);
+
+      if (allSearchResults.length === 0) {
+        throw new Error('No search results available for processing');
+      }
+
+      console.log(`Processing ${allSearchResults.length} search results through full pipeline`);
+
+      // Use the new external data pipeline with organization scraping
+      const result = await searchApi.processSearchResults(allSearchResults, {
+        enableScraping: true,
+        enableValidation: true,
+        enableDeduplication: true,
+        organizationScraping: true,
+        profileId: selectedProfile,
+        pipeline: {
+          qualityThreshold: 60,
+          maxConcurrent: 3,
+          enableMetadataEnrichment: true
+        }
+      });
+
+      if (result.success) {
+        setPipelineResults(result.data);
+        console.log('✅ Pipeline processing completed:', result.data);
+      } else {
+        throw new Error('Pipeline processing failed');
+      }
+
+    } catch (error) {
+      console.error('Pipeline processing error:', error);
+      alert('Pipeline processing failed. Please try again.');
+    } finally {
+      setIsPipelineRunning(false);
+    }
   };
 
   return (
@@ -357,6 +441,112 @@ export function SearchProcess({ queryBucket }: SearchProcessProps) {
                   Add queries to the bucket to start automated searching
                 </p>
               </div>
+            ) : pipelineResults ? (
+              /* Pipeline Results View */
+              <div className="h-full flex flex-col">
+                <div className="mb-4">
+                  <h4 className="text-lg font-semibold text-green-800 mb-2">🎯 Pipeline Processing Complete!</h4>
+                  <div className="grid grid-cols-4 gap-4 text-sm">
+                    <div className="bg-blue-50 p-3 rounded border">
+                      <div className="font-semibold text-blue-800">Search Results</div>
+                      <div className="text-xl font-bold text-blue-600">{pipelineResults.finalStats.searchResultsProcessed}</div>
+                    </div>
+                    <div className="bg-purple-50 p-3 rounded border">
+                      <div className="font-semibold text-purple-800">Successfully Scraped</div>
+                      <div className="text-xl font-bold text-purple-600">{pipelineResults.finalStats.successfullyScrapped}</div>
+                    </div>
+                    <div className="bg-yellow-50 p-3 rounded border">
+                      <div className="font-semibold text-yellow-800">Duplicates Removed</div>
+                      <div className="text-xl font-bold text-yellow-600">{pipelineResults.finalStats.duplicatesRemoved}</div>
+                    </div>
+                    <div className="bg-green-50 p-3 rounded border">
+                      <div className="font-semibold text-green-800">High-Value Opportunities</div>
+                      <div className="text-xl font-bold text-green-600">{pipelineResults.finalStats.highValueOpportunities}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-hidden">
+                  <h5 className="text-sm font-medium text-gray-700 mb-2">High-Value Opportunities Found:</h5>
+                  <div className="bg-white rounded-md border h-full overflow-y-auto">
+                    <div className="p-3 space-y-3">
+                      {pipelineResults.highValueOpportunities.slice(0, 10).map((opp: any, index: number) => {
+                        const analysis = pipelineResults.analysisResults.find((r: any) => r.opportunity.url === opp.url);
+                        return (
+                          <div key={index} className="border-b border-gray-100 pb-3 last:border-b-0">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h6 className="font-medium text-gray-900 mb-1">{opp.title}</h6>
+                                <p className="text-sm text-gray-600 mb-2 line-clamp-2">{opp.description}</p>
+                                <div className="flex items-center gap-4 text-xs text-gray-500">
+                                  {opp.organization && <span>🏢 {opp.organization}</span>}
+                                  {opp.amount && <span>💰 {opp.amount}</span>}
+                                  {opp.deadline && <span>⏰ {new Date(opp.deadline).toLocaleDateString()}</span>}
+                                </div>
+                              </div>
+                              <div className="ml-4 text-right">
+                                {analysis && (
+                                  <div className="text-sm">
+                                    <div className={`font-bold ${
+                                      analysis.relevanceScore.recommendation === 'high' ? 'text-green-600' :
+                                      analysis.relevanceScore.recommendation === 'medium' ? 'text-yellow-600' :
+                                      'text-blue-600'
+                                    }`}>
+                                      {analysis.relevanceScore.overallScore}/100
+                                    </div>
+                                    <div className="text-xs text-gray-500 capitalize">
+                                      {analysis.relevanceScore.recommendation}
+                                    </div>
+                                  </div>
+                                )}
+                                <a 
+                                  href={opp.url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-blue-600 hover:underline mt-1 block"
+                                >
+                                  View Details →
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex gap-2 justify-center">
+                  <button 
+                    onClick={handleResetSearch}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-medium"
+                  >
+                    Start New Search
+                  </button>
+                  <button 
+                    onClick={() => {
+                      window.location.href = '/dashboard/opportunities';
+                    }}
+                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md font-medium"
+                  >
+                    Save & View All Opportunities
+                  </button>
+                </div>
+              </div>
+            ) : isPipelineRunning ? (
+              /* Pipeline Processing View */
+              <div className="h-full flex flex-col items-center justify-center">
+                <div className="text-center mb-6">
+                  <div className="animate-spin w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+                  <h4 className="text-lg font-semibold text-orange-800 mb-2">🔧 Processing Complete Pipeline</h4>
+                  <p className="text-gray-600 text-sm">
+                    Scraping web pages → AI analysis → Duplicate detection...
+                  </p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    This may take 30-60 seconds depending on the number of results
+                  </p>
+                </div>
+              </div>
             ) : searchCompleted && searchProgress ? (
               <div className="h-full flex flex-col">
                 {/* Completion Header */}
@@ -369,15 +559,18 @@ export function SearchProcess({ queryBucket }: SearchProcessProps) {
                 </div>
 
                 {/* Results Summary */}
-                <div className="mb-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-green-600 mb-2">
-                      {searchProgress.resultsFound} Opportunities Found
+                    <div className="text-3xl font-bold text-blue-600 mb-2">
+                      {searchProgress.resultsFound} Search Results Found
                     </div>
-                    <div className="flex items-center justify-center gap-2 text-green-700">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="font-medium">All verified and added to opportunities</span>
+                    <div className="flex items-center justify-center gap-2 text-blue-700">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <span className="font-medium">Ready for scraping and analysis</span>
                     </div>
+                  </div>
+                  <div className="mt-3 text-sm text-blue-600 bg-blue-100 p-3 rounded">
+                    <strong>Next Steps:</strong> These results will be scraped, analyzed for relevance, and the most promising opportunities will be saved to your opportunities database.
                   </div>
                 </div>
 
@@ -405,13 +598,13 @@ export function SearchProcess({ queryBucket }: SearchProcessProps) {
                           <div className="flex-1">
                             <div className="text-sm font-medium text-gray-800 mb-1">"{log.query}"</div>
                             <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                              <span className="text-xs text-green-600 font-medium">Verified & Added</span>
+                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                              <span className="text-xs text-blue-600 font-medium">Search Completed</span>
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="text-sm font-bold text-green-600">{log.results}</div>
-                            <div className="text-xs text-gray-500">opportunities</div>
+                            <div className="text-sm font-bold text-blue-600">{log.results}</div>
+                            <div className="text-xs text-gray-500">results found</div>
                           </div>
                         </div>
                       ))}
@@ -420,19 +613,48 @@ export function SearchProcess({ queryBucket }: SearchProcessProps) {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="mt-4 flex gap-2 justify-center">
-                  <button 
-                    onClick={handleResetSearch}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-medium"
-                  >
-                    Run New Search
-                  </button>
-                  <button 
-                    onClick={() => {/* TODO: Navigate to opportunities */}}
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md font-medium"
-                  >
-                    View Opportunities
-                  </button>
+                <div className="mt-4 space-y-4">
+                  {/* Profile Selection */}
+                  {availableProfiles.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm font-medium text-gray-700">Profile:</label>
+                      <select
+                        value={selectedProfile || ''}
+                        onChange={(e) => setSelectedProfile(e.target.value)}
+                        className="px-3 py-1 border rounded text-sm"
+                      >
+                        {availableProfiles.map(profile => (
+                          <option key={profile.id} value={profile.id}>
+                            {profile.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  
+                  <div className="flex gap-2 justify-center">
+                    <button 
+                      onClick={handleResetSearch}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-medium"
+                    >
+                      Run New Search
+                    </button>
+                    <button 
+                      onClick={handleStartPipeline}
+                      className="bg-orange-600 hover:bg-orange-700 disabled:bg-orange-300 text-white px-6 py-2 rounded-md font-medium"
+                      disabled={isPipelineRunning || !selectedProfile || !searchProgress?.searchLog.length}
+                    >
+                      {isPipelineRunning ? 'Processing Pipeline...' : 'Start Full Pipeline'}
+                    </button>
+                    <button 
+                      onClick={() => {
+                        window.location.href = '/dashboard/opportunities';
+                      }}
+                      className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md font-medium"
+                    >
+                      View Opportunities
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : isSearching && searchProgress ? (

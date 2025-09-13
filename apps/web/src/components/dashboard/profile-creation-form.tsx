@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { ARTIST_CATEGORIES, ArtistProfile, CreateProfileRequest } from '@/types/profile';
 import { profileApi } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 const createProfileSchema = z.object({
   name: z.string().min(1, 'Profile name is required').max(50, 'Profile name must be less than 50 characters'),
@@ -25,6 +26,7 @@ interface ProfileCreationFormProps {
 
 export function ProfileCreationForm({ onProfileCreated }: ProfileCreationFormProps) {
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   const form = useForm<CreateProfileForm>({
     resolver: zodResolver(createProfileSchema),
@@ -46,9 +48,28 @@ export function ProfileCreationForm({ onProfileCreated }: ProfileCreationFormPro
       const newProfile = await profileApi.createProfile(request);
       onProfileCreated(newProfile);
       form.reset();
-    } catch (error) {
+      
+      toast({
+        title: 'Profile created successfully!',
+        description: `${newProfile.name} has been added to your profiles.`,
+        variant: 'default',
+      });
+    } catch (error: any) {
       console.error('Error creating profile:', error);
-      // TODO: Add proper error handling/toast
+      
+      // Extract meaningful error message
+      let errorMessage = 'Failed to create profile. Please try again.';
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      toast({
+        title: 'Error creating profile',
+        description: errorMessage,
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }

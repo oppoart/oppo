@@ -1,5 +1,14 @@
 import { z } from 'zod';
 import dotenv from 'dotenv';
+import { 
+  getConfig, 
+  validateEnvironment as validateSharedEnv,
+  API_TIMEOUTS,
+  AUTH_RATE_LIMITS,
+  RATE_LIMIT_WINDOWS,
+  HTTP_STATUS,
+  API_MESSAGES
+} from '../../../../packages/shared/src';
 
 // Load environment variables
 dotenv.config();
@@ -29,6 +38,22 @@ const envSchema = z.object({
   
   // External APIs 
   FIRECRAWL_API_KEY: z.string().optional(),
+  
+  // Google Search API Configuration
+  GOOGLE_CUSTOM_SEARCH_API_KEY: z.string().optional(),
+  GOOGLE_SEARCH_ENGINE_ID: z.string().optional(),
+
+  // Email Services (for password reset emails)
+  SENDGRID_API_KEY: z.string().optional(),
+  RESEND_API_KEY: z.string().optional(),
+  FROM_EMAIL: z.string().email().optional(),
+  
+  // SMTP Configuration (fallback email service)
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.string().transform(Number).optional(),
+  SMTP_SECURE: z.string().transform(val => val === 'true').optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
 
   // Rate Limiting
   RATE_LIMIT_WINDOW_MS: z.string().transform(Number).default('900000'), // 15 minutes
@@ -125,6 +150,14 @@ export const aiConfig = {
 export function validateEnvironment() {
   console.log('🔍 Validating environment configuration...');
   
+  // First validate using shared configuration validator
+  try {
+    validateSharedEnv();
+  } catch (error) {
+    console.error('Shared configuration validation failed:', error);
+    throw error;
+  }
+  
   // Check required environment variables
   const requiredForProduction = ['JWT_SECRET', 'DATABASE_URL'];
   
@@ -152,3 +185,6 @@ export function validateEnvironment() {
   
   return env;
 }
+
+// Export shared configuration for use in the application
+export const sharedConfig = getConfig();

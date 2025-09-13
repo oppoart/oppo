@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Filter, ChevronDown, Calendar, MapPin, Loader2, Plus, ThumbsUp, ThumbsDown, Eye, BookOpen, RefreshCw } from 'lucide-react';
+import { Search, Filter, ChevronDown, Calendar, MapPin, Loader2, Plus, ThumbsUp, ThumbsDown, Eye, BookOpen, RefreshCw, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,9 +10,11 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Opportunity } from '@/types/analyst';
-import { opportunityApi } from '@/lib/api';
+import { opportunityApi, liaisonApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { addOpportunityToTasks, isOpportunityInTasks } from '@/utils/tasks';
+import { ExportDialog, ExportFilters, ExportOptions } from '@/components/opportunities/ExportDialog';
+import { useWebSocket } from '@/lib/websocket';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -36,6 +38,7 @@ export default function OpportunitiesPage() {
   const [likedOpportunities, setLikedOpportunities] = useState<Set<string>>(new Set());
   const [dislikedOpportunities, setDislikedOpportunities] = useState<Set<string>>(new Set());
   const [backlogOpportunities, setBacklogOpportunities] = useState<Set<string>>(new Set());
+  const [isExporting, setIsExporting] = useState(false);
 
   // Load backlog state from tasks on mount
   useEffect(() => {
@@ -55,6 +58,49 @@ export default function OpportunitiesPage() {
   }, [opportunities]);
   const [isFetching, setIsFetching] = useState(false);
   const { toast } = useToast();
+
+  // WebSocket integration for real-time updates
+  const { connected } = useWebSocket(undefined, {
+    autoConnect: true,
+    onConnected: () => {
+      console.log('Connected to OPPO WebSocket server');
+    },
+    onDisconnected: () => {
+      console.log('Disconnected from OPPO WebSocket server');
+    },
+    onOpportunityAdded: (opportunity: Opportunity) => {
+      console.log('New opportunity added:', opportunity);
+      setOpportunities(prev => [opportunity, ...prev]);
+      toast({
+        title: 'New opportunity found!',
+        description: `${opportunity.title} has been added to your opportunities.`,
+      });
+    },
+    onOpportunityUpdated: (opportunity: Opportunity) => {
+      console.log('Opportunity updated:', opportunity);
+      setOpportunities(prev => 
+        prev.map(opp => opp.id === opportunity.id ? opportunity : opp)
+      );
+      toast({
+        title: 'Opportunity updated',
+        description: `${opportunity.title} has been updated.`,
+      });
+    },
+    onSyncCompleted: (data: any) => {
+      console.log('Sync completed:', data);
+      if (data.count > 0) {
+        toast({
+          title: 'Sync completed',
+          description: `${data.count} opportunities were synchronized.`,
+        });
+        // Refresh the list to show any new opportunities
+        loadOpportunities(true);
+      }
+    },
+    onError: (error: Error) => {
+      console.error('WebSocket error:', error);
+    }
+  });
 
   // Infinite scroll handler
   const handleScroll = useCallback(() => {
@@ -208,91 +254,149 @@ export default function OpportunitiesPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
-  // Toggle like
-  const toggleLike = (opportunityId: string) => {
-    setLikedOpportunities(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(opportunityId)) {
-        newSet.delete(opportunityId);
-        toast({
-          title: 'Removed from likes',
-          description: 'Opportunity removed from your liked list.',
-        });
-      } else {
-        newSet.add(opportunityId);
-        // Remove from disliked if it was there
-        setDislikedOpportunities(prevDisliked => {
-          const newDislikedSet = new Set(prevDisliked);
-          newDislikedSet.delete(opportunityId);
-          return newDislikedSet;
-        });
-        toast({
-          title: 'Added to likes',
-          description: 'Opportunity added to your liked list.',
+  // Toggle like with feedback capture
+  const toggleLike = async (opportunityId: string) => {
+    const isCurrentlyLiked = likedOpportunities.has(opportunityId);
+    
+    try {
+      if (!isCurrentlyLiked) {
+        // Capture feedback for accepting/liking the opportunity
+        await liaisonApi.captureFeedback({
+          opportunityId,
+          action: 'accepted',
+          reason: 'User liked the opportunity'
         });
       }
-      return newSet;
-    });
+
+      setLikedOpportunities(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(opportunityId)) {
+          newSet.delete(opportunityId);
+          toast({
+            title: 'Removed from likes',
+            description: 'Opportunity removed from your liked list.',
+          });
+        } else {
+          newSet.add(opportunityId);
+          // Remove from disliked if it was there
+          setDislikedOpportunities(prevDisliked => {
+            const newDislikedSet = new Set(prevDisliked);
+            newDislikedSet.delete(opportunityId);
+            return newDislikedSet;
+          });
+          toast({
+            title: 'Added to likes',
+            description: 'Opportunity added to your liked list and marked as accepted.',
+          });
+        }
+        return newSet;
+      });
+    } catch (error: any) {
+      console.error('Error capturing feedback:', error);
+      toast({
+        title: 'Feedback error',
+        description: 'Failed to capture feedback, but like status updated locally.',
+        variant: 'destructive',
+      });
+    }
   };
 
-  // Toggle dislike
-  const toggleDislike = (opportunityId: string) => {
-    setDislikedOpportunities(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(opportunityId)) {
-        newSet.delete(opportunityId);
-        toast({
-          title: 'Removed from dislikes',
-          description: 'Opportunity removed from your disliked list.',
-        });
-      } else {
-        newSet.add(opportunityId);
-        // Remove from liked if it was there
-        setLikedOpportunities(prevLiked => {
-          const newLikedSet = new Set(prevLiked);
-          newLikedSet.delete(opportunityId);
-          return newLikedSet;
-        });
-        toast({
-          title: 'Added to dislikes',
-          description: 'Opportunity added to your disliked list.',
+  // Toggle dislike with feedback capture
+  const toggleDislike = async (opportunityId: string) => {
+    const isCurrentlyDisliked = dislikedOpportunities.has(opportunityId);
+    
+    try {
+      if (!isCurrentlyDisliked) {
+        // Capture feedback for rejecting/disliking the opportunity
+        await liaisonApi.captureFeedback({
+          opportunityId,
+          action: 'rejected',
+          reason: 'User disliked the opportunity'
         });
       }
-      return newSet;
-    });
+
+      setDislikedOpportunities(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(opportunityId)) {
+          newSet.delete(opportunityId);
+          toast({
+            title: 'Removed from dislikes',
+            description: 'Opportunity removed from your disliked list.',
+          });
+        } else {
+          newSet.add(opportunityId);
+          // Remove from liked if it was there
+          setLikedOpportunities(prevLiked => {
+            const newLikedSet = new Set(prevLiked);
+            newLikedSet.delete(opportunityId);
+            return newLikedSet;
+          });
+          toast({
+            title: 'Added to dislikes',
+            description: 'Opportunity added to your disliked list and marked as rejected.',
+          });
+        }
+        return newSet;
+      });
+    } catch (error: any) {
+      console.error('Error capturing feedback:', error);
+      toast({
+        title: 'Feedback error',
+        description: 'Failed to capture feedback, but dislike status updated locally.',
+        variant: 'destructive',
+      });
+    }
   };
 
-  // Toggle backlog
-  const toggleBacklog = (opportunityId: string) => {
+  // Toggle backlog with feedback capture
+  const toggleBacklog = async (opportunityId: string) => {
     const opportunity = opportunities.find(opp => opp.id === opportunityId);
     if (!opportunity) return;
 
-    if (backlogOpportunities.has(opportunityId)) {
-      // Remove from backlog (this would require removing from tasks)
-      setBacklogOpportunities(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(opportunityId);
-        return newSet;
-      });
-      toast({
-        title: 'Removed from backlog',
-        description: 'Opportunity removed from your backlog. Note: Task still exists in Task Management.',
-        variant: 'default',
-      });
-    } else {
-      // Add to backlog via tasks
-      const added = addOpportunityToTasks(opportunity);
-      if (added) {
-        setBacklogOpportunities(prev => new Set(prev).add(opportunityId));
+    try {
+      if (backlogOpportunities.has(opportunityId)) {
+        // Remove from backlog (this would require removing from tasks)
+        setBacklogOpportunities(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(opportunityId);
+          return newSet;
+        });
         toast({
-          title: 'Added to backlog',
-          description: 'Opportunity added to your task backlog. Check Task Management to track progress.',
+          title: 'Removed from backlog',
+          description: 'Opportunity removed from your backlog. Note: Task still exists in Task Management.',
+          variant: 'default',
         });
       } else {
+        // Add to backlog via tasks and capture feedback
+        const added = addOpportunityToTasks(opportunity);
+        if (added) {
+          // Capture feedback for saving the opportunity
+          await liaisonApi.captureFeedback({
+            opportunityId,
+            action: 'saved',
+            reason: 'User added opportunity to backlog for later review'
+          });
+
+          setBacklogOpportunities(prev => new Set(prev).add(opportunityId));
+          toast({
+            title: 'Added to backlog',
+            description: 'Opportunity saved to your task backlog. Check Task Management to track progress.',
+          });
+        } else {
+          toast({
+            title: 'Already in backlog',
+            description: 'This opportunity is already in your task backlog.',
+            variant: 'default',
+          });
+        }
+      }
+    } catch (error: any) {
+      console.error('Error capturing feedback:', error);
+      // Still show success message since the backlog action worked
+      if (!backlogOpportunities.has(opportunityId)) {
         toast({
-          title: 'Already in backlog',
-          description: 'This opportunity is already in your task backlog.',
-          variant: 'default',
+          title: 'Added to backlog',
+          description: 'Opportunity added to backlog (feedback capture failed).',
         });
       }
     }
@@ -301,6 +405,38 @@ export default function OpportunitiesPage() {
   // View details
   const viewDetails = (opportunity: Opportunity) => {
     router.push(`/dashboard/opportunities/${opportunity.id}`);
+  };
+
+  // Export opportunities using liaison API
+  const handleExport = async (exportFilters: ExportFilters, options: ExportOptions) => {
+    setIsExporting(true);
+    try {
+      const blob = await liaisonApi.exportOpportunities(exportFilters, options);
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = options.filename || `opportunities_${new Date().toISOString().split('T')[0]}.${options.format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: 'Export completed',
+        description: `Successfully exported opportunities as ${options.format.toUpperCase()}.`,
+      });
+    } catch (error: any) {
+      console.error('Export error:', error);
+      toast({
+        title: 'Export failed',
+        description: error.message || 'Failed to export opportunities',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   // Format date
@@ -341,6 +477,16 @@ export default function OpportunitiesPage() {
         )}
         {isFetching ? 'Fetching...' : 'Fetch New'}
       </Button>
+      <ExportDialog
+        trigger={
+          <Button variant="outline" disabled={isExporting}>
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
+        }
+        onExport={handleExport}
+        isExporting={isExporting}
+      />
       <Button variant="outline" onClick={clearFilters}>
         Clear Filters
       </Button>

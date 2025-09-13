@@ -2,6 +2,12 @@ import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
 import { Prisma } from '@prisma/client';
 import { env } from '../config/env';
+import { errorHandler as newErrorHandler } from '../lib/errors/ErrorHandler';
+import { metricsCollector } from '../lib/monitoring/MetricsCollector';
+import { performanceTracker } from '../lib/monitoring/PerformanceTracker';
+import { securityEventLogger } from '../lib/security/SecurityEventLogger';
+import { threatMonitor } from '../lib/security/monitors/ThreatMonitor';
+import { logger } from '../lib/logging/Logger';
 
 // Standard error response interface
 export interface ErrorResponse {
@@ -75,111 +81,105 @@ export class InternalServerError extends AppError {
   }
 }
 
-// Error handler middleware
-export const errorHandler = (
+// Enhanced error handler middleware using the new comprehensive system
+export const errorHandler = newErrorHandler.handleError;
+
+// Legacy error handler for backward compatibility
+export const legacyErrorHandler = (
   err: Error | AppError,
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  // Log the error
-  console.error(`[${new Date().toISOString()}] Error:`, {
-    message: err.message,
-    stack: err.stack,
-    path: req.path,
-    method: req.method,
-    body: req.body,
-    query: req.query,
-    params: req.params,
-  });
+  // Use the comprehensive error handler instead
+  return newErrorHandler.handleError(err, req, res, next);
+};
 
-  let statusCode = 500;
-  let message = 'Something went wrong!';
-  let code = 'INTERNAL_ERROR';
-  let errors: string[] | Record<string, string> | undefined;
-
-  // Handle different error types
-  if (err instanceof AppError) {
-    // Custom application errors
-    statusCode = err.statusCode;
-    message = err.message;
-    code = err.code || 'APP_ERROR';
+// Security-aware middleware that checks for threats before processing
+export const securityAwareHandler = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  const threatAnalysis = threatMonitor.analyzeRequest(req);
+  
+  if (threatAnalysis.shouldBlock) {
+    securityEventLogger.logMaliciousRequest(
+      'REQUEST_BLOCKED',
+      `Request blocked due to threat analysis: ${threatAnalysis.threats.map(t => t.type).join(', ')}`,
+      req
+    );
     
-    if (err instanceof ValidationError) {
-      errors = err.errors;
-    }
-  } else if (err instanceof ZodError) {
-    // Zod validation errors
-    statusCode = 400;
-    message = 'Validation failed';
-    code = 'VALIDATION_ERROR';
-    errors = err.errors.map(e => {
-      const path = e.path.join('.');
-      return `${path}: ${e.message}`;
+    res.status(403).json({
+      success: false,
+      message: 'Request blocked for security reasons',
+      code: 'SECURITY_BLOCK',
+      timestamp: new Date().toISOString(),
+      path: req.path,
+      method: req.method,
     });
-  } else if (err instanceof Prisma.PrismaClientKnownRequestError) {
-    // Prisma database errors
-    switch (err.code) {
-      case 'P2002':
-        statusCode = 409;
-        message = 'A record with this value already exists';
-        code = 'DUPLICATE_ENTRY';
-        break;
-      case 'P2025':
-        statusCode = 404;
-        message = 'Record not found';
-        code = 'NOT_FOUND';
-        break;
-      case 'P2003':
-        statusCode = 400;
-        message = 'Foreign key constraint failed';
-        code = 'FOREIGN_KEY_ERROR';
-        break;
-      default:
-        statusCode = 400;
-        message = 'Database operation failed';
-        code = 'DATABASE_ERROR';
+    return;
+  }
+  
+  // Log high-risk requests for monitoring
+  if (threatAnalysis.riskScore > 50) {
+    securityEventLogger.logSuspiciousActivity(
+      'High risk request detected',
+      threatAnalysis.threats.map(t => t.type),
+      req
+    );
+  }
+  
+  next();
+};
+
+// Performance tracking middleware
+export const performanceTrackingHandler = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const measurementId = performanceTracker.start({
+    name: 'http_request',
+    labels: {
+      method: req.method,
+      path: req.path,
+    },
+  });
+  
+  // Store measurement ID in request for cleanup
+  (req as any).performanceMeasurementId = measurementId;
+  
+  // Track when response finishes
+  res.on('finish', () => {
+    const measurement = performanceTracker.end(measurementId);
+    
+    if (measurement) {
+      // Record HTTP metrics
+      metricsCollector.recordHttpRequest(
+        req.method,
+        req.path,
+        res.statusCode,
+        measurement.duration
+      );
+      
+      // Log slow requests
+      if (measurement.duration > 1000) {
+        // performanceTracker.logSlowRequest(
+        //   req.method,
+        //   req.path,
+        //   measurement.duration
+        // ); // Method not implemented
+        logger.warn('Slow request detected', {
+          method: req.method,
+          path: req.path,
+          duration: measurement.duration
+        });
+      }
     }
-  } else if (err instanceof Prisma.PrismaClientValidationError) {
-    statusCode = 400;
-    message = 'Invalid data provided';
-    code = 'VALIDATION_ERROR';
-  } else if (err instanceof Prisma.PrismaClientInitializationError) {
-    statusCode = 503;
-    message = 'Database connection failed';
-    code = 'DATABASE_CONNECTION_ERROR';
-  } else if (err.name === 'JsonWebTokenError') {
-    statusCode = 401;
-    message = 'Invalid token';
-    code = 'INVALID_TOKEN';
-  } else if (err.name === 'TokenExpiredError') {
-    statusCode = 401;
-    message = 'Token expired';
-    code = 'TOKEN_EXPIRED';
-  }
-
-  // Build error response
-  const errorResponse: ErrorResponse = {
-    success: false,
-    message,
-    code,
-    timestamp: new Date().toISOString(),
-    path: req.path,
-    method: req.method,
-  };
-
-  // Add errors array if present
-  if (errors) {
-    errorResponse.errors = errors;
-  }
-
-  // Add stack trace in development
-  if (env.NODE_ENV === 'development') {
-    errorResponse.stack = err.stack || undefined;
-  }
-
-  // Send error response
-  res.status(statusCode).json(errorResponse);
+  });
+  
+  next();
 };
 
 // Async error catcher utility

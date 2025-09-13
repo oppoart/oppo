@@ -1,165 +1,148 @@
-import { BaseDiscoverer } from '../../core/BaseDiscoverer';
+import { BaseSocialMediaScraper } from '../../core/BaseSocialMediaScraper';
 import { DiscoveryContext } from '../../core/interfaces';
 import { OpportunityData } from '../../../../../apps/backend/src/types/discovery';
-import { chromium, Browser, Page, BrowserContext } from 'playwright';
+import { Browser, Page, BrowserContext } from 'playwright';
 import { DataExtractor, RawData } from '../../processors/DataExtractor';
 import { DataCleaner } from '../../processors/DataCleaner';
 
-/**
- * LinkedIn scraper configuration
- */
-interface LinkedInConfig {
-  sessionCookies?: string;
-  email?: string;
-  password?: string;
-  searchTerms: string[];
-  jobSearchTerms: string[];
-  groupsToMonitor: string[];
-  companiesPagesToMonitor: string[];
-  maxPostsPerSearch: number;
-  maxJobsPerSearch: number;
-  useHeadless: boolean;
-  scrollTimeout: number;
-  postDelay: number;
-  loginRequired: boolean;
-}
+// Import new modular components
+import { BrowserManager, BrowserInstance } from '../../utils/BrowserManager';
+import { LinkedInAuthenticator, LinkedInCredentials } from '../../services/LinkedInAuthenticator';
+import { LinkedInContentExtractor } from '../../utils/LinkedInContentExtractor';
+import { LinkedInDataValidator } from '../../utils/LinkedInDataValidator';
+import {
+  LinkedInConfig,
+  LinkedInContent,
+  LinkedInSearchContext,
+  SecurityChallenge,
+  ScrapingMetrics
+} from '../../types/linkedin.types';
+import {
+  LINKEDIN_SELECTORS,
+  LINKEDIN_URLS,
+  LINKEDIN_TIMING,
+  LINKEDIN_SEARCH_TERMS,
+  LINKEDIN_MONITORING,
+  LINKEDIN_DEFAULT_CONFIG,
+  LINKEDIN_BROWSER_CONFIG
+} from '../../config/linkedin.config';
 
-/**
- * LinkedIn post/content data structure
- */
-interface LinkedInContent {
-  id: string;
-  type: 'post' | 'job' | 'article';
-  title: string;
-  content: string;
-  author: string;
-  authorTitle?: string;
-  authorCompany?: string;
-  authorUrl: string;
-  contentUrl: string;
-  publishedAt: Date;
-  likes?: number;
-  comments?: number;
-  shares?: number;
-  hashtags: string[];
-  mentions: string[];
-  externalLinks: string[];
-  location?: string;
-  company?: string;
-  salary?: string;
-  jobType?: string;
-  experience?: string;
-}
+// Interfaces moved to types/linkedin.types.ts
 
 /**
  * LinkedIn scraper for professional art opportunities
  * Focuses on LinkedIn posts, job postings, and opportunity announcements
+ * 
+ * Refactored to use modular components for better maintainability
  */
-export class LinkedInDiscoverer extends BaseDiscoverer {
+export class LinkedInDiscoverer extends BaseSocialMediaScraper {
   private config: LinkedInConfig;
-  private browser: Browser | null = null;
-  private context: BrowserContext | null = null;
-  private page: Page | null = null;
   private dataExtractor: DataExtractor;
   private dataCleaner: DataCleaner;
-  private isAuthenticated: boolean = false;
+  
+  // New modular components
+  private browserManager: BrowserManager;
+  private authenticator: LinkedInAuthenticator;
+  private contentExtractor: LinkedInContentExtractor;
+  private dataValidator: LinkedInDataValidator;
+  private currentBrowserInstance: BrowserInstance | null = null;
 
   constructor() {
-    super('linkedin', 'social', '1.0.0');
+    super(
+      'linkedin',
+      'social',
+      '1.0.0',
+      LINKEDIN_BROWSER_CONFIG,
+      {
+        requestsPerMinute: LINKEDIN_TIMING.requestsPerMinute,
+        burstLimit: 5,
+        cooldownPeriod: 60000,
+        enableBackoff: true
+      }
+    );
     
+    // Initialize configuration with defaults and environment variables
     this.config = {
+      ...LINKEDIN_DEFAULT_CONFIG,
       sessionCookies: process.env.LINKEDIN_COOKIES,
       email: process.env.LINKEDIN_EMAIL,
       password: process.env.LINKEDIN_PASSWORD,
-      searchTerms: [
-        'artist opportunity',
-        'art grant',
-        'creative residency',
-        'museum job',
-        'gallery position',
-        'art director',
-        'curator position',
-        'arts administrator',
-        'creative manager',
-        'art fellowship',
-        'cultural program',
-        'nonprofit art'
-      ],
-      jobSearchTerms: [
-        'artist',
-        'curator',
-        'art director',
-        'creative director',
-        'gallery manager',
-        'museum',
-        'arts',
-        'creative',
-        'design',
-        'cultural'
-      ],
-      groupsToMonitor: [
-        'arts-professionals',
-        'museum-professionals',
-        'art-gallery-professionals',
-        'creative-professionals-network',
-        'artists-network'
-      ],
-      companiesPagesToMonitor: [
-        'metropolitan-museum-of-art',
-        'moma',
-        'guggenheim-museum',
-        'whitney-museum',
-        'lacma'
-      ],
-      maxPostsPerSearch: 20,
-      maxJobsPerSearch: 50,
-      useHeadless: false, // LinkedIn has sophisticated bot detection
-      scrollTimeout: 30000,
-      postDelay: 3000,
-      loginRequired: true
+      searchTerms: LINKEDIN_SEARCH_TERMS.general,
+      jobSearchTerms: LINKEDIN_SEARCH_TERMS.jobs,
+      groupsToMonitor: LINKEDIN_MONITORING.groups,
+      companiesPagesToMonitor: LINKEDIN_MONITORING.companies
     };
 
-    this.dataExtractor = new DataExtractor({
-      enabled: true,
-      timeout: 10000,
-      extractImages: false,
-      extractLinks: true
+    // Initialize legacy processors
+    this.dataExtractor = new DataExtractor(this.config.dataExtractor);
+    this.dataCleaner = new DataCleaner(this.config.dataCleaner);
+    
+    // Initialize new modular components
+    this.browserManager = new BrowserManager({
+      maxInstances: 2,
+      reuseInstances: true,
+      instanceTimeout: 30 * 60 * 1000,
+      enablePool: false // Disable for LinkedIn due to session management
     });
-
-    this.dataCleaner = new DataCleaner({
-      enabled: true,
-      maxTitleLength: 200,
-      maxDescriptionLength: 3000
+    
+    this.authenticator = new LinkedInAuthenticator({
+      email: this.config.email,
+      password: this.config.password,
+      sessionCookies: this.config.sessionCookies
+    });
+    
+    this.contentExtractor = new LinkedInContentExtractor({
+      extractEngagementMetrics: true,
+      extractHashtags: true,
+      extractMentions: true,
+      extractLinks: true,
+      maxContentLength: this.config.dataCleaner.maxDescriptionLength,
+      timeout: LINKEDIN_TIMING.elementTimeout
+    });
+    
+    this.dataValidator = new LinkedInDataValidator({
+      enableStrictValidation: false,
+      enableContentEnrichment: true,
+      enableDuplicateDetection: true,
+      minQualityScore: 60
     });
   }
 
   protected async onInitialize(): Promise<void> {
-    console.log('Initializing LinkedIn discoverer...');
+    this.logInfo('Initializing LinkedIn discoverer...');
     
     // Validate configuration
     if (this.config.loginRequired && !this.config.sessionCookies && (!this.config.email || !this.config.password)) {
-      console.warn('LinkedIn credentials not provided, functionality will be limited');
+      this.logWarning('LinkedIn credentials not provided, functionality will be limited');
     }
 
-    // Initialize browser
+    // Initialize browser using browser manager
     await this.initializeBrowser();
+    
+    this.logInfo('LinkedIn discoverer initialized successfully');
   }
 
   protected async checkHealth(): Promise<boolean> {
     try {
-      if (!this.page) {
-        return false;
-      }
+      const page = await this.ensurePage();
 
       // Check if we can access LinkedIn
-      const response = await this.page.goto('https://www.linkedin.com', {
+      const response = await page.goto(LINKEDIN_URLS.base, {
         waitUntil: 'domcontentloaded',
-        timeout: 10000
+        timeout: LINKEDIN_TIMING.elementTimeout
       });
 
-      return response?.ok() || false;
+      const isHealthy = response?.ok() || false;
+      
+      if (isHealthy && this.config.loginRequired) {
+        // Additional check for authentication status
+        const authValid = await this.authenticator.checkIfLoggedIn(page);
+        return authValid;
+      }
+      
+      return isHealthy;
     } catch (error) {
-      console.error('LinkedIn health check failed:', error);
+      this.logError('LinkedIn health check failed', error);
       return false;
     }
   }
@@ -168,266 +151,197 @@ export class LinkedInDiscoverer extends BaseDiscoverer {
     const opportunities: OpportunityData[] = [];
     const maxResults = context?.maxResults || 100;
 
-    console.log(`Starting LinkedIn discovery (max results: ${maxResults})`);
+    this.logInfo(`Starting LinkedIn discovery (max results: ${maxResults})`);
+    this.updateMetrics('search');
 
     try {
-      // Ensure we're authenticated
-      if (this.config.loginRequired && !this.isAuthenticated) {
+      // Ensure browser and authentication
+      await this.ensurePage();
+      
+      if (this.config.loginRequired && !this.browserState.isAuthenticated) {
         await this.authenticate();
       }
 
+      // Create LinkedIn-specific search context
+      const searchContext: LinkedInSearchContext = {
+        searchTerms: context?.searchTerms || this.config.searchTerms,
+        maxResults
+      };
+
       // Search for general posts about opportunities
-      console.log('Searching posts for opportunities...');
-      const postOpportunities = await this.searchPosts(context);
+      this.logInfo('Searching posts for opportunities...');
+      const postOpportunities = await this.searchPosts(searchContext);
       opportunities.push(...postOpportunities);
 
       // Search job listings
       if (opportunities.length < maxResults) {
-        console.log('Searching job listings...');
-        const jobOpportunities = await this.searchJobs(context);
+        this.logInfo('Searching job listings...');
+        const jobOpportunities = await this.searchJobs(searchContext);
         opportunities.push(...jobOpportunities);
       }
 
       // Monitor specific groups
       if (opportunities.length < maxResults) {
-        console.log('Monitoring groups for opportunities...');
+        this.logInfo('Monitoring groups for opportunities...');
         const groupOpportunities = await this.monitorGroups();
         opportunities.push(...groupOpportunities);
       }
 
       // Monitor company pages
       if (opportunities.length < maxResults) {
-        console.log('Monitoring company pages...');
+        this.logInfo('Monitoring company pages...');
         const companyOpportunities = await this.monitorCompanyPages();
         opportunities.push(...companyOpportunities);
       }
 
-      const finalOpportunities = opportunities.slice(0, maxResults);
-      console.log(`LinkedIn discovery completed: ${finalOpportunities.length} opportunities found`);
+      // Validate and clean results
+      const validatedOpportunities = this.validateAndCleanOpportunities(opportunities);
+      const finalOpportunities = validatedOpportunities.slice(0, maxResults);
+      
+      this.logInfo(`LinkedIn discovery completed: ${finalOpportunities.length} opportunities found`);
       return finalOpportunities;
 
     } catch (error) {
-      console.error('LinkedIn discovery failed:', error);
+      this.logError('LinkedIn discovery failed', error);
+      this.updateMetrics('extraction_fail', undefined, {
+        type: 'extraction',
+        message: error instanceof Error ? error.message : String(error),
+        timestamp: new Date()
+      });
       throw error;
     }
   }
 
   /**
-   * Initialize Playwright browser
+   * Initialize browser using the browser manager
    */
-  private async initializeBrowser(): Promise<void> {
+  protected async initializeBrowser(): Promise<void> {
     try {
-      this.browser = await chromium.launch({
+      this.currentBrowserInstance = await this.browserManager.createBrowser({
         headless: this.config.useHeadless,
-        args: [
-          '--disable-blink-features=AutomationControlled',
-          '--disable-features=VizDisplayCompositor'
-        ]
+        ...LINKEDIN_BROWSER_CONFIG
       });
-
-      this.context = await this.browser.newContext({
-        viewport: { width: 1366, height: 768 },
-        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        locale: 'en-US',
-        timezoneId: 'America/New_York'
-      });
-
-      // Add stealth scripts
-      await this.context.addInitScript(() => {
-        Object.defineProperty(navigator, 'webdriver', {
-          get: () => undefined
-        });
-        
-        // Override chrome object
-        (window as any).chrome = {
-          runtime: {}
-        };
-      });
-
-      this.page = await this.context.newPage();
-
-      // Handle dialogs
-      this.page.on('dialog', async dialog => {
-        await dialog.dismiss();
-      });
-
+      
+      this.browserState = this.browserManager.createBrowserState(this.currentBrowserInstance);
+      
+      this.logInfo('Browser initialized with stealth configuration');
     } catch (error) {
-      console.error('Failed to initialize browser:', error);
+      this.logError('Failed to initialize browser', error);
       throw error;
     }
   }
 
   /**
-   * Authenticate with LinkedIn
+   * Authenticate with LinkedIn using the authentication service
    */
-  private async authenticate(): Promise<void> {
-    if (!this.page) {
-      throw new Error('Browser not initialized');
-    }
-
+  protected async authenticate(): Promise<void> {
+    const page = await this.ensurePage();
+    
     try {
-      console.log('Authenticating with LinkedIn...');
-
-      // Load cookies if available
-      if (this.config.sessionCookies) {
-        const cookies = JSON.parse(this.config.sessionCookies);
-        await this.context?.addCookies(cookies);
-        
-        // Check if cookies are valid
-        await this.page.goto('https://www.linkedin.com/feed');
-        await this.delay(3000);
-        
-        const loggedIn = await this.checkIfLoggedIn();
-        if (loggedIn) {
-          this.isAuthenticated = true;
-          console.log('Authenticated with session cookies');
-          return;
+      this.logInfo('Authenticating with LinkedIn...');
+      
+      const authResult = await this.authenticator.authenticate(page, this.browserState.context!);
+      
+      this.browserState.isAuthenticated = authResult.isAuthenticated;
+      this.authStatus = authResult;
+      
+      if (authResult.isAuthenticated) {
+        this.logInfo(`Successfully authenticated using ${authResult.method}`);
+      } else {
+        this.logWarning(`Authentication failed: ${authResult.error}`);
+        if (this.config.loginRequired) {
+          throw new Error(`LinkedIn authentication required but failed: ${authResult.error}`);
         }
       }
-
-      // Manual login if cookies failed or not available
-      if (this.config.email && this.config.password) {
-        await this.performLogin();
-      } else {
-        console.warn('No authentication method available, proceeding with limited access');
-        // Continue without login - very limited functionality
-      }
-
     } catch (error) {
-      console.error('Authentication failed:', error);
-    }
-  }
-
-  /**
-   * Perform manual login
-   */
-  private async performLogin(): Promise<void> {
-    if (!this.page || !this.config.email || !this.config.password) {
-      return;
-    }
-
-    try {
-      await this.page.goto('https://www.linkedin.com/login');
-      await this.page.waitForSelector('#username', { timeout: 10000 });
-
-      // Fill login form
-      await this.page.fill('#username', this.config.email);
-      await this.page.fill('#password', this.config.password);
-      
-      // Submit form
-      await this.page.click('button[type="submit"]');
-      
-      // Wait for navigation
-      await this.page.waitForNavigation({ waitUntil: 'networkidle', timeout: 15000 });
-      
-      // Handle security check or challenge
-      await this.handleSecurityCheck();
-      
-      this.isAuthenticated = true;
-      console.log('Successfully logged in to LinkedIn');
-
-    } catch (error) {
-      console.error('Login failed:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Check if currently logged in
-   */
-  private async checkIfLoggedIn(): Promise<boolean> {
-    if (!this.page) return false;
-
-    try {
-      // Check for profile icon or navigation elements
-      const profileIcon = await this.page.$('button[aria-label="View profile"]');
-      const feedExists = await this.page.$('.feed-container-theme');
-      return profileIcon !== null || feedExists !== null;
-    } catch {
-      return false;
-    }
-  }
-
-  /**
-   * Handle security checks and challenges
-   */
-  private async handleSecurityCheck(): Promise<void> {
-    if (!this.page) return;
-
-    try {
-      // Check for security challenge
-      const challengeText = await this.page.$('text="Help us protect the LinkedIn community"');
-      if (challengeText) {
-        console.log('LinkedIn security challenge detected - manual intervention may be required');
-        await this.delay(5000); // Give time for manual intervention
+      this.logError('Authentication failed', error);
+      if (this.config.loginRequired) {
+        throw error;
       }
-
-      // Skip any onboarding or tour prompts
-      const skipButton = await this.page.$('button:has-text("Skip")');
-      if (skipButton) {
-        await skipButton.click();
-        await this.delay(2000);
-      }
-
-    } catch (error) {
-      console.warn('Error handling security check:', error);
     }
   }
 
-  /**
-   * Search LinkedIn posts for opportunities
-   */
-  private async searchPosts(context?: DiscoveryContext): Promise<OpportunityData[]> {
-    if (!this.page) {
-      throw new Error('Browser not initialized');
-    }
+  // Login functionality moved to LinkedInAuthenticator service
 
+  /**
+   * Check if currently authenticated
+   */
+  protected async isAuthenticated(): Promise<boolean> {
+    const page = await this.ensurePage();
+    return await this.authenticator.checkIfLoggedIn(page);
+  }
+
+  /**
+   * Handle security challenges using the authentication service
+   */
+  protected async handleSecurityChallenge(): Promise<SecurityChallenge> {
+    const page = await this.ensurePage();
+    return await this.authenticator.handleSecurityChallenge(page);
+  }
+
+  /**
+   * Search LinkedIn posts for opportunities using modular components
+   */
+  private async searchPosts(context: LinkedInSearchContext): Promise<OpportunityData[]> {
+    const page = await this.ensurePage();
     const opportunities: OpportunityData[] = [];
-    const searchTerms = context?.searchTerms || this.config.searchTerms;
+    const searchTerms = context.searchTerms || this.config.searchTerms;
 
     for (const term of searchTerms) {
       if (opportunities.length >= this.config.maxPostsPerSearch) break;
 
       try {
-        console.log(`Searching posts for: "${term}"`);
+        await this.enforceRateLimit();
+        this.logInfo(`Searching posts for: "${term}"`);
 
         // Navigate to search results
-        const encodedQuery = encodeURIComponent(term);
-        const searchUrl = `https://www.linkedin.com/search/results/content/?keywords=${encodedQuery}&sortBy=%22date_posted%22`;
-        
-        await this.page.goto(searchUrl, { waitUntil: 'networkidle', timeout: 30000 });
-        await this.delay(3000);
+        const searchUrl = LINKEDIN_URLS.contentSearch(term);
+        await page.goto(searchUrl, { 
+          waitUntil: 'networkidle', 
+          timeout: LINKEDIN_TIMING.pageTimeout 
+        });
+        await this.delay(LINKEDIN_TIMING.postDelay);
 
         // Wait for search results
-        await this.page.waitForSelector('.search-results-container', { timeout: 10000 });
+        await page.waitForSelector(LINKEDIN_SELECTORS.search.resultsContainer, { 
+          timeout: LINKEDIN_TIMING.elementTimeout 
+        });
 
         // Load more results
         await this.loadMoreSearchResults();
 
-        // Extract posts
-        const postElements = await this.page.$$('.update-components-text');
-        console.log(`Found ${postElements.length} posts for "${term}"`);
+        // Extract posts using content extractor
+        const postElements = await page.$$(LINKEDIN_SELECTORS.posts.updateText);
+        this.logInfo(`Found ${postElements.length} posts for "${term}"`);
 
         // Process each post
         for (let i = 0; i < Math.min(postElements.length, this.config.maxPostsPerSearch); i++) {
           try {
-            const contentData = await this.extractPostContent(postElements[i]);
-            if (contentData) {
-              const opportunity = await this.convertContentToOpportunity(contentData);
-              if (opportunity && this.isValidOpportunity(opportunity)) {
+            const extractionResult = await this.contentExtractor.extractPostContent(page, postElements[i]);
+            
+            if (extractionResult.success && extractionResult.content) {
+              const opportunity = await this.convertContentToOpportunity(extractionResult.content);
+              if (opportunity) {
                 opportunities.push(opportunity);
+                this.updateMetrics('extraction_success', 'post');
+              }
+            } else {
+              this.updateMetrics('skip');
+              if (extractionResult.error) {
+                this.logWarning(`Failed to extract post ${i + 1}: ${extractionResult.error}`);
               }
             }
           } catch (error) {
-            console.warn(`Failed to extract post ${i + 1}:`, error);
+            this.updateMetrics('extraction_fail', 'post');
+            this.logWarning(`Failed to extract post ${i + 1}`, error);
           }
         }
 
         // Rate limiting between searches
-        await this.delay(this.config.postDelay);
+        await this.delay(LINKEDIN_TIMING.postDelay);
 
       } catch (error) {
-        console.error(`Failed to search posts for "${term}":`, error);
+        this.logError(`Failed to search posts for "${term}"`, error);
       }
     }
 
@@ -435,59 +349,68 @@ export class LinkedInDiscoverer extends BaseDiscoverer {
   }
 
   /**
-   * Search LinkedIn job listings
+   * Search LinkedIn job listings using modular components
    */
-  private async searchJobs(context?: DiscoveryContext): Promise<OpportunityData[]> {
-    if (!this.page) {
-      throw new Error('Browser not initialized');
-    }
-
+  private async searchJobs(context: LinkedInSearchContext): Promise<OpportunityData[]> {
+    const page = await this.ensurePage();
     const opportunities: OpportunityData[] = [];
-    const searchTerms = context?.searchTerms || this.config.jobSearchTerms;
+    const searchTerms = context.searchTerms || this.config.jobSearchTerms;
 
     for (const term of searchTerms) {
       if (opportunities.length >= this.config.maxJobsPerSearch) break;
 
       try {
-        console.log(`Searching jobs for: "${term}"`);
+        await this.enforceRateLimit();
+        this.logInfo(`Searching jobs for: "${term}"`);
 
         // Navigate to jobs search
-        const encodedQuery = encodeURIComponent(term);
-        const jobsUrl = `https://www.linkedin.com/jobs/search/?keywords=${encodedQuery}&sortBy=DD`;
-        
-        await this.page.goto(jobsUrl, { waitUntil: 'networkidle', timeout: 30000 });
-        await this.delay(3000);
+        const jobsUrl = LINKEDIN_URLS.jobsSearch(term);
+        await page.goto(jobsUrl, { 
+          waitUntil: 'networkidle', 
+          timeout: LINKEDIN_TIMING.pageTimeout 
+        });
+        await this.delay(LINKEDIN_TIMING.postDelay);
 
         // Wait for job results
-        await this.page.waitForSelector('.jobs-search__results-list', { timeout: 10000 });
+        await page.waitForSelector(LINKEDIN_SELECTORS.jobs.searchResultsList, { 
+          timeout: LINKEDIN_TIMING.elementTimeout 
+        });
 
         // Load more results
         await this.loadMoreJobResults();
 
         // Extract job cards
-        const jobElements = await this.page.$$('.job-card-container');
-        console.log(`Found ${jobElements.length} jobs for "${term}"`);
+        const jobElements = await page.$$(LINKEDIN_SELECTORS.jobs.jobCardContainer);
+        this.logInfo(`Found ${jobElements.length} jobs for "${term}"`);
 
         // Process each job
         for (let i = 0; i < Math.min(jobElements.length, this.config.maxJobsPerSearch); i++) {
           try {
-            const jobData = await this.extractJobContent(jobElements[i]);
-            if (jobData) {
-              const opportunity = await this.convertContentToOpportunity(jobData);
-              if (opportunity && this.isValidOpportunity(opportunity)) {
+            const extractionResult = await this.contentExtractor.extractJobContent(page, jobElements[i]);
+            
+            if (extractionResult.success && extractionResult.content) {
+              const opportunity = await this.convertContentToOpportunity(extractionResult.content);
+              if (opportunity) {
                 opportunities.push(opportunity);
+                this.updateMetrics('extraction_success', 'job');
+              }
+            } else {
+              this.updateMetrics('skip');
+              if (extractionResult.error) {
+                this.logWarning(`Failed to extract job ${i + 1}: ${extractionResult.error}`);
               }
             }
           } catch (error) {
-            console.warn(`Failed to extract job ${i + 1}:`, error);
+            this.updateMetrics('extraction_fail', 'job');
+            this.logWarning(`Failed to extract job ${i + 1}`, error);
           }
         }
 
         // Rate limiting between searches
-        await this.delay(this.config.postDelay);
+        await this.delay(LINKEDIN_TIMING.postDelay);
 
       } catch (error) {
-        console.error(`Failed to search jobs for "${term}":`, error);
+        this.logError(`Failed to search jobs for "${term}"`, error);
       }
     }
 
@@ -508,45 +431,56 @@ export class LinkedInDiscoverer extends BaseDiscoverer {
   }
 
   /**
-   * Monitor company pages
+   * Monitor company pages using modular components
    */
   private async monitorCompanyPages(): Promise<OpportunityData[]> {
-    if (!this.page) {
-      throw new Error('Browser not initialized');
-    }
-
+    const page = await this.ensurePage();
     const opportunities: OpportunityData[] = [];
 
     for (const companyId of this.config.companiesPagesToMonitor) {
       try {
-        console.log(`Monitoring company page: ${companyId}`);
+        await this.enforceRateLimit();
+        this.logInfo(`Monitoring company page: ${companyId}`);
 
-        const companyUrl = `https://www.linkedin.com/company/${companyId}/posts/`;
-        await this.page.goto(companyUrl, { waitUntil: 'networkidle', timeout: 30000 });
-        await this.delay(3000);
+        const companyUrl = LINKEDIN_URLS.companyPage(companyId);
+        await page.goto(companyUrl, { 
+          waitUntil: 'networkidle', 
+          timeout: LINKEDIN_TIMING.pageTimeout 
+        });
+        await this.delay(LINKEDIN_TIMING.postDelay);
 
         // Extract company posts
-        const postElements = await this.page.$$('.update-components-text');
+        const postElements = await page.$$(LINKEDIN_SELECTORS.posts.updateText);
         
         // Process posts
-        for (let i = 0; i < Math.min(postElements.length, 10); i++) {
+        for (let i = 0; i < Math.min(postElements.length, this.config.maxCompanyPosts); i++) {
           try {
-            const contentData = await this.extractPostContent(postElements[i]);
-            if (contentData && this.containsOpportunityKeywords(contentData.content)) {
-              const opportunity = await this.convertContentToOpportunity(contentData);
-              if (opportunity && this.isValidOpportunity(opportunity)) {
-                opportunities.push(opportunity);
+            const extractionResult = await this.contentExtractor.extractPostContent(page, postElements[i]);
+            
+            if (extractionResult.success && extractionResult.content) {
+              // Check if content contains opportunity keywords
+              const hasOpportunityKeywords = this.containsOpportunityKeywords(extractionResult.content.content);
+              
+              if (hasOpportunityKeywords) {
+                const opportunity = await this.convertContentToOpportunity(extractionResult.content);
+                if (opportunity) {
+                  opportunities.push(opportunity);
+                  this.updateMetrics('extraction_success', 'post');
+                }
+              } else {
+                this.updateMetrics('skip');
               }
             }
           } catch (error) {
-            console.warn(`Failed to extract company post ${i + 1}:`, error);
+            this.updateMetrics('extraction_fail', 'post');
+            this.logWarning(`Failed to extract company post ${i + 1}`, error);
           }
         }
 
-        await this.delay(this.config.postDelay);
+        await this.delay(LINKEDIN_TIMING.postDelay);
 
       } catch (error) {
-        console.error(`Failed to monitor company ${companyId}:`, error);
+        this.logError(`Failed to monitor company ${companyId}`, error);
       }
     }
 
@@ -557,31 +491,31 @@ export class LinkedInDiscoverer extends BaseDiscoverer {
    * Load more search results by scrolling
    */
   private async loadMoreSearchResults(): Promise<void> {
-    if (!this.page) return;
+    const page = await this.ensurePage();
 
     try {
       let scrollAttempts = 0;
-      const maxScrollAttempts = 3;
+      const maxScrollAttempts = LINKEDIN_TIMING.maxScrollAttempts;
 
       while (scrollAttempts < maxScrollAttempts) {
-        await this.page.evaluate(() => {
+        await page.evaluate(() => {
           window.scrollTo(0, document.body.scrollHeight);
         });
 
-        await this.delay(2000);
+        await this.delay(LINKEDIN_TIMING.scrollDelay);
 
         // Check for "Show more results" button
-        const showMoreButton = await this.page.$('button:has-text("Show more results")');
+        const showMoreButton = await page.$(LINKEDIN_SELECTORS.search.showMoreButton);
         if (showMoreButton) {
           await showMoreButton.click();
-          await this.delay(2000);
+          await this.delay(LINKEDIN_TIMING.scrollDelay);
         }
 
         scrollAttempts++;
       }
 
     } catch (error) {
-      console.warn('Error loading more search results:', error);
+      this.logWarning('Error loading more search results', error);
     }
   }
 
@@ -589,31 +523,31 @@ export class LinkedInDiscoverer extends BaseDiscoverer {
    * Load more job results
    */
   private async loadMoreJobResults(): Promise<void> {
-    if (!this.page) return;
+    const page = await this.ensurePage();
 
     try {
       let scrollAttempts = 0;
-      const maxScrollAttempts = 3;
+      const maxScrollAttempts = LINKEDIN_TIMING.maxScrollAttempts;
 
       while (scrollAttempts < maxScrollAttempts) {
-        await this.page.evaluate(() => {
+        await page.evaluate(() => {
           window.scrollTo(0, document.body.scrollHeight);
         });
 
-        await this.delay(2000);
+        await this.delay(LINKEDIN_TIMING.scrollDelay);
 
         // Check for "See more jobs" button
-        const seeMoreButton = await this.page.$('button:has-text("See more jobs")');
+        const seeMoreButton = await page.$(LINKEDIN_SELECTORS.search.seeMoreJobsButton);
         if (seeMoreButton) {
           await seeMoreButton.click();
-          await this.delay(3000);
+          await this.delay(LINKEDIN_TIMING.postDelay);
         }
 
         scrollAttempts++;
       }
 
     } catch (error) {
-      console.warn('Error loading more job results:', error);
+      this.logWarning('Error loading more job results', error);
     }
   }
 
@@ -1009,9 +943,37 @@ export class LinkedInDiscoverer extends BaseDiscoverer {
   protected getDefaultConfig() {
     return {
       ...super.getDefaultConfig(),
-      rateLimit: 10, // 10 requests per minute (very conservative for LinkedIn)
-      timeout: 90000, // 90 seconds for operations
-      retryAttempts: 2
+      rateLimit: LINKEDIN_TIMING.requestsPerMinute,
+      timeout: LINKEDIN_TIMING.operationTimeout,
+      retryAttempts: LINKEDIN_TIMING.retryAttempts
     };
+  }
+  
+  /**
+   * Get scraping metrics
+   */
+  public getScrapingMetrics(): ScrapingMetrics {
+    return this.getMetrics();
+  }
+  
+  /**
+   * Update LinkedIn configuration
+   */
+  public updateConfiguration(newConfig: Partial<LinkedInConfig>): void {
+    this.config = { ...this.config, ...newConfig };
+    
+    // Update component configurations
+    if (newConfig.dataExtractor) {
+      this.contentExtractor.updateConfig(newConfig.dataExtractor);
+    }
+    
+    if (newConfig.dataCleaner) {
+      // Update data validator if needed
+      this.dataValidator.updateConfig({
+        minQualityScore: 60 // Default quality threshold
+      });
+    }
+    
+    this.logInfo('Configuration updated successfully');
   }
 }

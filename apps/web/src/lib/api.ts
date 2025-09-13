@@ -327,6 +327,52 @@ export const searchApi = {
     return response.data.data;
   },
 
+  // Yandex Search
+  yandexSearch: async (query: string, options: {
+    num?: number;
+    location?: string;
+    hl?: string;
+    start?: number;
+  } = {}): Promise<{
+    results: Array<{
+      title: string;
+      link: string;
+      snippet: string;
+      position: number;
+      domain?: string;
+      date?: string;
+    }>;
+    totalResults: number;
+    searchTime: number;
+    query: string;
+  }> => {
+    const response = await api.post('/api/search/yandex', { query, ...options });
+    return response.data.data;
+  },
+
+  // Bing Search
+  bingSearch: async (query: string, options: {
+    num?: number;
+    location?: string;
+    hl?: string;
+    start?: number;
+  } = {}): Promise<{
+    results: Array<{
+      title: string;
+      link: string;
+      snippet: string;
+      position: number;
+      domain?: string;
+      date?: string;
+    }>;
+    totalResults: number;
+    searchTime: number;
+    query: string;
+  }> => {
+    const response = await api.post('/api/search/bing', { query, ...options });
+    return response.data.data;
+  },
+
   // Search multiple queries
   searchMultipleQueries: async (queries: string[], options: {
     num?: number;
@@ -361,6 +407,39 @@ export const searchApi = {
   }> => {
     const response = await api.post('/api/search/art-opportunities', { query, ...options });
     return response.data.data;
+  },
+
+  // Process search results through external data pipeline
+  processSearchResults: async (searchResults: any[], options: {
+    enableScraping?: boolean;
+    enableValidation?: boolean;
+    enableDeduplication?: boolean;
+    organizationScraping?: boolean;
+    profileId?: string;
+    pipeline?: {
+      qualityThreshold?: number;
+      maxConcurrent?: number;
+      enableMetadataEnrichment?: boolean;
+    };
+  } = {}): Promise<{
+    success: boolean;
+    data?: {
+      jobId: string;
+      processed: number;
+      opportunities: any[];
+      statistics: {
+        total: number;
+        valid: number;
+        duplicates: number;
+        averageScore: number;
+      };
+    };
+  }> => {
+    const response = await api.post('/api/research/process-search-results', { 
+      searchResults, 
+      options 
+    });
+    return response.data;
   },
 
   // Health check
@@ -420,6 +499,467 @@ export const queryBucketApi = {
   // Update query tags
   updateQuery: async (id: string, tags: string[]): Promise<void> => {
     await api.put(`/api/query-bucket/${id}`, { tags });
+  }
+};
+
+// Web Scraper API
+export const scraperApi = {
+  // Scrape a single URL
+  scrapeUrl: async (url: string, metadata?: {
+    query?: string;
+    searchEngine?: string;
+    position?: number;
+  }): Promise<{
+    success: boolean;
+    data?: any;
+    meta?: {
+      processingTime: number;
+      method: string;
+      scrapedAt: string;
+    };
+    error?: string;
+  }> => {
+    const response = await api.post('/api/scraper/scrape', { url, metadata });
+    return response.data;
+  },
+
+  // Scrape multiple URLs
+  scrapeMultiple: async (urls: string[], metadata?: {
+    query?: string;
+    searchEngine?: string;
+  }): Promise<{
+    success: boolean;
+    data?: {
+      results: any[];
+      summary: {
+        total: number;
+        successful: number;
+        failed: number;
+        successRate: number;
+      };
+    };
+    meta?: {
+      totalProcessingTime: number;
+      processedAt: string;
+    };
+  }> => {
+    const response = await api.post('/api/scraper/scrape-multiple', { urls, metadata });
+    return response.data;
+  },
+
+  // Scrape search results
+  scrapeSearchResults: async (searchResults: any[], query: string): Promise<{
+    success: boolean;
+    data?: {
+      opportunities: any[];
+      results: any[];
+      summary: {
+        query: string;
+        totalUrls: number;
+        successful: number;
+        failed: number;
+        successRate: number;
+        avgProcessingTime: number;
+      };
+    };
+    meta?: {
+      processedAt: string;
+      totalProcessingTime: number;
+    };
+  }> => {
+    const response = await api.post('/api/scraper/scrape-search-results', { searchResults, query });
+    return response.data;
+  },
+
+  // Check scraper health
+  healthCheck: async (): Promise<{
+    success: boolean;
+    data?: {
+      firecrawl: boolean;
+      playwright: boolean;
+      cheerio: boolean;
+      status: string;
+    };
+    meta?: {
+      timestamp: string;
+      preferredMethod: string;
+    };
+  }> => {
+    const response = await api.get('/api/scraper/health');
+    return response.data;
+  }
+};
+
+// AI Analysis API
+export const analysisApi = {
+  // Analyze single opportunity
+  analyzeOpportunity: async (opportunity: any, profileId: string): Promise<{
+    success: boolean;
+    data?: {
+      analysis: any;
+      opportunity: any;
+      profile: any;
+    };
+    meta?: {
+      processingTime: number;
+      aiService: string;
+      analyzedAt: string;
+    };
+  }> => {
+    const response = await api.post('/api/analysis/analyze-opportunity', { opportunity, profileId });
+    return response.data;
+  },
+
+  // Analyze batch of opportunities
+  analyzeBatch: async (opportunities: any[], profileId: string): Promise<{
+    success: boolean;
+    data?: {
+      analyses: any[];
+      summary: {
+        total: number;
+        successful: number;
+        failed: number;
+        averageScore: number;
+        recommendations: {
+          high: number;
+          medium: number;
+          low: number;
+          notRelevant: number;
+        };
+      };
+      profile: any;
+    };
+    meta?: {
+      totalProcessingTime: number;
+      avgProcessingTime: number;
+      analyzedAt: string;
+      aiService: string;
+    };
+  }> => {
+    const response = await api.post('/api/analysis/analyze-batch', { opportunities, profileId });
+    return response.data;
+  },
+
+  // Combined scrape and analyze
+  scrapeAndAnalyze: async (searchResults: any[], query: string, profileId: string): Promise<{
+    success: boolean;
+    data?: {
+      query: string;
+      scrapeResults: {
+        total: number;
+        successful: number;
+        failed: number;
+      };
+      analysisResults: any[];
+      relevantOpportunities: any[];
+      highValueOpportunities: any[];
+      summary: {
+        searchResultsProcessed: number;
+        successfullyScrapped: number;
+        analyzed: number;
+        relevant: number;
+        highValue: number;
+        conversionRate: number;
+      };
+    };
+    meta?: {
+      processedAt: string;
+      totalProcessingTime: number;
+    };
+  }> => {
+    const response = await api.post('/api/analysis/scrape-and-analyze', { 
+      searchResults, 
+      query, 
+      profileId 
+    });
+    return response.data;
+  },
+
+  // Check analysis service health
+  healthCheck: async (): Promise<{
+    success: boolean;
+    data?: {
+      openai: boolean;
+      ruleBasedFallback: boolean;
+      status: string;
+    };
+    meta?: {
+      timestamp: string;
+      preferredMethod: string;
+    };
+  }> => {
+    const response = await api.get('/api/analysis/health');
+    return response.data;
+  }
+};
+
+// Deduplication API
+export const deduplicationApi = {
+  // Detect duplicates in opportunities
+  detectDuplicates: async (opportunities: any[], analysisResults?: any[], options?: {
+    titleSimilarityThreshold?: number;
+    descriptionSimilarityThreshold?: number;
+    organizationMatchRequired?: boolean;
+    deadlineToleranceDays?: number;
+    urlDomainMatching?: boolean;
+  }): Promise<{
+    success: boolean;
+    data?: {
+      deduplication: {
+        originalCount: number;
+        uniqueCount: number;
+        duplicateGroups: Array<{
+          id: string;
+          opportunities: any[];
+          primaryOpportunity: any;
+          duplicateCount: number;
+          confidence: number;
+          reason: string;
+          mergedAt: string;
+        }>;
+        removedDuplicates: any[];
+        uniqueOpportunities: any[];
+        processingTime: number;
+        duplicateDetectionRate: number;
+      };
+      statistics: {
+        originalCount: number;
+        uniqueCount: number;
+        duplicatesRemoved: number;
+        duplicateGroups: number;
+        duplicateRate: number;
+        confidenceLevels: {
+          high: number;
+          medium: number;
+          low: number;
+        };
+        averageGroupSize: number;
+      };
+    };
+    meta?: {
+      processingTime: number;
+      processedAt: string;
+      userId: string;
+      deduplicationMethod: string;
+    };
+  }> => {
+    const response = await api.post('/api/deduplication/detect-duplicates', { 
+      opportunities, 
+      analysisResults, 
+      options 
+    });
+    return response.data;
+  },
+
+  // Full pipeline processing: scrape, analyze, and deduplicate
+  processPipeline: async (searchResults: any[], query: string, profileId: string, options?: {
+    deduplication?: {
+      titleSimilarityThreshold?: number;
+      descriptionSimilarityThreshold?: number;
+      organizationMatchRequired?: boolean;
+      deadlineToleranceDays?: number;
+      urlDomainMatching?: boolean;
+    };
+  }): Promise<{
+    success: boolean;
+    data?: {
+      query: string;
+      scrapeResults: {
+        total: number;
+        successful: number;
+        failed: number;
+      };
+      analysisResults: any[];
+      deduplicationResult: {
+        originalCount: number;
+        uniqueCount: number;
+        duplicateGroups: any[];
+        removedDuplicates: any[];
+        uniqueOpportunities: any[];
+        processingTime: number;
+        duplicateDetectionRate: number;
+      };
+      relevantOpportunities: any[];
+      highValueOpportunities: any[];
+      finalStats: {
+        searchResultsProcessed: number;
+        successfullyScrapped: number;
+        analyzed: number;
+        originalOpportunities: number;
+        duplicatesRemoved: number;
+        uniqueOpportunities: number;
+        relevantOpportunities: number;
+        highValueOpportunities: number;
+        finalConversionRate: number;
+      };
+    };
+    meta?: {
+      processedAt: string;
+      totalProcessingTime: number;
+      pipelineSteps: string[];
+    };
+  }> => {
+    const response = await api.post('/api/deduplication/process-pipeline', { 
+      searchResults, 
+      query, 
+      profileId, 
+      options 
+    });
+    return response.data;
+  },
+
+  // Check deduplication service health
+  healthCheck: async (): Promise<{
+    success: boolean;
+    data?: {
+      deduplicationAlgorithm: string;
+      supportedMethods: string[];
+      status: string;
+    };
+    meta?: {
+      timestamp: string;
+      version: string;
+    };
+  }> => {
+    const response = await api.get('/api/deduplication/health');
+    return response.data;
+  }
+};
+
+// Liaison API - UI integration, export, and feedback
+export const liaisonApi = {
+  // Get opportunities with liaison-specific features
+  getOpportunities: async (options?: {
+    status?: string[];
+    type?: string[];
+    organization?: string;
+    relevanceMinScore?: number;
+    page?: number;
+    limit?: number;
+  }): Promise<{
+    success: boolean;
+    data: Opportunity[];
+    meta: {
+      total: number;
+      page: number;
+      limit: number;
+      hasMore: boolean;
+    };
+  }> => {
+    const params = new URLSearchParams();
+    
+    if (options?.status) options.status.forEach(s => params.append('status', s));
+    if (options?.type) options.type.forEach(t => params.append('type', t));
+    if (options?.organization) params.append('organization', options.organization);
+    if (options?.relevanceMinScore) params.append('relevanceMinScore', options.relevanceMinScore.toString());
+    if (options?.page) params.append('page', options.page.toString());
+    if (options?.limit) params.append('limit', options.limit.toString());
+
+    const response = await api.get(`/api/liaison/opportunities?${params}`);
+    return response.data;
+  },
+
+  // Update opportunity status
+  updateOpportunityStatus: async (id: string, status: string): Promise<{
+    success: boolean;
+    data: Opportunity;
+    message: string;
+  }> => {
+    const response = await api.post(`/api/liaison/opportunities/${id}/status`, { status });
+    return response.data;
+  },
+
+  // Capture user feedback
+  captureFeedback: async (feedback: {
+    opportunityId: string;
+    action: 'accepted' | 'rejected' | 'saved' | 'applied';
+    reason?: string;
+  }): Promise<{
+    success: boolean;
+    message: string;
+  }> => {
+    const response = await api.post('/api/liaison/feedback', feedback);
+    return response.data;
+  },
+
+  // Export opportunities
+  exportOpportunities: async (
+    filters: {
+      status?: string[];
+      type?: string[];
+      organization?: string[];
+      relevanceMinScore?: number;
+      deadlineAfter?: string;
+      deadlineBefore?: string;
+    },
+    options: {
+      format: 'csv' | 'json';
+      filename?: string;
+      includeMetadata?: boolean;
+    }
+  ): Promise<Blob> => {
+    const response = await api.post('/api/liaison/export', 
+      { filters, options },
+      { responseType: 'blob' }
+    );
+    return response.data;
+  },
+
+  // Get export template
+  getExportTemplate: async (format: 'csv' | 'json'): Promise<Blob> => {
+    const response = await api.get(`/api/liaison/export/template/${format}`, {
+      responseType: 'blob'
+    });
+    return response.data;
+  },
+
+  // Get dashboard data
+  getDashboardData: async (): Promise<{
+    success: boolean;
+    data: {
+      stats: {
+        totalOpportunities: number;
+        newThisWeek: number;
+        upcomingDeadlines: number;
+        highRelevance: number;
+        inProgress: number;
+        submitted: number;
+      };
+      recentOpportunities: Opportunity[];
+      upcomingDeadlines: Opportunity[];
+    };
+  }> => {
+    const response = await api.get('/api/liaison/dashboard');
+    return response.data;
+  },
+
+  // Get liaison statistics
+  getStats: async (): Promise<{
+    success: boolean;
+    data: {
+      totalExports: number;
+      feedbackCount: number;
+      lastExport?: Date;
+    };
+  }> => {
+    const response = await api.get('/api/liaison/stats');
+    return response.data;
+  },
+
+  // Health check
+  healthCheck: async (): Promise<{
+    success: boolean;
+    data: {
+      status: 'healthy' | 'degraded' | 'unhealthy';
+      details: {
+        database: boolean;
+        websocket: boolean;
+        export: boolean;
+      };
+    };
+  }> => {
+    const response = await api.get('/api/liaison/health');
+    return response.data;
   }
 };
 

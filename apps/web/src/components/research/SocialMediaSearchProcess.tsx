@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Instagram, Twitter, Facebook, AtSign, Play, Pause, Clock, Settings, BarChart3, Users, Heart, MessageCircle } from 'lucide-react';
 
 interface SocialMediaSearchProcessProps {
@@ -8,6 +9,7 @@ interface SocialMediaSearchProcessProps {
 }
 
 export function SocialMediaSearchProcess({ queryBucket }: SocialMediaSearchProcessProps) {
+  const router = useRouter();
   const [activeService, setActiveService] = useState('instagram');
   const [isSearching, setIsSearching] = useState(false);
   const [scheduleEnabled, setScheduleEnabled] = useState(true);
@@ -281,7 +283,7 @@ export function SocialMediaSearchProcess({ queryBucket }: SocialMediaSearchProce
                     Run New Social Search
                   </button>
                   <button 
-                    onClick={() => {/* TODO: Navigate to opportunities */}}
+                    onClick={() => router.push('/dashboard/opportunities')}
                     className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-medium"
                   >
                     View Social Posts

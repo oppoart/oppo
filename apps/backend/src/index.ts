@@ -1,9 +1,11 @@
 import express, { Application } from 'express';
+import { createServer } from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
 import prisma from './lib/prisma';
+import { createWebSocketServer } from './lib/websocket';
 import authRoutes from './routes/auth';
 import profilesRoutes from './routes/profiles';
 import usersRoutes from './routes/users';
@@ -12,6 +14,10 @@ import analystRoutes from './routes/analyst';
 import researchRoutes from './routes/research';
 import searchRoutes from './routes/search';
 import queryBucketRoutes from './routes/query-bucket';
+import scraperRoutes from './routes/scraper';
+import analysisRoutes from './routes/analysis';
+import deduplicationRoutes from './routes/deduplication';
+import liaisonRoutes from './routes/liaison';
 import { 
   validateEnvironment, 
   env, 
@@ -104,6 +110,18 @@ app.use('/api/search', searchRoutes);
 // Query Bucket routes (save search queries)
 app.use('/api/query-bucket', queryBucketRoutes);
 
+// Web Scraper routes (extract opportunity data)
+app.use('/api/scraper', scraperRoutes);
+
+// AI Analysis routes (relevance scoring)
+app.use('/api/analysis', analysisRoutes);
+
+// Deduplication routes (duplicate detection and merging)
+app.use('/api/deduplication', deduplicationRoutes);
+
+// Liaison routes (export, feedback, and UI integration)
+app.use('/api/liaison', liaisonRoutes);
+
 // Basic API endpoint
 app.get('/api/test', (req, res) => {
   res.json({ message: 'OPPO Backend API is running!' });
@@ -118,12 +136,22 @@ app.use(errorLogger);
 // Global error handler - must be last
 app.use(errorHandler);
 
-app.listen(env.PORT, () => {
+// Create HTTP server for WebSocket support
+const server = createServer(app);
+
+// Initialize WebSocket server
+const webSocketServer = createWebSocketServer(server);
+
+// Export WebSocket server for use in other modules
+export { webSocketServer };
+
+server.listen(env.PORT, () => {
   console.log(`🚀 OPPO Backend server running on port ${env.PORT}`);
   console.log(`📊 Health check: http://localhost:${env.PORT}/health`);
   console.log(`🔧 Environment: ${env.NODE_ENV}`);
   console.log(`🌐 Frontend URL: ${env.FRONTEND_URL}`);
   console.log(`📝 Log Level: ${env.LOG_LEVEL}`);
+  console.log(`🔌 WebSocket server: ws://localhost:${env.PORT}/ws`);
   
   if (env.NODE_ENV === 'development') {
     console.log(`🔨 Development mode: Hot reload enabled`);

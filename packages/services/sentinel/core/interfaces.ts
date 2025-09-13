@@ -1,7 +1,8 @@
 import { 
   OpportunityData, 
   DiscoveryResult, 
-  SourceType 
+  SourceType,
+  JobStatus 
 } from '../../../../apps/backend/src/types/discovery';
 
 /**
@@ -111,7 +112,7 @@ export interface ScheduledJob {
 export interface DiscoveryJobStatus {
   id: string;
   discovererName: string;
-  status: 'pending' | 'running' | 'completed' | 'failed';
+  status: JobStatus;
   startTime?: Date;
   endTime?: Date;
   error?: string;

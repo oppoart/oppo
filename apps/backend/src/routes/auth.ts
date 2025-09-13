@@ -260,11 +260,8 @@ router.post('/request-password-reset', authLimiter, validate({ body: requestPass
       },
     });
 
-    // TODO: Send email with reset token
-    // For now, just log it (in production, you'd send an email)
-    console.log(`Password reset requested for ${email}`);
-    console.log(`Reset token: ${resetToken}`);
-    console.log(`Reset URL: ${process.env.FRONTEND_URL}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`);
+    // Send password reset email
+    await sendPasswordResetEmail(user.email, resetToken, user.name);
 
     res.json({
       success: true,
@@ -394,5 +391,207 @@ router.post('/reset-password', authLimiter, validate({ body: resetPasswordSchema
     });
   }
 });
+
+/**
+ * Send password reset email using multiple providers with fallback
+ */
+async function sendPasswordResetEmail(email: string, resetToken: string, userName?: string | null): Promise<void> {
+  const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+  
+  const emailContent = {
+    to: email,
+    subject: 'Reset Your OPPO Password',
+    html: generatePasswordResetEmailHTML(resetUrl, userName),
+    text: generatePasswordResetEmailText(resetUrl, userName)
+  };
+
+  const providers = [
+    () => sendWithSendGrid(emailContent),
+    () => sendWithResend(emailContent),
+    () => sendWithNodemailer(emailContent),
+    () => sendWithConsoleLog(emailContent) // Fallback for development
+  ];
+
+  let lastError: Error | null = null;
+  
+  for (const provider of providers) {
+    try {
+      await provider();
+      console.log(`Password reset email sent successfully to ${email} using provider`);
+      return;
+    } catch (error) {
+      lastError = error as Error;
+      console.warn(`Email provider failed:`, error);
+      continue;
+    }
+  }
+  
+  // If all providers fail, still don't throw to prevent the API from failing
+  console.error('All email providers failed:', lastError);
+}
+
+/**
+ * SendGrid email provider
+ */
+async function sendWithSendGrid(emailContent: any): Promise<void> {
+  if (!process.env.SENDGRID_API_KEY) {
+    throw new Error('SendGrid API key not configured');
+  }
+  
+  // Dynamic import to avoid requiring SendGrid in development
+  try {
+    const sgMail = require('@sendgrid/mail');
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    
+    await sgMail.send({
+      ...emailContent,
+      from: process.env.FROM_EMAIL || 'noreply@oppo.com',
+    });
+  } catch (error) {
+    throw new Error(`SendGrid failed: ${error}`);
+  }
+}
+
+/**
+ * Resend email provider
+ */
+async function sendWithResend(emailContent: any): Promise<void> {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error('Resend API key not configured');
+  }
+  
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...emailContent,
+        from: process.env.FROM_EMAIL || 'OPPO <noreply@oppo.com>',
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Resend API failed: ${response.status} ${response.statusText}`);
+    }
+  } catch (error) {
+    throw new Error(`Resend failed: ${error}`);
+  }
+}
+
+/**
+ * Nodemailer with SMTP (generic provider)
+ */
+async function sendWithNodemailer(emailContent: any): Promise<void> {
+  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    throw new Error('SMTP configuration not complete');
+  }
+  
+  try {
+    const nodemailer = require('nodemailer');
+    
+    const transporter = nodemailer.createTransporter({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      ...emailContent,
+      from: process.env.FROM_EMAIL || 'OPPO <noreply@oppo.com>',
+    });
+  } catch (error) {
+    throw new Error(`Nodemailer failed: ${error}`);
+  }
+}
+
+/**
+ * Console log fallback (development)
+ */
+async function sendWithConsoleLog(emailContent: any): Promise<void> {
+  console.log('\n=== PASSWORD RESET EMAIL ===');
+  console.log(`To: ${emailContent.to}`);
+  console.log(`Subject: ${emailContent.subject}`);
+  console.log(`Content:\n${emailContent.text}`);
+  console.log('===============================\n');
+}
+
+/**
+ * Generate HTML email template
+ */
+function generatePasswordResetEmailHTML(resetUrl: string, userName?: string | null): string {
+  const name = userName || 'User';
+  
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title>Reset Your OPPO Password</title>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #6366f1; color: white; padding: 20px; text-align: center; }
+            .content { padding: 30px 20px; }
+            .button { display: inline-block; background: #6366f1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+            .footer { background: #f3f4f6; padding: 20px; text-align: center; font-size: 12px; color: #6b7280; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>Reset Your Password</h1>
+            </div>
+            <div class="content">
+                <p>Hello ${name},</p>
+                <p>We received a request to reset your password for your OPPO account.</p>
+                <p>Click the button below to reset your password:</p>
+                <p><a href="${resetUrl}" class="button">Reset Password</a></p>
+                <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
+                <p><a href="${resetUrl}">${resetUrl}</a></p>
+                <p><strong>This link will expire in 15 minutes.</strong></p>
+                <p>If you didn't request this password reset, please ignore this email.</p>
+                <p>Best regards,<br>The OPPO Team</p>
+            </div>
+            <div class="footer">
+                <p>This is an automated email. Please do not reply to this message.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+  `;
+}
+
+/**
+ * Generate plain text email template
+ */
+function generatePasswordResetEmailText(resetUrl: string, userName?: string | null): string {
+  const name = userName || 'User';
+  
+  return `
+Hello ${name},
+
+We received a request to reset your password for your OPPO account.
+
+To reset your password, please visit the following link:
+${resetUrl}
+
+This link will expire in 15 minutes.
+
+If you didn't request this password reset, please ignore this email.
+
+Best regards,
+The OPPO Team
+
+---
+This is an automated email. Please do not reply to this message.
+  `.trim();
+}
 
 export default router;

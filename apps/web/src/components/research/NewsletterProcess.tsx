@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Play, Pause, Clock, Settings, BarChart3, Mail, CheckCircle, XCircle, AlertTriangle, RefreshCw, MailOpen } from 'lucide-react';
 
 interface Newsletter {
@@ -23,6 +24,7 @@ interface NewsletterProcessProps {
 }
 
 export function NewsletterProcess({ newsletters, selectedNewsletters, onUpdateStatus }: NewsletterProcessProps) {
+  const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
   const [scheduleEnabled, setScheduleEnabled] = useState(true);
   const [scheduleFrequency, setScheduleFrequency] = useState('daily');
@@ -300,7 +302,7 @@ export function NewsletterProcess({ newsletters, selectedNewsletters, onUpdateSt
                     Process New Newsletters
                   </button>
                   <button 
-                    onClick={() => {/* TODO: Navigate to opportunities */}}
+                    onClick={() => router.push('/dashboard/opportunities')}
                     className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-medium"
                   >
                     View Opportunities
