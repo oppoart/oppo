@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { requireAuth } from '../middleware/auth';
 import { validate } from '../middleware/validation';
 import { z } from 'zod';
-import { AnalystService } from '../../../../packages/services/analyst';
+import AnalystServiceSingleton from '../services/AnalystServiceSingleton';
 import { ResearchService } from '../services/research';
 import {
   RESEARCH_SERVICES,
@@ -23,13 +23,15 @@ import {
 } from '../../../../packages/shared/src/validation/research.schemas';
 
 const router: ExpressRouter = Router();
-const prisma = new PrismaClient();
-const analystService = new AnalystService(prisma);
 
-// Initialize services
-analystService.initialize().catch(console.error);
+// Use singleton for agentic (autonomous) research workflows
+const analystService = AnalystServiceSingleton.getInstance();
+const prisma = AnalystServiceSingleton.getPrisma();
 
-// Initialize ResearchService
+// Initialize the singleton (safe to call multiple times)
+AnalystServiceSingleton.initialize().catch(console.error);
+
+// Initialize ResearchService for session-based agentic workflows
 const researchService = new ResearchService(prisma, analystService, {
   enableMetrics: true,
   enableLogging: true

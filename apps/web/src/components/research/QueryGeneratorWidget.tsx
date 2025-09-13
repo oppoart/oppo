@@ -22,6 +22,7 @@ export function QueryGeneratorWidget({
   const [generatedQueries, setGeneratedQueries] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [metadata, setMetadata] = useState<any>(null);
+  const [maxQueries, setMaxQueries] = useState<number>(8);
   const { toast } = useToast();
 
   const handleGenerateQueries = async () => {
@@ -29,7 +30,7 @@ export function QueryGeneratorWidget({
       setIsGenerating(true);
       setError(null);
       
-      const result = await analystApi.generateQueries(profileId, { maxQueries: 8 });
+      const result = await analystApi.generateQueries(profileId, { maxQueries });
       
       setGeneratedQueries(result.queries);
       setMetadata(result.metadata || null);
@@ -77,6 +78,20 @@ export function QueryGeneratorWidget({
               Clear
             </button>
           )}
+          
+          {/* 🔢 Number Input for Query Count */}
+          <div className="flex items-center gap-1">
+            <input
+              type="number"
+              min="1"
+              max="15"
+              value={maxQueries}
+              onChange={(e) => setMaxQueries(Math.max(1, Math.min(15, parseInt(e.target.value) || 1)))}
+              className="w-12 px-1 py-0.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+              disabled={isGenerating}
+              title="Number of queries to generate"
+            />
+          </div>
           
           <button
             onClick={handleGenerateQueries}

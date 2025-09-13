@@ -1,4 +1,4 @@
-import { GeneratedSearchQuery, SourceType } from '../../../../apps/backend/src/types/discovery';
+import { GeneratedSearchQuery, SourceType } from './types';
 
 export class QueryOptimizer {
   private isInitialized: boolean = false;

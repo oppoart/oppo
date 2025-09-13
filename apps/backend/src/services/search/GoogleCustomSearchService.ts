@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { SearchResult, GoogleSearchOptions, GoogleSearchResponse } from './GoogleSearchService';
+import { apiKeyManager } from '../../../../packages/shared/src/config/ApiKeyManager';
 
 /**
  * Google Custom Search API Client
@@ -11,11 +12,20 @@ export class GoogleCustomSearchService {
   private baseUrl = 'https://www.googleapis.com/customsearch/v1';
 
   constructor(apiKey?: string, searchEngineId?: string) {
-    this.apiKey = apiKey || process.env.GOOGLE_CUSTOM_SEARCH_API_KEY || '';
-    this.searchEngineId = searchEngineId || process.env.GOOGLE_SEARCH_ENGINE_ID || '';
+    // Use provided keys or get from API Key Manager with fallback support
+    this.apiKey = apiKey || apiKeyManager.getApiKey('GOOGLE_SEARCH_API_KEY') || '';
+    this.searchEngineId = searchEngineId || apiKeyManager.getApiKey('GOOGLE_SEARCH_ENGINE_ID') || '';
     
+    // Validate configuration
     if (!this.apiKey || !this.searchEngineId) {
-      console.warn('GoogleCustomSearchService: API key or Search Engine ID not configured. Service will not be available.');
+      const missingItems = [];
+      if (!this.apiKey) missingItems.push('GOOGLE_SEARCH_API_KEY');
+      if (!this.searchEngineId) missingItems.push('GOOGLE_SEARCH_ENGINE_ID');
+      
+      console.warn(`GoogleCustomSearchService: Missing configuration: ${missingItems.join(', ')}. Service will not be available.`);
+      console.warn('Please add these environment variables to your .env file:');
+      console.warn('GOOGLE_SEARCH_API_KEY="your_google_api_key_here"');
+      console.warn('GOOGLE_SEARCH_ENGINE_ID="your_search_engine_id_here"');
     }
   }
 
@@ -23,10 +33,12 @@ export class GoogleCustomSearchService {
     const startTime = Date.now();
     
     if (!this.apiKey || !this.searchEngineId) {
-      throw new Error('Google Custom Search API not configured');
+      throw new Error('❌ Google Custom Search API not configured. Please add GOOGLE_SEARCH_API_KEY and GOOGLE_SEARCH_ENGINE_ID to .env file.');
     }
 
     try {
+      console.log(`🔍 Google Custom Search: "${options.query}"`);
+      
       const params = {
         key: this.apiKey,
         cx: this.searchEngineId,
@@ -41,6 +53,10 @@ export class GoogleCustomSearchService {
       const response = await axios.get(this.baseUrl, { params });
       const data = response.data;
 
+      if (data.error) {
+        throw new Error(`Google API Error: ${data.error.message} (${data.error.code})`);
+      }
+
       const results: SearchResult[] = (data.items || []).map((item: any, index: number) => ({
         title: item.title || '',
         link: item.link || '',
@@ -50,6 +66,8 @@ export class GoogleCustomSearchService {
         date: this.extractDate(item)
       }));
 
+      console.log(`✅ Google Custom Search found ${results.length} results`);
+
       return {
         results,
         totalResults: parseInt(data.searchInformation?.totalResults) || results.length,
@@ -58,14 +76,16 @@ export class GoogleCustomSearchService {
       };
 
     } catch (error: any) {
-      console.error('Google Custom Search API error:', error);
+      console.error('❌ Google Custom Search failed:', error.message);
       
       if (error.response?.status === 403) {
-        throw new Error('Google Custom Search API quota exceeded or invalid credentials');
+        throw new Error('❌ Google Custom Search API quota exceeded or invalid credentials. Check your API key and billing.');
       } else if (error.response?.status === 429) {
-        throw new Error('Google Custom Search API rate limit exceeded');
+        throw new Error('❌ Google Custom Search API rate limit exceeded. Try again later.');
+      } else if (error.response?.status === 400) {
+        throw new Error('❌ Invalid Google Custom Search request. Check your search engine ID.');
       } else {
-        throw new Error(`Google Custom Search failed: ${error.message}`);
+        throw new Error(`❌ Google Custom Search failed: ${error.message}`);
       }
     }
   }

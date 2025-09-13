@@ -1,4 +1,4 @@
-import { ArtistProfile } from '@prisma/client';
+import { ArtistProfile } from './QueryGeneratorService';
 
 export interface ProfileAnalysis {
   primaryMediums: string[];

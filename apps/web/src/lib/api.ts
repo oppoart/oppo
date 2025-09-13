@@ -442,6 +442,7 @@ export const searchApi = {
     return response.data;
   },
 
+
   // Health check
   healthCheck: async (): Promise<{
     googleSearch: boolean;

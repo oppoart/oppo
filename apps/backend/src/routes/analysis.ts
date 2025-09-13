@@ -285,6 +285,9 @@ router.post('/analyze-batch', analysisLimiter, async (req: AuthenticatedRequest,
  */
 router.post('/scrape-and-analyze', analysisLimiter, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
+    console.log('🚀 Scrape-and-analyze endpoint called');
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+    
     const { searchResults, query, profileId } = req.body;
     
     if (!Array.isArray(searchResults) || !query || !profileId) {
@@ -375,14 +378,83 @@ router.post('/scrape-and-analyze', analysisLimiter, async (req: AuthenticatedReq
       }
     );
 
-    // Step 3: Combine results and calculate statistics
-    const relevantOpportunities = analysisResults.filter(r => 
+    // Map analysis results back to original opportunities
+    const analysisWithOpportunities = analysisResults.map((analysis, index) => ({
+      ...analysis,
+      originalOpportunity: successfulScrapes[index]?.opportunity
+    }));
+
+    // Step 3: Filter relevant opportunities with their original data
+    const relevantAnalyses = analysisWithOpportunities.filter(r => 
       r.success && r.relevanceScore.recommendation !== 'not-relevant'
     );
 
-    const highValueOpportunities = analysisResults.filter(r => 
+    const highValueAnalyses = analysisWithOpportunities.filter(r => 
       r.success && ['high', 'medium'].includes(r.relevanceScore.recommendation)
     );
+
+    // Step 4: 💾 SAVE RELEVANT OPPORTUNITIES TO DATABASE
+    console.log(`💾 Saving ${relevantAnalyses.length} relevant opportunities to database...`);
+    
+    const savedOpportunities = [];
+    let duplicatesSkipped = 0;
+    
+    for (const analysis of relevantAnalyses) {
+      if (analysis.success && analysis.originalOpportunity) {
+        try {
+          // Convert scraped opportunity to database format
+          const opp = analysis.originalOpportunity;
+          const opportunityData = {
+            title: opp.title,
+            description: opp.description,
+            url: opp.url,
+            organization: opp.organization || 'Unknown',
+            deadline: opp.deadline,
+            amount: opp.amount,
+            location: opp.location,
+            tags: opp.tags || [],
+            sourceType: 'websearch',
+            sourceUrl: opp.url,
+            sourceMetadata: {
+              searchQuery: query,
+              scrapingMethod: opp.scrapingMethod,
+              scrapedAt: opp.scrapedAt,
+              analysisScore: analysis.relevanceScore.overallScore,
+              recommendation: analysis.relevanceScore.recommendation
+            },
+            relevanceScore: analysis.relevanceScore.overallScore / 100, // Convert to 0-1 scale
+            semanticScore: analysis.relevanceScore.breakdown.mediumMatch / 100,
+            keywordScore: analysis.relevanceScore.breakdown.skillMatch / 100,
+            categoryScore: analysis.relevanceScore.breakdown.artRelevance / 100,
+            aiServiceUsed: 'openai',
+            processed: true,
+            status: 'new',
+            applied: false,
+            discoveredAt: new Date(),
+            lastUpdated: new Date()
+          };
+
+          // Save directly to database using Prisma
+          const savedOpportunity = await prisma.opportunity.create({
+            data: opportunityData
+          });
+          
+          savedOpportunities.push(savedOpportunity);
+          console.log(`✅ Saved to database: ${opp.title}`);
+          
+        } catch (error: any) {
+          // Check if it's a duplicate error
+          if (error.code === 'P2002') {
+            duplicatesSkipped++;
+            console.log(`⚠️ Skipped duplicate: ${analysis.originalOpportunity?.title}`);
+          } else {
+            console.error(`❌ Failed to save opportunity "${analysis.originalOpportunity?.title}":`, error.message);
+          }
+        }
+      }
+    }
+
+    console.log(`💾 Database save complete: ${savedOpportunities.length} saved, ${duplicatesSkipped} duplicates skipped`);
 
     res.json({
       success: true,
@@ -393,16 +465,24 @@ router.post('/scrape-and-analyze', analysisLimiter, async (req: AuthenticatedReq
           successful: successfulScrapes.length,
           failed: scrapeResults.length - successfulScrapes.length
         },
-        analysisResults,
-        relevantOpportunities,
-        highValueOpportunities,
+        analysisResults: analysisWithOpportunities,
+        relevantOpportunities: relevantAnalyses,
+        highValueOpportunities: highValueAnalyses,
+        // 💾 DATABASE SAVE RESULTS
+        databaseResults: {
+          saved: savedOpportunities.length,
+          duplicatesSkipped,
+          totalRelevant: relevantAnalyses.length
+        },
+        savedOpportunities, // Include saved opportunities for frontend
         summary: {
           searchResultsProcessed: searchResults.length,
           successfullyScrapped: successfulScrapes.length,
-          analyzed: analysisResults.length,
-          relevant: relevantOpportunities.length,
-          highValue: highValueOpportunities.length,
-          conversionRate: Math.round((relevantOpportunities.length / searchResults.length) * 100)
+          analyzed: analysisWithOpportunities.length,
+          relevant: relevantAnalyses.length,
+          highValue: highValueAnalyses.length,
+          savedToDatabase: savedOpportunities.length,
+          conversionRate: Math.round((relevantAnalyses.length / searchResults.length) * 100)
         }
       },
       meta: {
@@ -413,12 +493,21 @@ router.post('/scrape-and-analyze', analysisLimiter, async (req: AuthenticatedReq
     });
 
   } catch (error: any) {
-    console.error('Scrape-and-analyze error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to scrape and analyze opportunities',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    console.error('❌ Scrape-and-analyze error:', error);
+    console.error('Error stack:', error.stack);
+    
+    // Ensure we always return JSON, never HTML
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to scrape and analyze opportunities',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
+        details: process.env.NODE_ENV === 'development' ? {
+          stack: error.stack,
+          name: error.name
+        } : undefined
+      });
+    }
   }
 });
 

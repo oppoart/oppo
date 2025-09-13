@@ -84,7 +84,7 @@ export class AnalystService extends EventEmitter {
     };
 
     // Initialize components
-    this.queryGenerator = new QueryGeneratorService(prisma, {
+    this.queryGenerator = new QueryGeneratorService({
       aiProvider: this.config.aiProvider,
       timeout: this.config.queryGenerationTimeout
     });

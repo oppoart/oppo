@@ -18,6 +18,7 @@ import scraperRoutes from './routes/scraper';
 import analysisRoutes from './routes/analysis';
 import deduplicationRoutes from './routes/deduplication';
 import liaisonRoutes from './routes/liaison';
+import apiHealthRoutes from './routes/api-health';
 import { 
   validateEnvironment, 
   env, 
@@ -121,6 +122,9 @@ app.use('/api/deduplication', deduplicationRoutes);
 
 // Liaison routes (export, feedback, and UI integration)
 app.use('/api/liaison', liaisonRoutes);
+
+// API Health check routes (monitoring API key status)
+app.use('/api/health', apiHealthRoutes);
 
 // Basic API endpoint
 app.get('/api/test', (req, res) => {

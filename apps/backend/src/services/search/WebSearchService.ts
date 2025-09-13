@@ -1,5 +1,6 @@
 import { GoogleSearchService, SearchResult, GoogleSearchOptions, GoogleSearchResponse } from './GoogleSearchService';
 import { GoogleCustomSearchService } from './GoogleCustomSearchService';
+import { DuckDuckGoSearchService } from './DuckDuckGoSearchService';
 import { PrismaClient } from '@prisma/client';
 
 export interface SearchJobOptions {
@@ -45,14 +46,12 @@ export interface ProcessedSearchResult extends SearchResult {
  * Combines multiple search APIs with intelligent processing
  */
 export class WebSearchService {
-  private serpApiService: GoogleSearchService;
-  private customSearchService: GoogleCustomSearchService;
+  private googleSearchService: GoogleCustomSearchService;
   private prisma: PrismaClient;
   private activeJobs = new Map<string, SearchJob>();
 
   constructor(prisma: PrismaClient) {
-    this.serpApiService = new GoogleSearchService();
-    this.customSearchService = new GoogleCustomSearchService();
+    this.googleSearchService = new GoogleCustomSearchService();
     this.prisma = prisma;
   }
 
@@ -107,16 +106,13 @@ export class WebSearchService {
 
       for (const query of job.queries) {
         try {
-          // Try SerpAPI first (more reliable)
-          let searchResults = await this.searchWithProvider('serpapi', query, job.options);
-          
-          // If SerpAPI fails or returns few results, try Google Custom Search
-          if (searchResults.results.length < 5) {
-            const customResults = await this.searchWithProvider('custom', query, job.options);
-            if (customResults.results.length > searchResults.results.length) {
-              searchResults = customResults;
-            }
-          }
+          // Use Google Custom Search API directly
+          const searchResults = await this.googleSearchService.search({
+            query,
+            num: job.options.maxResults || 10,
+            hl: 'en',
+            gl: 'us'
+          });
 
           // Process and filter results
           const processedResults = await this.processSearchResults(searchResults.results, job.options);
@@ -160,27 +156,6 @@ export class WebSearchService {
     }
   }
 
-  /**
-   * Search with specific provider
-   */
-  private async searchWithProvider(
-    provider: 'serpapi' | 'custom', 
-    query: string, 
-    options: SearchJobOptions
-  ): Promise<GoogleSearchResponse> {
-    const searchOptions: GoogleSearchOptions = {
-      query,
-      num: options.maxResults || 10,
-      hl: 'en',
-      gl: 'us'
-    };
-
-    if (provider === 'serpapi') {
-      return await this.serpApiService.searchArtOpportunities(query, searchOptions);
-    } else {
-      return await this.customSearchService.searchArtOpportunities(query, searchOptions);
-    }
-  }
 
   /**
    * Process raw search results with quality scoring

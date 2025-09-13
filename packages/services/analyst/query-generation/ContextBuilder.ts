@@ -1,6 +1,6 @@
-import { ArtistProfile } from '@prisma/client';
+import { ArtistProfile } from './QueryGeneratorService';
 import { ProfileAnalysis } from './ProfileAnalyzer';
-import { AIServiceError } from '../../../../apps/backend/src/types/discovery';
+import { AIServiceError } from './types';
 
 export interface AIContext {
   systemPrompt: string;
@@ -71,7 +71,9 @@ export class ContextBuilder {
         searchObjectives,
         contextualHints,
         constraints,
-        expectedOutputFormat: this.getExpectedOutputFormat()
+        expectedOutputFormat: this.getExpectedOutputFormat(),
+        // 🎯 ADD: Include full profile analysis for sophisticated query generation
+        profileAnalysis: analysis
       };
 
     } catch (error) {

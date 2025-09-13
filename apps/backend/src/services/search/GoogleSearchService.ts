@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { apiKeyManager } from '../../../../packages/shared/src/config/ApiKeyManager';
 
 export interface SearchResult {
   title: string;
@@ -30,9 +31,19 @@ export class GoogleSearchService {
   private baseUrl = 'https://serpapi.com/search';
 
   constructor(apiKey?: string) {
-    this.apiKey = apiKey || process.env.SERPAPI_KEY || '';
-    if (!this.apiKey || this.apiKey === 'your_serpapi_key_here') {
-      console.warn('GoogleSearchService: No valid SerpAPI key provided. Using mock search results for development.');
+    // Use provided key or get from API Key Manager with fallback support
+    this.apiKey = apiKey || apiKeyManager.getApiKey('SERPAPI_KEY') || '';
+    
+    if (!this.apiKey || !apiKeyManager.validateApiKey('SERPAPI_KEY', this.apiKey)) {
+      console.warn('GoogleSearchService: No valid SerpAPI key provided.');
+      console.warn('Please add SERPAPI_KEY to your .env file or configure an alternative search service.');
+      
+      // Check for alternative search services
+      const alternatives = apiKeyManager.getBestSearchService();
+      if (alternatives && alternatives !== 'SERPAPI_KEY') {
+        console.log(`Alternative search service available: ${alternatives}`);
+      }
+      
       this.apiKey = '';
     }
   }
@@ -41,11 +52,12 @@ export class GoogleSearchService {
     const startTime = Date.now();
     
     if (!this.apiKey) {
-      // Return mock data for development when no API key is available
-      return this.generateMockResults(options, startTime);
+      throw new Error('❌ SERPAPI_KEY not configured. Please add your SerpAPI key to .env file or use a different search service.');
     }
 
     try {
+      console.log(`🔍 SerpAPI Search: "${options.query}"`);
+      
       const params = {
         engine: 'google',
         q: options.query,
@@ -60,6 +72,10 @@ export class GoogleSearchService {
       const response = await axios.get(this.baseUrl, { params });
       const data = response.data;
 
+      if (data.error) {
+        throw new Error(`SerpAPI Error: ${data.error}`);
+      }
+
       const results: SearchResult[] = (data.organic_results || []).map((result: any, index: number) => ({
         title: result.title || '',
         link: result.link || '',
@@ -69,6 +85,8 @@ export class GoogleSearchService {
         date: result.date
       }));
 
+      console.log(`✅ SerpAPI found ${results.length} results`);
+
       return {
         results,
         totalResults: data.search_information?.total_results || results.length,
@@ -77,17 +95,16 @@ export class GoogleSearchService {
       };
 
     } catch (error: any) {
-      console.error('Google Search API error:', error);
+      console.error('❌ SerpAPI Search failed:', error.message);
       
       if (error.response?.status === 401) {
-        console.warn('Invalid SerpAPI key detected. Falling back to mock results for development.');
-        return this.generateMockResults(options, startTime);
+        throw new Error('❌ Invalid SERPAPI_KEY. Please check your SerpAPI credentials in .env file.');
       } else if (error.response?.status === 429) {
-        console.warn('Search API rate limit exceeded. Falling back to mock results.');
-        return this.generateMockResults(options, startTime);
+        throw new Error('❌ SerpAPI rate limit exceeded. Please upgrade your plan or try again later.');
+      } else if (error.response?.status === 403) {
+        throw new Error('❌ SerpAPI access denied. Please check your API key permissions.');
       } else {
-        console.warn(`Google Search failed: ${error.message}. Falling back to mock results.`);
-        return this.generateMockResults(options, startTime);
+        throw new Error(`❌ SerpAPI Search failed: ${error.message}`);
       }
     }
   }

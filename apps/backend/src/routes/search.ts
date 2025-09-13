@@ -2,11 +2,14 @@ import express, { Router, Response } from 'express';
 import { AuthenticatedRequest } from '../types/auth';
 import { requireAuth } from '../middleware/auth';
 import { asyncHandler } from '../middleware/error-handler';
-import { googleSearchService } from '../services/search/GoogleSearchService';
+import { GoogleCustomSearchService } from '../services/search/GoogleCustomSearchService';
 import { z } from 'zod';
 import { validate } from '../middleware/validation';
 
 const router: Router = express.Router();
+
+// Initialize Google Custom Search Service
+const googleSearchService = new GoogleCustomSearchService();
 
 const searchQuerySchema = z.object({
   query: z.string().min(1, 'Query is required'),
@@ -57,35 +60,16 @@ router.post(
 
     let searchResults;
     
-    if (artFocus) {
-      // Use art-specific search for each query
-      searchResults = await Promise.allSettled(
-        queries.map((query: string) => 
-          googleSearchService.searchArtOpportunities(query, options)
-        )
-      );
-    } else {
-      // Use regular multi-query search
-      searchResults = await Promise.allSettled(
-        queries.map((query: string) => 
-          googleSearchService.search({ ...options, query })
-        )
-      );
-    }
+    // Use Google Custom Search for all queries (artFocus handled by search engine configuration)
+    searchResults = await Promise.allSettled(
+      queries.map((query: string) => 
+        googleSearchService.search({ ...options, query })
+      )
+    );
 
     const results = searchResults.map((result, index) => {
       if (result.status === 'fulfilled') {
-        let searchResult = result.value;
-        
-        // Apply art filtering if requested
-        if (artFocus) {
-          searchResult = {
-            ...searchResult,
-            results: googleSearchService.filterArtResults(searchResult.results)
-          };
-        }
-        
-        return searchResult;
+        return result.value;
       } else {
         console.error(`Search failed for query "${queries[index]}":`, result.reason);
         return {
@@ -122,17 +106,12 @@ router.post(
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { query, num } = req.body;
 
-    const result = await googleSearchService.searchArtOpportunities(query, { num });
+    const result = await googleSearchService.search({ query, num });
     
-    // Filter results for art-related content
-    const filteredResult = {
-      ...result,
-      results: googleSearchService.filterArtResults(result.results)
-    };
-
+    // Results are already filtered by Google Custom Search Engine configuration
     res.json({
       success: true,
-      data: filteredResult
+      data: result
     });
   })
 );

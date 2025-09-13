@@ -291,6 +291,7 @@ export function SearchProcess({ queryBucket }: SearchProcessProps) {
     setPipelineResults(null);
   };
 
+
   const handleStartPipeline = async () => {
     if (!selectedProfile || !searchProgress?.searchLog.length) {
       console.error('No profile selected or no search results available');
@@ -300,7 +301,7 @@ export function SearchProcess({ queryBucket }: SearchProcessProps) {
     setIsPipelineRunning(true);
     
     try {
-      console.log('🚀 Starting full pipeline processing...');
+      console.log('🚀 Starting scraping and analysis...');
       
       // Collect all search results from completed searches
       const allSearchResults = searchProgress.searchLog
@@ -308,35 +309,52 @@ export function SearchProcess({ queryBucket }: SearchProcessProps) {
         .flatMap(log => log.searchResults);
 
       if (allSearchResults.length === 0) {
-        throw new Error('No search results available for processing');
+        throw new Error('No search results available for scraping');
       }
 
-      console.log(`Processing ${allSearchResults.length} search results through full pipeline`);
+      console.log(`🕷️ Scraping and analyzing ${allSearchResults.length} search results...`);
 
-      // Use the new external data pipeline with organization scraping
-      const result = await searchApi.processSearchResults(allSearchResults, {
-        enableScraping: true,
-        enableValidation: true,
-        enableDeduplication: true,
-        organizationScraping: true,
-        profileId: selectedProfile,
-        pipeline: {
-          qualityThreshold: 60,
-          maxConcurrent: 3,
-          enableMetadataEnrichment: true
-        }
+      // Use the scrape-and-analyze endpoint for combined processing
+      const response = await fetch('/api/analysis/scrape-and-analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          searchResults: allSearchResults,
+          profileId: selectedProfile,
+          query: searchProgress.searchLog.map(log => log.query).join(', ')
+        })
       });
 
+      const result = await response.json();
+
       if (result.success) {
-        setPipelineResults(result.data);
-        console.log('✅ Pipeline processing completed:', result.data);
+        setPipelineResults({
+          ...result.data,
+          finalStats: {
+            searchResultsProcessed: allSearchResults.length,
+            successfullyScrapped: result.data.summary?.successfullyScrapped || 0,
+            duplicatesRemoved: result.data.databaseResults?.duplicatesSkipped || 0,
+            highValueOpportunities: result.data.summary?.savedToDatabase || 0
+          },
+          highValueOpportunities: result.data.savedOpportunities || [],
+          analysisResults: result.data.analysisResults || []
+        });
+        console.log('✅ Scraping, analysis, and database save completed:', result.data);
+        
+        // Show success message with database save info
+        if (result.data.summary?.savedToDatabase > 0) {
+          alert(`Success! Saved ${result.data.summary.savedToDatabase} opportunities to your database. View them in the Opportunities page.`);
+        }
       } else {
-        throw new Error('Pipeline processing failed');
+        throw new Error(result.message || 'Scraping and analysis failed');
       }
 
     } catch (error) {
-      console.error('Pipeline processing error:', error);
-      alert('Pipeline processing failed. Please try again.');
+      console.error('❌ Scraping and analysis error:', error);
+      alert(`Scraping failed: ${error.message || 'Unknown error'}`);
     } finally {
       setIsPipelineRunning(false);
     }
@@ -549,112 +567,69 @@ export function SearchProcess({ queryBucket }: SearchProcessProps) {
               </div>
             ) : searchCompleted && searchProgress ? (
               <div className="h-full flex flex-col">
-                {/* Completion Header */}
-                <div className="mb-4 text-center">
-                  <div className="text-6xl mb-4">✅</div>
-                  <h4 className="text-2xl font-bold text-green-600 mb-2">Search Completed!</h4>
-                  <p className="text-muted-foreground">
-                    All {searchProgress.totalQueries} queries processed successfully
-                  </p>
+                {/* 📊 SIMPLE LEFT-ALIGNED HEADER */}
+                <div className="mb-4">
+                  <h4 className="text-lg font-semibold text-gray-900">Found {searchProgress.resultsFound} results</h4>
+                  <p className="text-sm text-gray-600">{searchProgress.totalQueries} queries completed</p>
                 </div>
 
-                {/* Results Summary */}
-                <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-blue-600 mb-2">
-                      {searchProgress.resultsFound} Search Results Found
-                    </div>
-                    <div className="flex items-center justify-center gap-2 text-blue-700">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <span className="font-medium">Ready for scraping and analysis</span>
-                    </div>
-                  </div>
-                  <div className="mt-3 text-sm text-blue-600 bg-blue-100 p-3 rounded">
-                    <strong>Next Steps:</strong> These results will be scraped, analyzed for relevance, and the most promising opportunities will be saved to your opportunities database.
-                  </div>
-                </div>
-
-                {/* Search Summary */}
-                <div className="mb-4 p-3 bg-blue-50 rounded-md border border-blue-200">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="text-center">
-                      <div className="font-semibold text-blue-800">Queries Processed</div>
-                      <div className="text-xl font-bold text-blue-600">{searchProgress.totalQueries}</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="font-semibold text-blue-800">Success Rate</div>
-                      <div className="text-xl font-bold text-blue-600">100%</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Search Log */}
-                <div className="flex-1 overflow-hidden">
-                  <h5 className="text-sm font-medium text-gray-700 mb-2">Search Results:</h5>
-                  <div className="bg-white rounded-md border h-full overflow-y-auto">
-                    <div className="p-3 space-y-2">
-                      {searchProgress.searchLog.map((log, index) => (
-                        <div key={index} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0">
-                          <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-800 mb-1">"{log.query}"</div>
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                              <span className="text-xs text-blue-600 font-medium">Search Completed</span>
+                {/* 📋 DETAILED SEARCH RESULTS */}
+                <div className="flex-1 overflow-y-auto mb-4 space-y-3">
+                  {searchProgress.searchLog.map((log, index) => (
+                    <div key={index} className="bg-white border rounded-lg p-4">
+                      {/* Query Header */}
+                      <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
+                        <span className="font-medium text-gray-900">"{log.query}"</span>
+                        <span className="text-sm bg-blue-100 text-blue-700 px-2 py-1 rounded">{log.results} results</span>
+                      </div>
+                      
+                      {/* 🌐 ALL WEBSITE RESULTS */}
+                      {log.searchResults && log.searchResults.length > 0 && (
+                        <div className="space-y-3">
+                          {log.searchResults.map((result, resultIndex) => (
+                            <div key={resultIndex} className="border-l-2 border-blue-200 pl-3">
+                              <div className="flex items-start justify-between mb-1">
+                                <h6 className="font-medium text-gray-900 text-sm leading-tight flex-1 mr-2">
+                                  {result.title}
+                                </h6>
+                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                  {result.domain}
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-600 mb-2 leading-relaxed">
+                                {result.snippet}
+                              </p>
+                              <a 
+                                href={result.link} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                              >
+                                {result.link}
+                              </a>
                             </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-sm font-bold text-blue-600">{log.results}</div>
-                            <div className="text-xs text-gray-500">results found</div>
-                          </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  </div>
+                  ))}
                 </div>
 
-                {/* Action Buttons */}
-                <div className="mt-4 space-y-4">
-                  {/* Profile Selection */}
-                  {availableProfiles.length > 0 && (
-                    <div className="flex items-center gap-2">
-                      <label className="text-sm font-medium text-gray-700">Profile:</label>
-                      <select
-                        value={selectedProfile || ''}
-                        onChange={(e) => setSelectedProfile(e.target.value)}
-                        className="px-3 py-1 border rounded text-sm"
-                      >
-                        {availableProfiles.map(profile => (
-                          <option key={profile.id} value={profile.id}>
-                            {profile.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                  
-                  <div className="flex gap-2 justify-center">
-                    <button 
-                      onClick={handleResetSearch}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-medium"
-                    >
-                      Run New Search
-                    </button>
-                    <button 
-                      onClick={handleStartPipeline}
-                      className="bg-orange-600 hover:bg-orange-700 disabled:bg-orange-300 text-white px-6 py-2 rounded-md font-medium"
-                      disabled={isPipelineRunning || !selectedProfile || !searchProgress?.searchLog.length}
-                    >
-                      {isPipelineRunning ? 'Processing Pipeline...' : 'Start Full Pipeline'}
-                    </button>
-                    <button 
-                      onClick={() => {
-                        window.location.href = '/dashboard/opportunities';
-                      }}
-                      className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md font-medium"
-                    >
-                      View Opportunities
-                    </button>
-                  </div>
+                {/* 🎯 SIMPLE ACTIONS */}
+                <div className="flex gap-2">
+                  <button 
+                    onClick={handleStartPipeline}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-medium"
+                    disabled={isPipelineRunning || !selectedProfile}
+                  >
+                    Scrape & Analyze
+                  </button>
+                  <button 
+                    onClick={handleResetSearch}
+                    className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded font-medium"
+                  >
+                    New Search
+                  </button>
                 </div>
               </div>
             ) : isSearching && searchProgress ? (

@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { queryGenerationService, analysisService } from '../services/ai-services';
+import AnalystServiceSingleton from '../services/AnalystServiceSingleton';
 import { requireAuth } from '../middleware/auth';
 import { validate } from '../middleware/validation';
 import { z } from 'zod';
@@ -14,7 +15,13 @@ interface AuthenticatedRequest extends Request {
 }
 
 const router: Router = Router();
-const prisma = new PrismaClient();
+
+// Use singleton for manual (user-triggered) analysis
+const analystService = AnalystServiceSingleton.getInstance();
+const prisma = AnalystServiceSingleton.getPrisma();
+
+// Initialize the singleton (safe to call multiple times)
+AnalystServiceSingleton.initialize().catch(console.error);
 
 // Validation schemas
 const runAnalysisSchema = z.object({
@@ -136,22 +143,17 @@ router.post('/generate-queries',
         return;
       }
 
-      // Convert Prisma profile to our service interface
-      const artistProfile = {
-        id: profile.id,
-        name: profile.name,
-        mediums: profile.mediums,
-        skills: profile.skills,
-        interests: profile.interests,
-        experience: profile.experience || 'intermediate',
-        location: profile.location || undefined,
-        bio: profile.bio || undefined
-      };
+      // Use the sophisticated AnalystService for query generation
+      // This will use ProfileAnalyzer, ContextBuilder, and QueryOptimizer
+      const queries = await analystService.generateQueries(profile.id, ['websearch']);
 
-      const result = await queryGenerationService.generateQueries(artistProfile, {
-        maxQueries,
+      const result = {
+        queries,
+        generatedAt: new Date(),
+        profileId: profile.id,
+        processingTimeMs: 0, // AnalystService doesn't return timing yet
         opportunityType: 'all'
-      });
+      };
 
       res.json({
         success: true,

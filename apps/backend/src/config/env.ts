@@ -39,9 +39,12 @@ const envSchema = z.object({
   // External APIs 
   FIRECRAWL_API_KEY: z.string().optional(),
   
-  // Google Search API Configuration
-  GOOGLE_CUSTOM_SEARCH_API_KEY: z.string().optional(),
+  // Google Search API Configuration (standardized names)
+  GOOGLE_SEARCH_API_KEY: z.string().optional(),
   GOOGLE_SEARCH_ENGINE_ID: z.string().optional(),
+  
+  // Legacy support (will be deprecated)
+  GOOGLE_CUSTOM_SEARCH_API_KEY: z.string().optional(),
 
   // Email Services (for password reset emails)
   SENDGRID_API_KEY: z.string().optional(),

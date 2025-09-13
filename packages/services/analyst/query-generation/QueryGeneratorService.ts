@@ -1,4 +1,16 @@
-import { PrismaClient, ArtistProfile } from '@prisma/client';
+// Use a simple interface instead of Prisma types
+export interface ArtistProfile {
+  id: string;
+  name: string;
+  mediums: string[];
+  skills: string[];
+  interests: string[];
+  experience: string;
+  location?: string;
+  bio?: string;
+  artistStatement?: string;
+  userId: string;
+}
 import { ProfileAnalyzer } from './ProfileAnalyzer';
 import { ContextBuilder } from './ContextBuilder';
 import { QueryOptimizer } from './QueryOptimizer';
@@ -9,7 +21,7 @@ import {
   AIServiceError,
   SearchQueryContext,
   GeneratedSearchQuery
-} from '../../../../apps/backend/src/types/discovery';
+} from './types';
 
 export interface QueryGeneratorConfig {
   aiProvider: 'openai' | 'anthropic' | 'google';
@@ -45,13 +57,12 @@ export class QueryGeneratorService {
   private queryCache: Map<string, QueryGenerationResult> = new Map();
 
   constructor(
-    private prisma: PrismaClient,
     config: Partial<QueryGeneratorConfig> = {}
   ) {
     this.config = {
       aiProvider: 'openai',
       timeout: 30000,
-      maxQueriesPerSource: 5,
+      maxQueriesPerSource: 20, // 🔧 INCREASED: Allow up to 20 queries per source
       useSemanticEnhancement: true,
       cacheResults: true,
       ...config
@@ -73,6 +84,8 @@ export class QueryGeneratorService {
     
     try {
       await this.contextBuilder.initialize();
+      await this.queryOptimizer.initialize();
+      await this.basicTemplate.initialize();
       await this.semanticTemplate.initialize();
       console.log('Query Generation Service initialized successfully');
     } catch (error) {
@@ -141,7 +154,7 @@ export class QueryGeneratorService {
           profile,
           aiContext,
           profileAnalysis,
-          Math.min(maxQueries || this.config.maxQueriesPerSource, this.config.maxQueriesPerSource)
+          maxQueries || this.config.maxQueriesPerSource // 🔧 FIXED: Use user's maxQueries directly
         );
 
         allQueries.push(...sourceQueries);

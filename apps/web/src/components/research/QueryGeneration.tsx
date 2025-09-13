@@ -6,7 +6,7 @@ import { Plus, Play } from 'lucide-react';
 interface QueryGenerationProps {
   generatedQueries: string[];
   isGenerating: boolean;
-  onGenerateQueries: () => void;
+  onGenerateQueries: (maxQueries: number) => void;
   onAddToBucket: (query: string) => void;
   queryBucket: string[];
 }
@@ -18,22 +18,43 @@ export function QueryGeneration({
   onAddToBucket,
   queryBucket
 }: QueryGenerationProps) {
+  const [maxQueries, setMaxQueries] = useState<number>(10);
   return (
     <div className="flex-1 border-b border-border min-h-0">
       <div className="h-full pt-2 px-4 pb-4 flex flex-col">
-        {/* Header with title and button */}
+        {/* Header with title and controls */}
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-lg font-semibold">Query Generation</h3>
-          <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${isGenerating ? 'bg-yellow-500' : 'bg-green-500'}`}></div>
-            <button 
-              onClick={onGenerateQueries}
-              disabled={isGenerating}
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white p-2 rounded-md transition-colors"
-              title={isGenerating ? 'Generating...' : 'Generate Queries'}
-            >
-              <Play className="h-4 w-4" />
-            </button>
+          <div className="flex items-center gap-3">
+            {/* 🔢 Number Input for Query Count */}
+            <div className="flex items-center gap-2">
+              <label htmlFor="maxQueries" className="text-sm font-medium text-gray-600">
+                Count:
+              </label>
+              <input
+                id="maxQueries"
+                type="number"
+                min="1"
+                max="20"
+                value={maxQueries}
+                onChange={(e) => setMaxQueries(Math.max(1, Math.min(20, parseInt(e.target.value) || 1)))}
+                className="w-16 px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={isGenerating}
+              />
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${isGenerating ? 'bg-yellow-500' : 'bg-green-500'}`}></div>
+              <button 
+                onClick={() => onGenerateQueries(maxQueries)}
+                disabled={isGenerating}
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-3 py-2 rounded-md transition-colors flex items-center gap-2"
+                title={isGenerating ? 'Generating...' : `Generate ${maxQueries} Queries`}
+              >
+                <Play className="h-4 w-4" />
+                <span className="text-sm font-medium">Generate</span>
+              </button>
+            </div>
           </div>
         </div>
         <div className="border-b border-border mb-2 -mx-4 h-px"></div>

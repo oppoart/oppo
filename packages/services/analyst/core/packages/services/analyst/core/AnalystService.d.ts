@@ -54,11 +54,31 @@ export declare class AnalystService extends EventEmitter {
     private isInitialized;
     private activeAnalyses;
     constructor(prisma: PrismaClient, config?: Partial<AnalystConfig>);
+    /**
+     * Initialize the Analyst service and all components
+     */
     initialize(): Promise<void>;
+    /**
+     * Run complete AI analysis for an artist profile
+     * This is the core method that orchestrates the entire pipeline:
+     * Profile → Query Generation → Discovery → Relevance Scoring → Storage
+     */
     runAnalysis(request: AnalysisRequest): Promise<AnalysisResult>;
+    /**
+     * Generate queries for an artist profile without running full discovery
+     */
     generateQueries(profileId: string, sources?: SourceType[]): Promise<string[]>;
+    /**
+     * Score opportunities for relevance to an artist profile
+     */
     scoreOpportunities(profileId: string, opportunityIds: string[]): Promise<Map<string, number>>;
+    /**
+     * Get analysis statistics
+     */
     getStats(): Promise<AnalystStats>;
+    /**
+     * Health check for the Analyst service
+     */
     healthCheck(): Promise<{
         status: 'healthy' | 'degraded' | 'unhealthy';
         details: {
@@ -69,9 +89,11 @@ export declare class AnalystService extends EventEmitter {
             archivistConnection: boolean;
         };
     }>;
+    /**
+     * Graceful shutdown
+     */
     shutdown(): Promise<void>;
     private executeAnalysis;
     private getArtistProfile;
     private generateRequestId;
 }
-//# sourceMappingURL=AnalystService.d.ts.map

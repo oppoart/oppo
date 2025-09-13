@@ -38,7 +38,7 @@ export default function LLMSearchPage() {
     handleExportResults,
   } = useResearchServices({ serviceIds, serviceNames });
 
-  const handleGenerateQueries = async () => {
+  const handleGenerateQueries = async (maxQueries: number = 10) => {
     if (!selectedProfile) {
       toast({
         title: "No Profile Selected",
@@ -52,7 +52,7 @@ export default function LLMSearchPage() {
     
     try {
       const result = await analystApi.generateQueries(selectedProfile.id, {
-        maxQueries: 10,
+        maxQueries,
         sourceTypes: ['llm', 'ai_research']
       });
       
