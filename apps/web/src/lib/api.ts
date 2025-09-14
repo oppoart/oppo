@@ -219,7 +219,6 @@ export const opportunityApi = {
     type?: string;
     minRelevanceScore?: number;
     deadlineBefore?: string;
-    starred?: boolean;
   }): Promise<{
     data: Opportunity[];
     pagination: {
@@ -237,15 +236,26 @@ export const opportunityApi = {
     if (options?.type) params.append('type', options.type);
     if (options?.minRelevanceScore) params.append('minRelevanceScore', options.minRelevanceScore.toString());
     if (options?.deadlineBefore) params.append('deadlineBefore', options.deadlineBefore);
-    if (options?.starred) params.append('starred', 'true');
 
-    const response = await api.get(`/api/archivist/opportunities?${params}`);
-    return response.data;
+    const response = await api.get(`/api/analysis/opportunities?${params}`);
+    // Transform the response to match expected format
+    const result = response.data;
+    const pagination = result.pagination || { offset: 0, limit: 10, total: 0 };
+    
+    return {
+      data: result.data || [],
+      pagination: {
+        page: Math.floor(pagination.offset / pagination.limit) + 1,
+        limit: pagination.limit,
+        total: pagination.total,
+        pages: Math.ceil(pagination.total / pagination.limit)
+      }
+    };
   },
 
   // Get specific opportunity by ID
   getOpportunity: async (id: string): Promise<Opportunity> => {
-    const response = await api.get(`/api/archivist/opportunities/${id}`);
+    const response = await api.get(`/api/analysis/opportunities/${id}`);
     return response.data.data;
   },
 
@@ -261,11 +271,6 @@ export const opportunityApi = {
     return response.data.data;
   },
 
-  // Get starred opportunities
-  getStarredOpportunities: async (): Promise<Opportunity[]> => {
-    const response = await api.get('/api/archivist/opportunities/starred');
-    return response.data.data;
-  },
 
   // Get opportunities with stats
   getOpportunitiesWithStats: async (): Promise<Opportunity[]> => {
@@ -323,8 +328,25 @@ export const searchApi = {
     searchTime: number;
     query: string;
   }> => {
-    const response = await api.post('/api/search/google', { query, ...options });
-    return response.data.data;
+    try {
+      const response = await api.post('/api/search/google', { query, ...options });
+      return response.data.data;
+    } catch (error: any) {
+      // Re-throw with additional context for search-specific errors
+      if (error.response?.data?.code === 'SEARCH_QUOTA_EXCEEDED') {
+        const enhancedError = new Error('Search quota exceeded. Please try again later.');
+        (enhancedError as any).code = 'SEARCH_QUOTA_EXCEEDED';
+        (enhancedError as any).originalError = error;
+        throw enhancedError;
+      }
+      if (error.response?.data?.code === 'SEARCH_CREDENTIALS_ERROR') {
+        const enhancedError = new Error('Search service is temporarily unavailable.');
+        (enhancedError as any).code = 'SEARCH_CREDENTIALS_ERROR';
+        (enhancedError as any).originalError = error;
+        throw enhancedError;
+      }
+      throw error;
+    }
   },
 
   // Yandex Search
@@ -385,8 +407,26 @@ export const searchApi = {
     totalQueries: number;
     successfulQueries: number;
   }> => {
-    const response = await api.post('/api/search/google/multiple', { queries, ...options });
-    return response.data.data;
+    try {
+      const response = await api.post('/api/search/google/multiple', { queries, ...options });
+      return response.data.data;
+    } catch (error: any) {
+      // For multiple queries, quota errors might be mixed in the results
+      // Check if the error is a global quota issue
+      if (error.response?.data?.code === 'SEARCH_QUOTA_EXCEEDED') {
+        const enhancedError = new Error('Search quota exceeded. Please try again later.');
+        (enhancedError as any).code = 'SEARCH_QUOTA_EXCEEDED';
+        (enhancedError as any).originalError = error;
+        throw enhancedError;
+      }
+      if (error.response?.data?.code === 'SEARCH_CREDENTIALS_ERROR') {
+        const enhancedError = new Error('Search service is temporarily unavailable.');
+        (enhancedError as any).code = 'SEARCH_CREDENTIALS_ERROR';
+        (enhancedError as any).originalError = error;
+        throw enhancedError;
+      }
+      throw error;
+    }
   },
 
   // Search for art opportunities
@@ -405,8 +445,25 @@ export const searchApi = {
     searchTime: number;
     query: string;
   }> => {
-    const response = await api.post('/api/search/art-opportunities', { query, ...options });
-    return response.data.data;
+    try {
+      const response = await api.post('/api/search/art-opportunities', { query, ...options });
+      return response.data.data;
+    } catch (error: any) {
+      // Re-throw with additional context for search-specific errors
+      if (error.response?.data?.code === 'SEARCH_QUOTA_EXCEEDED') {
+        const enhancedError = new Error('Search quota exceeded. Please try again later.');
+        (enhancedError as any).code = 'SEARCH_QUOTA_EXCEEDED';
+        (enhancedError as any).originalError = error;
+        throw enhancedError;
+      }
+      if (error.response?.data?.code === 'SEARCH_CREDENTIALS_ERROR') {
+        const enhancedError = new Error('Search service is temporarily unavailable.');
+        (enhancedError as any).code = 'SEARCH_CREDENTIALS_ERROR';
+        (enhancedError as any).originalError = error;
+        throw enhancedError;
+      }
+      throw error;
+    }
   },
 
   // Process search results through external data pipeline

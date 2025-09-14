@@ -179,7 +179,7 @@ export function useResearchServices({ serviceIds, serviceNames }: UseResearchSer
 
   const loadActiveSessions = async (profileId: string) => {
     try {
-      const { sessions } = await retryWithBackoff(async () => {
+      const sessions = await retryWithBackoff(async () => {
         return await researchApi.getActiveSessions(profileId);
       }, 2, 1000);
       

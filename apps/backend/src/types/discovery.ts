@@ -73,8 +73,9 @@ export type DiscoverySourceData = z.infer<typeof discoverySourceSchema>;
 export const webSearchConfigSchema = z.object({
   searchQueries: z.array(z.string()),
   providers: z.array(z.enum(['serpapi', 'tavily', 'bing', 'perplexity'])),
-  maxResults: z.number().default(20),
+  maxResults: z.number().default(100), // Increased from 20 to 100 for more comprehensive results
   language: z.string().default('en'),
+  dateRestrict: z.enum(['past_month', 'past_week', 'past_day']).default('past_month'), // Only show recent opportunities
 });
 
 export const socialConfigSchema = z.object({

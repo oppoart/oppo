@@ -8,25 +8,25 @@ datasource db {
 }
 
 model User {
-  id                String              @id @default(cuid())
-  email             String              @unique
-  emailVerified     Boolean             @default(false)
-  name              String?
-  image             String?
-  preferences       Json?               // User-level preferences for AI matching and notifications
-  settings          Json?               // General app settings and configuration
-  linkedinCredentials Json?             // LinkedIn authentication credentials
-  linkedinProfile   Json?               // LinkedIn profile data
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  profiles          ArtistProfile[]
-  sessions          Session[]
-  accounts          Account[]
+  id                  String               @id @default(cuid())
+  email               String               @unique
+  emailVerified       Boolean              @default(false)
+  name                String?
+  image               String?
+  preferences         Json?
+  settings            Json?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  linkedinCredentials Json?
+  linkedinProfile     Json?
+  accounts            Account[]
+  profiles            ArtistProfile[]
+  bookmarks           Bookmark[]
   passwordResetTokens PasswordResetToken[]
-  activities        UserActivity[]      // Track user interactions
-  queryBuckets      QueryBucket[]       // User's saved search queries
-  bookmarks         Bookmark[]          // User's bookmarked URLs
-  
+  queryBuckets        QueryBucket[]
+  sessions            Session[]
+  activities          UserActivity[]
+
   @@map("users")
 }
 
@@ -45,20 +45,20 @@ model Session {
 }
 
 model Account {
-  id                String   @id @default(cuid())
-  userId            String
-  accountId         String
-  providerId        String
-  accessToken       String?
-  refreshToken      String?
-  idToken           String?
-  accessTokenExpiresAt DateTime?
+  id                    String    @id @default(cuid())
+  userId                String
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
-  scope             String?
-  password          String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([providerId, accountId])
   @@map("accounts")
@@ -77,68 +77,60 @@ model PasswordResetToken {
 }
 
 model ArtistProfile {
-  id               String   @id @default(cuid())
-  userId           String
-  name             String
-  mediums          String[] @default(["other"]) // generative art, textile art, new media art, AI art, etc.
-  bio              String?
-  artistStatement  String?
-  skills           String[]
-  interests        String[]
-  experience       String?
-  location         String?
-  website          String?
-  portfolioUrl     String?
-  preferences      Json?
-  settings         Json?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String   @id @default(cuid())
+  userId          String
+  name            String
+  mediums         String[] @default(["other"])
+  bio             String?
+  artistStatement String?
+  skills          String[]
+  interests       String[]
+  experience      String?
+  location        String?
+  website         String?
+  portfolioUrl    String?
+  preferences     Json?
+  settings        Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("artist_profiles")
 }
 
 model Opportunity {
-  id               String             @id @default(cuid())
+  id               String                  @id @default(cuid())
   title            String
-  organization     String?            // Added: Organization/Institution name
+  organization     String?
   description      String
   url              String
   deadline         DateTime?
   amount           String?
   location         String?
   tags             String[]
-  
-  // Discovery System Fields
-  sourceType       String             // 'websearch', 'social', 'bookmark', 'newsletter'
-  sourceUrl        String?            // Original source URL where found
-  sourceId         String?            // ID of the source that discovered this opportunity
-  sourceMetadata   Json?              // API response data, social post info, etc.
-  discoveredAt     DateTime           @default(now())
-  lastUpdated      DateTime           @default(now()) @updatedAt
-  createdAt        DateTime           @default(now())
-  
-  // Processing Fields
+  sourceType       String
+  sourceUrl        String?
+  sourceMetadata   Json?
+  discoveredAt     DateTime                @default(now())
+  lastUpdated      DateTime                @default(now()) @updatedAt
   relevanceScore   Float?
-  semanticScore    Float?             // AI semantic similarity score
-  keywordScore     Float?             // Keyword matching score
-  categoryScore    Float?             // Category/medium matching score
-  aiServiceUsed    String?            // Which AI service was used for analysis
-  processingTimeMs Int?               // Time taken to process this opportunity
-  processed        Boolean            @default(false)
-  
-  // User Interaction Fields
-  status           String             @default("new") // 'new', 'reviewing', 'applying', 'submitted', 'rejected', 'archived'
-  applied          Boolean            @default(false)
-  notes            String?            // User notes about this opportunity
-  starred          Boolean            @default(false) // User bookmarked/starred
-  
-  // Relationships
-  source           OpportunitySource? @relation(fields: [sourceId], references: [id])
+  semanticScore    Float?
+  keywordScore     Float?
+  categoryScore    Float?
+  aiServiceUsed    String?
+  processingTimeMs Int?
+  processed        Boolean                 @default(false)
+  status           String                  @default("new")
+  applied          Boolean                 @default(false)
+  notes            String?
+  starred          Boolean                 @default(false)
+  createdAt        DateTime                @default(now())
+  sourceId         String?
+  source           OpportunitySource?      @relation(fields: [sourceId], references: [id])
+  duplicateOf      OpportunityDuplicate[]  @relation("DuplicateOpportunity")
+  duplicates       OpportunityDuplicate[]  @relation("MasterOpportunity")
   matches          OpportunityMatch[]
   sourceLinks      OpportunitySourceLink[]
-  duplicates       OpportunityDuplicate[] @relation("MasterOpportunity")
-  duplicateOf      OpportunityDuplicate[] @relation("DuplicateOpportunity")
 
   @@map("opportunities")
 }
@@ -154,26 +146,22 @@ model OpportunityMatch {
   @@map("opportunity_matches")
 }
 
-// Discovery System Models
-
 model OpportunitySource {
-  id           String        @id @default(cuid())
-  name         String        // Human-readable name (e.g., "ArtConnect", "Instagram", "Arts.gov")
-  type         String        // 'websearch', 'social', 'bookmark', 'newsletter'
-  url          String?       // Base URL for scraping sources
-  enabled      Boolean       @default(true)
-  active       Boolean       @default(true) // Whether the source is actively being scanned
-  lastScanned  DateTime?     // Last successful scan
-  successCount Int           @default(0) // Number of successful scans
-  errorCount   Int           @default(0) // Number of failed scans
-  config       Json?         // Source-specific configuration (search terms, hashtags, etc.)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  
-  // Relationships
+  id            String                  @id @default(cuid())
+  name          String
+  type          String
+  url           String?
+  enabled       Boolean                 @default(true)
+  lastScanned   DateTime?
+  successCount  Int                     @default(0)
+  errorCount    Int                     @default(0)
+  config        Json?
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+  active        Boolean                 @default(true)
+  discoveryJobs DiscoveryJob[]
   opportunities Opportunity[]
   sourceLinks   OpportunitySourceLink[]
-  discoveryJobs DiscoveryJob[]
 
   @@map("opportunity_sources")
 }
@@ -183,8 +171,6 @@ model OpportunitySourceLink {
   opportunityId String
   sourceId      String
   discoveredAt  DateTime          @default(now())
-  
-  // Relationships
   opportunity   Opportunity       @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
   source        OpportunitySource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
 
@@ -193,71 +179,61 @@ model OpportunitySourceLink {
 }
 
 model DiscoveryJob {
-  id              String            @id @default(cuid())
-  sourceId        String?
-  sourceType      String            // 'websearch', 'social', 'bookmark', 'newsletter', 'manual'
-  sourceName      String?
-  status          String            @default("pending") // 'pending', 'running', 'completed', 'failed', 'cancelled'
-  startedAt       DateTime?
-  completedAt     DateTime?
-  opportunitiesFound Int            @default(0)
-  errors          Json?             // Array of error messages
-  metadata        Json?             // Job-specific data (search queries, hashtags, etc.)
-  processingTimeMs Int?             // Total job execution time
-  createdAt       DateTime          @default(now())
-  
-  // Relationships
-  source          OpportunitySource? @relation(fields: [sourceId], references: [id])
+  id                 String             @id @default(cuid())
+  sourceId           String?
+  sourceType         String
+  sourceName         String?
+  status             String             @default("pending")
+  startedAt          DateTime?
+  completedAt        DateTime?
+  opportunitiesFound Int                @default(0)
+  errors             Json?
+  metadata           Json?
+  processingTimeMs   Int?
+  createdAt          DateTime           @default(now())
+  source             OpportunitySource? @relation(fields: [sourceId], references: [id])
 
   @@map("discovery_jobs")
 }
 
 model OpportunityDuplicate {
-  id                    String      @id @default(cuid())
-  masterOpportunityId   String      // The opportunity we keep
-  duplicateOpportunityId String     // The opportunity we mark as duplicate
-  similarityScore       Float       // How similar they are (0-1)
-  mergeStrategy         String?     // How duplicates were handled
-  createdAt             DateTime    @default(now())
-  
-  // Relationships
-  masterOpportunity     Opportunity @relation("MasterOpportunity", fields: [masterOpportunityId], references: [id], onDelete: Cascade)
-  duplicateOpportunity  Opportunity @relation("DuplicateOpportunity", fields: [duplicateOpportunityId], references: [id], onDelete: Cascade)
+  id                     String      @id @default(cuid())
+  masterOpportunityId    String
+  duplicateOpportunityId String
+  similarityScore        Float
+  mergeStrategy          String?
+  createdAt              DateTime    @default(now())
+  duplicateOpportunity   Opportunity @relation("DuplicateOpportunity", fields: [duplicateOpportunityId], references: [id], onDelete: Cascade)
+  masterOpportunity      Opportunity @relation("MasterOpportunity", fields: [masterOpportunityId], references: [id], onDelete: Cascade)
 
   @@unique([masterOpportunityId, duplicateOpportunityId])
   @@map("opportunity_duplicates")
 }
 
-// AI Service Performance Tracking
-
 model AIServiceMetrics {
-  id              String    @id @default(cuid())
-  serviceName     String    // 'openai', 'anthropic', 'google', etc.
-  operation       String    // 'embedding', 'analysis', 'search', etc.
-  responseTimeMs  Int       // Response time in milliseconds
-  success         Boolean   // Whether the operation succeeded
-  costUsd         Float?    // Cost in USD if available
-  qualityScore    Float?    // Quality assessment (0-1)
-  errorMessage    String?   // Error details if failed
-  metadata        Json?     // Additional metrics data
-  createdAt       DateTime  @default(now())
+  id             String   @id @default(cuid())
+  serviceName    String
+  operation      String
+  responseTimeMs Int
+  success        Boolean
+  costUsd        Float?
+  qualityScore   Float?
+  errorMessage   String?
+  metadata       Json?
+  createdAt      DateTime @default(now())
 
   @@map("ai_service_metrics")
 }
 
-// User Interaction Tracking
-
 model UserActivity {
-  id            String    @id @default(cuid())
-  userId        String
-  activityType  String    // 'opportunity_viewed', 'status_changed', 'starred', 'applied', etc.
-  entityType    String    // 'opportunity', 'profile', 'search', etc.
-  entityId      String?   // ID of the entity being acted upon
-  metadata      Json?     // Activity-specific data
-  createdAt     DateTime  @default(now())
-  
-  // Relationships
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  userId       String
+  activityType String
+  entityType   String
+  entityId     String?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_activities")
 }
@@ -265,69 +241,64 @@ model UserActivity {
 model QueryBucket {
   id        String   @id @default(cuid())
   userId    String
-  profileId String?  // Optional - can be associated with a specific artist profile
+  profileId String?
   query     String
-  source    String   @default("manual") // 'manual', 'generated', 'ai'
-  tags      String[] // Optional tags for organization
+  source    String   @default("manual")
+  tags      String[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  // Relationships
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, query]) // Prevent duplicate queries per user
+  @@unique([userId, query])
   @@map("query_buckets")
 }
 
-// AI Caching Tables
-
 model AIAnalysisCache {
-  id                 String    @id @default(cuid())
-  opportunityId      String
-  artistProfileId    String
-  relevanceScore     Float
-  category           String
-  reasoning          String
-  matchedCriteria    String[]
+  id                  String   @id @default(cuid())
+  opportunityId       String
+  artistProfileId     String
+  relevanceScore      Float
+  category            String
+  reasoning           String
+  matchedCriteria     String[]
   missingRequirements String[]
-  confidence         Float
-  aiProvider         String    // 'openai', 'anthropic'
-  aiModel            String    // Model version used
-  responseHash       String    // Hash of the response for deduplication
-  processingTimeMs   Int
-  createdAt          DateTime  @default(now())
-  expiresAt          DateTime  // TTL for cache entries
-  
+  confidence          Float
+  aiProvider          String
+  aiModel             String
+  responseHash        String
+  processingTimeMs    Int
+  createdAt           DateTime @default(now())
+  expiresAt           DateTime
+
   @@unique([opportunityId, artistProfileId])
-  @@index([expiresAt]) // For efficient cleanup
+  @@index([expiresAt])
   @@index([opportunityId])
   @@index([artistProfileId])
   @@map("ai_analysis_cache")
 }
 
 model QueryGenerationHistory {
-  id                  String    @id @default(cuid())
-  artistProfileId     String
-  opportunityType     String    // 'grants', 'residencies', 'exhibitions', 'all'
-  generatedQueries    String[]  // Array of generated query strings
-  queryGenerationStyle String   // 'focused', 'diverse', 'creative'
-  aiProvider          String    // 'openai', 'anthropic'
-  aiModel             String    // Model version used
-  temperature         Float     // AI temperature used
-  maxTokens           Int       // Max tokens setting
-  processingTimeMs    Int
-  queryCount          Int       // Number of queries generated
-  responseHash        String    // Hash for deduplication
-  metadata            Json?     // Additional generation parameters
-  createdAt           DateTime  @default(now())
-  
+  id                   String   @id @default(cuid())
+  artistProfileId      String
+  opportunityType      String
+  generatedQueries     String[]
+  queryGenerationStyle String
+  aiProvider           String
+  aiModel              String
+  temperature          Float
+  maxTokens            Int
+  processingTimeMs     Int
+  queryCount           Int
+  responseHash         String
+  metadata             Json?
+  createdAt            DateTime @default(now())
+
   @@index([artistProfileId])
   @@index([opportunityType])
   @@index([createdAt])
   @@map("query_generation_history")
 }
 
-// Bookmark Management
 model Bookmark {
   id          String    @id @default(cuid())
   userId      String
@@ -339,45 +310,41 @@ model Bookmark {
   active      Boolean   @default(true)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  
-  // Relationships
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   @@unique([userId, url])
   @@map("bookmarks")
 }
 
-// System Alerts and Monitoring
 model SystemAlert {
-  id          String    @id @default(cuid())
-  type        String    // 'error', 'warning', 'info'
-  title       String
-  message     String
-  source      String?   // Which service/component generated the alert
-  metadata    Json?     // Additional alert data
-  resolved    Boolean   @default(false)
-  resolvedAt  DateTime?
-  createdAt   DateTime  @default(now())
-  
+  id         String    @id @default(cuid())
+  type       String
+  title      String
+  message    String
+  source     String?
+  metadata   Json?
+  resolved   Boolean   @default(false)
+  resolvedAt DateTime?
+  createdAt  DateTime  @default(now())
+
   @@index([type])
   @@index([resolved])
   @@index([createdAt])
   @@map("system_alerts")
 }
 
-// User Feedback
 model Feedback {
-  id          String    @id @default(cuid())
-  userId      String?
-  type        String    // 'bug', 'feature', 'improvement', 'general'
-  subject     String
-  message     String
-  status      String    @default("new") // 'new', 'reviewing', 'resolved', 'archived'
-  priority    String    @default("medium") // 'low', 'medium', 'high', 'critical'
-  metadata    Json?     // Additional feedback data
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
+  id        String   @id @default(cuid())
+  userId    String?
+  type      String
+  subject   String
+  message   String
+  status    String   @default("new")
+  priority  String   @default("medium")
+  metadata  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([status])
   @@index([priority])
   @@index([createdAt])

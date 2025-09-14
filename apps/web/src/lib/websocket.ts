@@ -1,6 +1,7 @@
 'use client';
 
 import { EventEmitter } from 'events';
+import { useState, useEffect } from 'react';
 
 export interface WSMessage {
   type: 'OPPORTUNITY_ADDED' | 'OPPORTUNITY_UPDATED' | 'SYNC_COMPLETED' | 'ERROR' | 'HEARTBEAT';
@@ -42,10 +43,15 @@ export class WebSocketClient extends EventEmitter {
     try {
       // Add token to URL if provided
       const wsUrl = token ? `${this.url}?token=${token}` : this.url;
+      console.log('Attempting WebSocket connection to:', wsUrl);
       this.ws = new WebSocket(wsUrl);
       this.setupEventHandlers();
     } catch (error) {
       console.error('Failed to create WebSocket connection:', error);
+      // Only emit error if there are listeners to prevent unhandled errors
+      if (this.listenerCount('error') > 0) {
+        this.emit('error', error);
+      }
       this.handleReconnect();
     }
   }
@@ -107,7 +113,10 @@ export class WebSocketClient extends EventEmitter {
 
     this.ws.onerror = (error) => {
       console.error('WebSocket error:', error);
-      this.emit('error', error);
+      // Only emit error if there are listeners to prevent unhandled errors
+      if (this.listenerCount('error') > 0) {
+        this.emit('error', error);
+      }
     };
   }
 
@@ -209,8 +218,8 @@ export const createWebSocketClient = (
 ): WebSocketClient => {
   const wsUrl = url || (
     typeof window !== 'undefined' 
-      ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`
-      : 'ws://localhost:3001/ws'
+      ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//localhost:8080`
+      : 'ws://localhost:8080'
   );
 
   if (globalWebSocketClient) {
@@ -305,6 +314,3 @@ export const useWebSocket = (
     disconnect: () => client?.disconnect(),
   };
 };
-
-// Import useState and useEffect for the hook
-import { useState, useEffect } from 'react';

@@ -63,6 +63,14 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  SERPER_API_KEY?: string;
+
+  @IsOptional()
+  @IsString()
+  SERPER_DEV_API_KEY?: string;
+
+  @IsOptional()
+  @IsString()
   SENDGRID_API_KEY?: string;
 
   @IsOptional()

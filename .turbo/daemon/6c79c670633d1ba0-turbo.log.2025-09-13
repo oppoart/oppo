@@ -1921,3 +1921,94 @@
 2025-09-13T18:26:28.133020Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/dist")}
 2025-09-13T18:26:28.133030Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
 2025-09-13T18:26:28.133068Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-09-13T18:30:43.433259Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".claude/settings.local.json"), AnchoredSystemPathBuf(".claude/settings.local.json.tmp.58921.1757788243355")}
+2025-09-13T18:30:43.433268Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-13T18:30:52.033331Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".claude/settings.local.json"), AnchoredSystemPathBuf(".claude/settings.local.json.tmp.58921.1757788251984")}
+2025-09-13T18:30:52.033345Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-13T18:31:46.832420Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/src/modules/query-bucket/query-bucket.service.ts"), AnchoredSystemPathBuf("apps/backend/src/modules/query-bucket/query-bucket.service.ts.tmp.58921.1757788306755")}
+2025-09-13T18:31:46.832428Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:32:06.233241Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/src/modules/query-bucket/query-bucket.controller.ts"), AnchoredSystemPathBuf("apps/backend/src/modules/query-bucket/query-bucket.controller.ts.tmp.58921.1757788326132")}
+2025-09-13T18:32:06.233252Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:32:14.832881Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/src/modules/query-bucket/query-bucket.module.ts"), AnchoredSystemPathBuf("apps/backend/src/modules/query-bucket/query-bucket.module.ts.tmp.58921.1757788334773")}
+2025-09-13T18:32:14.832892Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:32:22.032574Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/src/modules/analyst/analyst.controller.ts"), AnchoredSystemPathBuf("apps/backend/src/modules/analyst/analyst.controller.ts.tmp.58921.1757788341923")}
+2025-09-13T18:32:22.032623Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:32:32.332539Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/src/modules/analyst/analyst.controller.ts"), AnchoredSystemPathBuf("apps/backend/src/modules/analyst/analyst.controller.ts.tmp.58921.1757788352296")}
+2025-09-13T18:32:32.332550Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:32:46.633223Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/src/modules/analyst/analyst.module.ts.tmp.58921.1757788366573"), AnchoredSystemPathBuf("apps/backend/src/modules/analyst/analyst.module.ts")}
+2025-09-13T18:32:46.633232Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:34:35.933439Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/src/modules/research/research.controller.ts.tmp.58921.1757788475818"), AnchoredSystemPathBuf("apps/backend/src/modules/research/research.controller.ts")}
+2025-09-13T18:34:35.933449Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:35:08.133025Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/src/modules/research/research.service.ts.tmp.58921.1757788508066"), AnchoredSystemPathBuf("apps/backend/src/modules/research/research.service.ts")}
+2025-09-13T18:35:08.133040Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:35:21.433271Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/dist")}
+2025-09-13T18:35:21.433280Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:35:21.433320Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-09-13T18:35:23.033300Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/dist")}
+2025-09-13T18:35:23.033312Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:35:23.033347Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-09-13T18:35:53.934519Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/dist")}
+2025-09-13T18:35:53.934537Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:35:53.985936Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-09-13T18:35:57.133280Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/dist")}
+2025-09-13T18:35:57.133290Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:35:57.169596Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-09-13T18:36:14.134713Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".claude/settings.local.json"), AnchoredSystemPathBuf(".claude/settings.local.json.tmp.58921.1757788574022")}
+2025-09-13T18:36:14.134722Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-13T18:36:44.734143Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/src/modules/analyst/analyst.controller.ts.tmp.58921.1757788604678"), AnchoredSystemPathBuf("apps/backend/src/modules/analyst/analyst.controller.ts")}
+2025-09-13T18:36:44.734153Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:36:50.934318Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/src/modules/research/research.controller.ts"), AnchoredSystemPathBuf("apps/backend/src/modules/research/research.controller.ts.tmp.58921.1757788610833")}
+2025-09-13T18:36:50.934330Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:36:55.833665Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/src/modules/query-bucket/query-bucket.controller.ts"), AnchoredSystemPathBuf("apps/backend/src/modules/query-bucket/query-bucket.controller.ts.tmp.58921.1757788615765")}
+2025-09-13T18:36:55.833673Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:37:01.933578Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/src/modules/query-generation/query-generation.controller.ts"), AnchoredSystemPathBuf("apps/backend/src/modules/query-generation/query-generation.controller.ts.tmp.58921.1757788621921")}
+2025-09-13T18:37:01.933591Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:37:09.735101Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/dist")}
+2025-09-13T18:37:09.735111Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:37:09.735148Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-09-13T18:37:11.333936Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/dist")}
+2025-09-13T18:37:11.333947Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:37:11.358550Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-09-13T18:39:08.836119Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/dist")}
+2025-09-13T18:39:08.836136Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:39:08.840042Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-09-13T18:39:10.833532Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/dist")}
+2025-09-13T18:39:10.833542Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:39:10.888302Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-09-13T18:41:29.234789Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/src/shared/services/ai.service.ts.tmp.58921.1757788889190"), AnchoredSystemPathBuf("apps/backend/src/shared/services/ai.service.ts")}
+2025-09-13T18:41:29.234798Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:41:43.435023Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(""), AnchoredSystemPathBuf("apps/backend/dist")}
+2025-09-13T18:41:43.435050Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:41:43.468795Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-09-13T18:41:45.034046Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/dist")}
+2025-09-13T18:41:45.034063Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:41:45.052568Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-09-13T18:44:05.433569Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/src/shared/services/ai.service.ts"), AnchoredSystemPathBuf("apps/backend/src/shared/services/ai.service.ts.tmp.58921.1757789045404")}
+2025-09-13T18:44:05.433578Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:45:12.934070Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/src/modules/research/research.controller.ts"), AnchoredSystemPathBuf("apps/backend/src/modules/research/research.controller.ts.tmp.58921.1757789112847")}
+2025-09-13T18:45:12.934079Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:45:23.833858Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/src/modules/research/research.controller.ts"), AnchoredSystemPathBuf("apps/backend/src/modules/research/research.controller.ts.tmp.58921.1757789123790")}
+2025-09-13T18:45:23.833867Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:45:35.534081Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/src/modules/research/research.controller.ts.tmp.58921.1757789135499"), AnchoredSystemPathBuf("apps/backend/src/modules/research/research.controller.ts")}
+2025-09-13T18:45:35.534091Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:45:54.535466Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("")}
+2025-09-13T18:45:54.535474Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({}))
+2025-09-13T18:45:56.134441Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/dist")}
+2025-09-13T18:45:56.134452Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:45:56.140580Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-09-13T18:48:19.335148Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/src/modules/research/research.service.ts.tmp.58921.1757789299224"), AnchoredSystemPathBuf("apps/backend/src/modules/research/research.service.ts")}
+2025-09-13T18:48:19.335156Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:48:36.035049Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/web/src/hooks/useResearchServices.ts.tmp.58921.1757789315967"), AnchoredSystemPathBuf("apps/web/src/hooks/useResearchServices.ts")}
+2025-09-13T18:48:36.035060Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("web"), path: AnchoredSystemPathBuf("apps/web") }}))
+2025-09-13T18:52:15.135484Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/src/shared/services/ai.service.ts"), AnchoredSystemPathBuf("apps/backend/src/shared/services/ai.service.ts.tmp.58921.1757789535094")}
+2025-09-13T18:52:15.135496Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:52:22.835749Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/src/modules/query-generation/query-generation.service.ts.tmp.58921.1757789542802"), AnchoredSystemPathBuf("apps/backend/src/modules/query-generation/query-generation.service.ts")}
+2025-09-13T18:52:22.835762Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:53:14.835331Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/src/modules/query-generation/query-generation.service.ts.tmp.58921.1757789594764"), AnchoredSystemPathBuf("apps/backend/src/modules/query-generation/query-generation.service.ts")}
+2025-09-13T18:53:14.835340Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:53:35.236465Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/dist")}
+2025-09-13T18:53:35.236475Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:53:35.236521Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-09-13T18:53:36.735211Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/dist")}
+2025-09-13T18:53:36.735221Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-09-13T18:53:36.774020Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun

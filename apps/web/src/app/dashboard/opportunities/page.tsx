@@ -23,7 +23,6 @@ interface OpportunityFilters {
   type?: string;
   minRelevanceScore?: number;
   deadlineBefore?: string;
-  starred?: boolean;
 }
 
 export default function OpportunitiesPage() {
@@ -61,7 +60,7 @@ export default function OpportunitiesPage() {
 
   // WebSocket integration for real-time updates
   const { connected } = useWebSocket(undefined, {
-    autoConnect: true,
+    autoConnect: true, // Re-enabled with native WebSocket backend
     onConnected: () => {
       console.log('Connected to OPPO WebSocket server');
     },
@@ -217,18 +216,36 @@ export default function OpportunitiesPage() {
 
       const result = await response.json();
       
-      if (result.success && result.data && result.data.length > 0) {
-        // Add new opportunities to the existing list
-        setOpportunities(prev => [...result.data, ...prev]);
+      if (result.success) {
+        const { data, meta } = result;
+        const { newOpportunities, duplicates, message } = meta;
         
-        toast({
-          title: 'New opportunities found!',
-          description: `Found ${result.data.length} new opportunities and added them to your list.`,
-        });
+        if (data && data.length > 0) {
+          // Add new opportunities to the existing list
+          setOpportunities(prev => [...data, ...prev]);
+          
+          toast({
+            title: 'Search completed!',
+            description: message || `Found ${data.length} new opportunities and added them to your list.`,
+          });
+        } else if (duplicates > 0) {
+          // Show specific message for duplicates
+          toast({
+            title: 'All opportunities already exist',
+            description: message || `Found ${duplicates} opportunities, but all were already in your database. Check your existing opportunities above.`,
+            variant: 'default',
+          });
+        } else {
+          toast({
+            title: 'No opportunities found',
+            description: message || 'No new opportunities were found for your search terms.',
+          });
+        }
       } else {
         toast({
-          title: 'No new opportunities',
-          description: 'No new opportunities were found at this time.',
+          title: 'Search failed',
+          description: 'Failed to search for new opportunities. Please try again.',
+          variant: 'destructive',
         });
       }
     } catch (err: any) {

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { auth } from '../../shared/auth/better-auth';
 
@@ -47,7 +47,11 @@ export class AuthService {
       return result;
     } catch (error) {
       this.logger.error('Sign up failed', error);
-      throw error;
+      // Convert Better Auth errors to proper HTTP exceptions
+      if (error.message && error.message.includes('User already exists')) {
+        throw new BadRequestException('User already exists with this email');
+      }
+      throw new BadRequestException('Sign up failed');
     }
   }
 
@@ -64,7 +68,11 @@ export class AuthService {
       return result;
     } catch (error) {
       this.logger.error('Sign in failed', error);
-      throw error;
+      // Convert Better Auth errors to proper HTTP exceptions
+      if (error.message && error.message.includes('Invalid email or password')) {
+        throw new UnauthorizedException('Invalid email or password');
+      }
+      throw new BadRequestException('Authentication failed');
     }
   }
 }

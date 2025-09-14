@@ -39,6 +39,16 @@ export const getErrorMessage = (error: unknown): string => {
       return data.message;
     }
     
+    // Check for specific error codes first
+    if (data?.code) {
+      switch (data.code) {
+        case 'SEARCH_QUOTA_EXCEEDED':
+          return 'Search quota exceeded. Please try again later or contact support to increase your quota.';
+        case 'SEARCH_CREDENTIALS_ERROR':
+          return 'Search service is not properly configured. Please contact support.';
+      }
+    }
+    
     // Fallback messages based on status code
     switch (error.response?.status) {
       case 400:
@@ -54,7 +64,7 @@ export const getErrorMessage = (error: unknown): string => {
       case 422:
         return 'The provided data is invalid.';
       case 429:
-        return 'Too many requests. Please try again later.';
+        return 'Search quota exceeded. Please try again later.';
       case 500:
         return 'An internal server error occurred. Please try again later.';
       case 502:
@@ -221,6 +231,30 @@ export const isValidationError = (error: unknown): boolean => {
   }
   if (error instanceof ApiError) {
     return error.statusCode === 400 || error.statusCode === 422;
+  }
+  return false;
+};
+
+// Check if error is a quota exceeded error
+export const isQuotaExceededError = (error: unknown): boolean => {
+  if (error instanceof AxiosError) {
+    const data = error.response?.data as ErrorResponse | undefined;
+    return error.response?.status === 429 || data?.code === 'SEARCH_QUOTA_EXCEEDED';
+  }
+  if (error instanceof ApiError) {
+    return error.statusCode === 429 || error.code === 'SEARCH_QUOTA_EXCEEDED';
+  }
+  return false;
+};
+
+// Check if error is a search credentials error
+export const isSearchCredentialsError = (error: unknown): boolean => {
+  if (error instanceof AxiosError) {
+    const data = error.response?.data as ErrorResponse | undefined;
+    return data?.code === 'SEARCH_CREDENTIALS_ERROR';
+  }
+  if (error instanceof ApiError) {
+    return error.code === 'SEARCH_CREDENTIALS_ERROR';
   }
   return false;
 };

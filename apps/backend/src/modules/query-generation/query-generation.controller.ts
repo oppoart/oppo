@@ -28,7 +28,7 @@ import {
   QueryStrategy 
 } from '../../constants/query.constants';
 
-@Controller('api/query-generation')
+@Controller('query-generation')
 @UseGuards(AuthGuard)
 export class QueryGenerationController {
   private readonly logger = new Logger(QueryGenerationController.name);

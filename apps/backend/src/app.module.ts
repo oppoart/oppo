@@ -25,6 +25,7 @@ import { AnalysisModule } from './modules/analysis/analysis.module';
 import { ScraperModule } from './modules/scraper/scraper.module';
 import { QueryBucketModule } from './modules/query-bucket/query-bucket.module';
 import { QueryGenerationModule } from './modules/query-generation/query-generation.module';
+import { DeduplicationModule } from './modules/deduplication/deduplication.module';
 
 // Shared modules
 import { PrismaModule } from './modules/prisma/prisma.module';
@@ -85,6 +86,7 @@ import { validateEnvironment } from './config/env.validation';
     ScraperModule,
     QueryBucketModule,
     QueryGenerationModule,
+    DeduplicationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
