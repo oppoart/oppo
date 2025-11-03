@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -97,13 +98,13 @@ export function Sidebar({
 
       {/* Sidebar */}
       <div className={cn(
-        "fixed inset-y-0 left-0 z-50 flex flex-col bg-white border-r border-border",
+        "fixed inset-y-0 left-0 z-50 flex flex-col bg-card border-r border-border",
         "transform transition-transform duration-300 ease-in-out lg:translate-x-0",
         isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         isCollapsed ? "w-16" : "w-64"
       )}>
         {/* Header */}
-        <div className="flex h-16 items-center justify-between px-4 border-b">
+        <div className="flex h-16 items-center justify-between px-4 border-b border-border">
           {!isCollapsed && (
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
@@ -205,6 +206,19 @@ export function Sidebar({
 
         <Separator />
 
+        {/* Theme toggle */}
+        <div className="p-3">
+          {!isCollapsed ? (
+            <div className="flex items-center justify-between px-3 py-2">
+              <span className="text-sm text-muted-foreground">Theme</span>
+              <ThemeToggle />
+            </div>
+          ) : (
+            <div className="flex justify-center">
+              <ThemeToggle />
+            </div>
+          )}
+        </div>
 
         <Separator />
 
@@ -224,8 +238,8 @@ export function Sidebar({
                     {user?.email}
                   </p>
                 </div>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="icon"
                   className="h-8 w-8 hover:bg-background/80"
                   onClick={handleLogout}
@@ -233,7 +247,7 @@ export function Sidebar({
                   <LogOut className="h-4 w-4" />
                 </Button>
               </div>
-              <a 
+              <a
                 href="/dashboard/settings"
                 className="flex items-center justify-center px-3 py-2 text-sm rounded-lg transition-colors hover:bg-muted text-muted-foreground hover:text-foreground w-full"
               >
@@ -244,15 +258,15 @@ export function Sidebar({
           ) : (
             <div className="space-y-2">
               <div className="flex items-center justify-center space-x-1">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-10 w-10" 
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10"
                   onClick={handleLogout}
                 >
                   <LogOut className="h-4 w-4" />
                 </Button>
-                <a 
+                <a
                   href="/dashboard/settings"
                   className="flex items-center justify-center h-10 w-10 rounded-lg transition-colors hover:bg-muted text-muted-foreground hover:text-foreground"
                 >
