@@ -118,6 +118,58 @@ Generate diverse search queries that will help find relevant opportunities for t
     }
   }
 
+  async generateGpt5SearchQueries(prompt: string): Promise<string> {
+    if (!this.openai) {
+      this.logger.warn('OpenAI not configured - returning mock search queries');
+      return this.getMockSearchQueries();
+    }
+
+    const gpt5Model = this.configService.get('AI_MODEL_GPT5');
+    if (!gpt5Model) {
+      this.logger.warn('GPT-5 model not configured - falling back to primary model');
+      return this.generateSearchQueries(prompt);
+    }
+
+    try {
+      const systemMessage = `You are GPT-5, the most advanced AI assistant specialized in generating highly targeted and sophisticated search queries for artists seeking opportunities. Your advanced capabilities allow you to:
+
+1. Generate exceptionally specific and nuanced search queries
+2. Understand complex artistic contexts and market dynamics
+3. Create search strategies that discover hidden and emerging opportunities
+4. Optimize for both traditional and alternative funding sources
+5. Consider geographic, temporal, and demographic factors
+6. Generate queries that find opportunities across multiple platforms and networks
+7. Return only the search queries, one per line, without numbering
+
+Using your advanced reasoning capabilities, generate comprehensive and strategic search queries that will uncover the most relevant opportunities for the artist described in the user message. Consider both obvious and non-obvious search angles.`;
+
+      const completion = await this.openai.chat.completions.create({
+        model: gpt5Model,
+        messages: [
+          { role: 'system', content: systemMessage },
+          { role: 'user', content: prompt }
+        ],
+        max_completion_tokens: parseInt(this.configService.get('AI_MAX_TOKENS', '200')),
+        temperature: 0.7,
+      });
+
+      const searchQueries = completion.choices[0]?.message?.content;
+      
+      if (!searchQueries) {
+        this.logger.error('No content returned from GPT-5 for search query generation');
+        return this.getMockSearchQueries();
+      }
+
+      this.logger.log('Successfully generated search queries using GPT-5');
+      return searchQueries.trim();
+
+    } catch (error) {
+      this.logger.error('Failed to generate search queries with GPT-5:', error);
+      this.logger.log('Falling back to primary model');
+      return this.generateSearchQueries(prompt);
+    }
+  }
+
   private getMockSearchQueries(): string {
     const mockQueries = [
       'artist grants contemporary art 2024',

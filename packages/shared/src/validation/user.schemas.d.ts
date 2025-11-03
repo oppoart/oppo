@@ -7,18 +7,18 @@ export declare const userBaseSchema: z.ZodObject<{
     createdAt: z.ZodString;
     updatedAt: z.ZodString;
 }, "strip", z.ZodTypeAny, {
-    name?: string;
+    email?: string;
     id?: string;
     createdAt?: string;
     updatedAt?: string;
-    email?: string;
+    name?: string;
     emailVerified?: boolean;
 }, {
-    name?: string;
+    email?: string;
     id?: string;
     createdAt?: string;
     updatedAt?: string;
-    email?: string;
+    name?: string;
     emailVerified?: boolean;
 }>;
 export declare const userPreferencesSchema: z.ZodEffects<z.ZodObject<{
@@ -140,14 +140,14 @@ export declare const userSettingsSchema: z.ZodObject<{
     showWelcomeTour: z.ZodDefault<z.ZodBoolean>;
     analyticsEnabled: z.ZodDefault<z.ZodBoolean>;
 }, "strip", z.ZodTypeAny, {
-    theme?: "light" | "dark" | "system";
+    theme?: "system" | "light" | "dark";
     language?: string;
     timezone?: string;
     compactMode?: boolean;
     showWelcomeTour?: boolean;
     analyticsEnabled?: boolean;
 }, {
-    theme?: "light" | "dark" | "system";
+    theme?: "system" | "light" | "dark";
     language?: string;
     timezone?: string;
     compactMode?: boolean;
@@ -163,18 +163,18 @@ export declare const userWithPreferencesSchema: z.ZodObject<{
         createdAt: z.ZodString;
         updatedAt: z.ZodString;
     }, "strip", z.ZodTypeAny, {
-        name?: string;
+        email?: string;
         id?: string;
         createdAt?: string;
         updatedAt?: string;
-        email?: string;
+        name?: string;
         emailVerified?: boolean;
     }, {
-        name?: string;
+        email?: string;
         id?: string;
         createdAt?: string;
         updatedAt?: string;
-        email?: string;
+        name?: string;
         emailVerified?: boolean;
     }>;
     preferences: z.ZodEffects<z.ZodObject<{
@@ -296,14 +296,14 @@ export declare const userWithPreferencesSchema: z.ZodObject<{
         showWelcomeTour: z.ZodDefault<z.ZodBoolean>;
         analyticsEnabled: z.ZodDefault<z.ZodBoolean>;
     }, "strip", z.ZodTypeAny, {
-        theme?: "light" | "dark" | "system";
+        theme?: "system" | "light" | "dark";
         language?: string;
         timezone?: string;
         compactMode?: boolean;
         showWelcomeTour?: boolean;
         analyticsEnabled?: boolean;
     }, {
-        theme?: "light" | "dark" | "system";
+        theme?: "system" | "light" | "dark";
         language?: string;
         timezone?: string;
         compactMode?: boolean;
@@ -312,11 +312,11 @@ export declare const userWithPreferencesSchema: z.ZodObject<{
     }>;
 }, "strip", z.ZodTypeAny, {
     user?: {
-        name?: string;
+        email?: string;
         id?: string;
         createdAt?: string;
         updatedAt?: string;
-        email?: string;
+        name?: string;
         emailVerified?: boolean;
     };
     preferences?: {
@@ -343,7 +343,7 @@ export declare const userWithPreferencesSchema: z.ZodObject<{
         webhookUrl?: string;
     };
     settings?: {
-        theme?: "light" | "dark" | "system";
+        theme?: "system" | "light" | "dark";
         language?: string;
         timezone?: string;
         compactMode?: boolean;
@@ -352,11 +352,11 @@ export declare const userWithPreferencesSchema: z.ZodObject<{
     };
 }, {
     user?: {
-        name?: string;
+        email?: string;
         id?: string;
         createdAt?: string;
         updatedAt?: string;
-        email?: string;
+        name?: string;
         emailVerified?: boolean;
     };
     preferences?: {
@@ -383,7 +383,7 @@ export declare const userWithPreferencesSchema: z.ZodObject<{
         webhookUrl?: string;
     };
     settings?: {
-        theme?: "light" | "dark" | "system";
+        theme?: "system" | "light" | "dark";
         language?: string;
         timezone?: string;
         compactMode?: boolean;
@@ -466,14 +466,14 @@ export declare const updateSettingsSchema: z.ZodObject<{
     showWelcomeTour: z.ZodOptional<z.ZodDefault<z.ZodBoolean>>;
     analyticsEnabled: z.ZodOptional<z.ZodDefault<z.ZodBoolean>>;
 }, "strip", z.ZodTypeAny, {
-    theme?: "light" | "dark" | "system";
+    theme?: "system" | "light" | "dark";
     language?: string;
     timezone?: string;
     compactMode?: boolean;
     showWelcomeTour?: boolean;
     analyticsEnabled?: boolean;
 }, {
-    theme?: "light" | "dark" | "system";
+    theme?: "system" | "light" | "dark";
     language?: string;
     timezone?: string;
     compactMode?: boolean;
@@ -485,13 +485,13 @@ export declare const userProfileSummarySchema: z.ZodObject<{
     name: z.ZodString;
     mediums: z.ZodArray<z.ZodString, "many">;
 }, "strip", z.ZodTypeAny, {
+    id?: string;
     name?: string;
     mediums?: string[];
-    id?: string;
 }, {
+    id?: string;
     name?: string;
     mediums?: string[];
-    id?: string;
 }>;
 export declare const userWithProfilesSchema: z.ZodObject<{
     id: z.ZodString;
@@ -506,38 +506,38 @@ export declare const userWithProfilesSchema: z.ZodObject<{
         name: z.ZodString;
         mediums: z.ZodArray<z.ZodString, "many">;
     }, "strip", z.ZodTypeAny, {
+        id?: string;
         name?: string;
         mediums?: string[];
-        id?: string;
     }, {
+        id?: string;
         name?: string;
         mediums?: string[];
-        id?: string;
     }>, "many">>;
 }, "strip", z.ZodTypeAny, {
-    name?: string;
+    email?: string;
     id?: string;
     createdAt?: string;
     updatedAt?: string;
+    name?: string;
+    emailVerified?: boolean;
     profiles?: {
+        id?: string;
         name?: string;
         mediums?: string[];
-        id?: string;
     }[];
-    email?: string;
-    emailVerified?: boolean;
 }, {
-    name?: string;
+    email?: string;
     id?: string;
     createdAt?: string;
     updatedAt?: string;
+    name?: string;
+    emailVerified?: boolean;
     profiles?: {
+        id?: string;
         name?: string;
         mediums?: string[];
-        id?: string;
     }[];
-    email?: string;
-    emailVerified?: boolean;
 }>;
 export declare const apiKeySchema: z.ZodObject<{
     openaiApiKey: z.ZodOptional<z.ZodString>;

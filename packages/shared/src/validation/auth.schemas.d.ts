@@ -19,26 +19,26 @@ export declare const registerSchema: z.ZodEffects<z.ZodObject<{
     name: z.ZodString;
     acceptTerms: z.ZodEffects<z.ZodBoolean, boolean, boolean>;
 }, "strip", z.ZodTypeAny, {
-    name?: string;
     email?: string;
+    name?: string;
     password?: string;
     confirmPassword?: string;
     acceptTerms?: boolean;
 }, {
-    name?: string;
     email?: string;
+    name?: string;
     password?: string;
     confirmPassword?: string;
     acceptTerms?: boolean;
 }>, {
-    name?: string;
     email?: string;
+    name?: string;
     password?: string;
     confirmPassword?: string;
     acceptTerms?: boolean;
 }, {
-    name?: string;
     email?: string;
+    name?: string;
     password?: string;
     confirmPassword?: string;
     acceptTerms?: boolean;
@@ -55,21 +55,21 @@ export declare const resetPasswordSchema: z.ZodEffects<z.ZodObject<{
     password: z.ZodEffects<z.ZodEffects<z.ZodEffects<z.ZodEffects<z.ZodString, string, string>, string, string>, string, string>, string, string>;
     confirmPassword: z.ZodString;
 }, "strip", z.ZodTypeAny, {
+    token?: string;
     password?: string;
     confirmPassword?: string;
-    token?: string;
 }, {
+    token?: string;
     password?: string;
     confirmPassword?: string;
-    token?: string;
 }>, {
+    token?: string;
     password?: string;
     confirmPassword?: string;
-    token?: string;
 }, {
+    token?: string;
     password?: string;
     confirmPassword?: string;
-    token?: string;
 }>;
 export declare const changePasswordSchema: z.ZodEffects<z.ZodEffects<z.ZodObject<{
     currentPassword: z.ZodString;

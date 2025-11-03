@@ -13,23 +13,23 @@ export declare const TaskSchema: z.ZodObject<{
     userId: z.ZodString;
 }, "strip", z.ZodTypeAny, {
     description?: string;
-    title?: string;
-    userId?: string;
     id?: string;
+    userId?: string;
     createdAt?: Date;
     updatedAt?: Date;
-    status?: "completed" | "pending" | "in_progress" | "cancelled";
-    priority?: "low" | "medium" | "high" | "urgent";
+    title?: string;
+    status?: "completed" | "in_progress" | "pending" | "cancelled";
+    priority?: "high" | "medium" | "low" | "urgent";
     dueDate?: Date;
 }, {
     description?: string;
-    title?: string;
-    userId?: string;
     id?: string;
+    userId?: string;
     createdAt?: Date;
     updatedAt?: Date;
-    status?: "completed" | "pending" | "in_progress" | "cancelled";
-    priority?: "low" | "medium" | "high" | "urgent";
+    title?: string;
+    status?: "completed" | "in_progress" | "pending" | "cancelled";
+    priority?: "high" | "medium" | "low" | "urgent";
     dueDate?: Date;
 }>;
 export declare const CreateTaskSchema: z.ZodObject<{
@@ -40,12 +40,12 @@ export declare const CreateTaskSchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     description?: string;
     title?: string;
-    priority?: "low" | "medium" | "high" | "urgent";
+    priority?: "high" | "medium" | "low" | "urgent";
     dueDate?: Date;
 }, {
     description?: string;
     title?: string;
-    priority?: "low" | "medium" | "high" | "urgent";
+    priority?: "high" | "medium" | "low" | "urgent";
     dueDate?: Date;
 }>;
 export declare const UpdateTaskSchema: z.ZodObject<{
@@ -58,14 +58,14 @@ export declare const UpdateTaskSchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     description?: string;
     title?: string;
-    status?: "completed" | "pending" | "in_progress" | "cancelled";
-    priority?: "low" | "medium" | "high" | "urgent";
+    status?: "completed" | "in_progress" | "pending" | "cancelled";
+    priority?: "high" | "medium" | "low" | "urgent";
     dueDate?: Date;
 }, {
     description?: string;
     title?: string;
-    status?: "completed" | "pending" | "in_progress" | "cancelled";
-    priority?: "low" | "medium" | "high" | "urgent";
+    status?: "completed" | "in_progress" | "pending" | "cancelled";
+    priority?: "high" | "medium" | "low" | "urgent";
     dueDate?: Date;
 }>;
 export declare const UserSchema: z.ZodObject<{
@@ -75,17 +75,17 @@ export declare const UserSchema: z.ZodObject<{
     createdAt: z.ZodDate;
     updatedAt: z.ZodDate;
 }, "strip", z.ZodTypeAny, {
-    name?: string;
+    email?: string;
     id?: string;
     createdAt?: Date;
     updatedAt?: Date;
-    email?: string;
+    name?: string;
 }, {
-    name?: string;
+    email?: string;
     id?: string;
     createdAt?: Date;
     updatedAt?: Date;
-    email?: string;
+    name?: string;
 }>;
 export declare const ApiResponseSchema: z.ZodObject<{
     success: z.ZodBoolean;

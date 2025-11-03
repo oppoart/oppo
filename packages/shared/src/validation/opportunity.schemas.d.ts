@@ -30,12 +30,12 @@ export declare const opportunityBaseSchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     tags?: string[];
     description?: string;
-    type?: string;
-    title?: string;
-    location?: string;
     id?: string;
     createdAt?: Date;
     updatedAt?: Date;
+    type?: string;
+    title?: string;
+    location?: string;
     relevanceScore?: number;
     url?: string;
     organization?: string;
@@ -58,12 +58,12 @@ export declare const opportunityBaseSchema: z.ZodObject<{
 }, {
     tags?: string[];
     description?: string;
-    type?: string;
-    title?: string;
-    location?: string;
     id?: string;
     createdAt?: Date;
     updatedAt?: Date;
+    type?: string;
+    title?: string;
+    location?: string;
     relevanceScore?: number;
     url?: string;
     organization?: string;
@@ -108,11 +108,11 @@ export declare const scrapedOpportunitySchema: z.ZodObject<{
     error?: string;
     title?: string;
     location?: string;
+    success?: boolean;
     url?: string;
     organization?: string;
     deadline?: Date;
     amount?: string;
-    success?: boolean;
     category?: string;
     requirements?: string[];
     applicationUrl?: string;
@@ -126,11 +126,11 @@ export declare const scrapedOpportunitySchema: z.ZodObject<{
     error?: string;
     title?: string;
     location?: string;
+    success?: boolean;
     url?: string;
     organization?: string;
     deadline?: Date;
     amount?: string;
-    success?: boolean;
     category?: string;
     requirements?: string[];
     applicationUrl?: string;
@@ -249,10 +249,10 @@ export declare const updateOpportunitySchema: z.ZodObject<Omit<{
 }, "id" | "createdAt">, "strip", z.ZodTypeAny, {
     tags?: string[];
     description?: string;
+    updatedAt?: Date;
     type?: string;
     title?: string;
     location?: string;
-    updatedAt?: Date;
     relevanceScore?: number;
     url?: string;
     organization?: string;
@@ -275,10 +275,10 @@ export declare const updateOpportunitySchema: z.ZodObject<Omit<{
 }, {
     tags?: string[];
     description?: string;
+    updatedAt?: Date;
     type?: string;
     title?: string;
     location?: string;
-    updatedAt?: Date;
     relevanceScore?: number;
     url?: string;
     organization?: string;
@@ -332,7 +332,9 @@ export declare const opportunitySearchSchema: z.ZodObject<{
     organization?: string;
     page?: number;
     limit?: number;
-    sortBy?: "title" | "createdAt" | "relevanceScore" | "deadline" | "amount";
+    minRelevanceScore?: number;
+    deadlineBefore?: Date;
+    sortBy?: "createdAt" | "title" | "relevanceScore" | "deadline" | "amount";
     sortOrder?: "asc" | "desc";
     category?: string;
     geographicScope?: string;
@@ -342,8 +344,6 @@ export declare const opportunitySearchSchema: z.ZodObject<{
     minAmount?: number;
     maxAmount?: number;
     deadlineAfter?: Date;
-    deadlineBefore?: Date;
-    minRelevanceScore?: number;
     maxRelevanceScore?: number;
     createdAfter?: Date;
     createdBefore?: Date;
@@ -356,7 +356,9 @@ export declare const opportunitySearchSchema: z.ZodObject<{
     organization?: string;
     page?: number;
     limit?: number;
-    sortBy?: "title" | "createdAt" | "relevanceScore" | "deadline" | "amount";
+    minRelevanceScore?: number;
+    deadlineBefore?: Date;
+    sortBy?: "createdAt" | "title" | "relevanceScore" | "deadline" | "amount";
     sortOrder?: "asc" | "desc";
     category?: string;
     geographicScope?: string;
@@ -366,8 +368,6 @@ export declare const opportunitySearchSchema: z.ZodObject<{
     minAmount?: number;
     maxAmount?: number;
     deadlineAfter?: Date;
-    deadlineBefore?: Date;
-    minRelevanceScore?: number;
     maxRelevanceScore?: number;
     createdAfter?: Date;
     createdBefore?: Date;
@@ -383,8 +383,8 @@ export declare const opportunityApplicationSchema: z.ZodObject<{
     applicationData: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodAny>>;
 }, "strip", z.ZodTypeAny, {
     profileId?: string;
-    opportunityId?: string;
     status?: string;
+    opportunityId?: string;
     notes?: string;
     appliedAt?: Date;
     submittedAt?: Date;
@@ -392,8 +392,8 @@ export declare const opportunityApplicationSchema: z.ZodObject<{
     applicationData?: Record<string, any>;
 }, {
     profileId?: string;
-    opportunityId?: string;
     status?: string;
+    opportunityId?: string;
     notes?: string;
     appliedAt?: Date;
     submittedAt?: Date;
@@ -415,8 +415,8 @@ export declare const opportunityAnalysisSchema: z.ZodObject<{
     profileId?: string;
     opportunityId?: string;
     relevanceScore?: number;
-    aiModel?: string;
     matchingCriteria?: string[];
+    aiModel?: string;
     strengthsAlignment?: string[];
     gapsIdentified?: string[];
     recommendedActions?: string[];
@@ -426,8 +426,8 @@ export declare const opportunityAnalysisSchema: z.ZodObject<{
     profileId?: string;
     opportunityId?: string;
     relevanceScore?: number;
-    aiModel?: string;
     matchingCriteria?: string[];
+    aiModel?: string;
     strengthsAlignment?: string[];
     gapsIdentified?: string[];
     recommendedActions?: string[];
@@ -467,21 +467,21 @@ export declare const opportunityImportSchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     format?: "xml" | "json" | "csv";
     data?: Record<string, any>[];
-    source?: string;
     options?: {
         skipDuplicates?: boolean;
         validateFirst?: boolean;
         assignToProfile?: string;
     };
+    source?: string;
 }, {
     format?: "xml" | "json" | "csv";
     data?: Record<string, any>[];
-    source?: string;
     options?: {
         skipDuplicates?: boolean;
         validateFirst?: boolean;
         assignToProfile?: string;
     };
+    source?: string;
 }>;
 export declare const opportunityStatsSchema: z.ZodObject<{
     total: z.ZodNumber;
@@ -494,22 +494,22 @@ export declare const opportunityStatsSchema: z.ZodObject<{
     upcomingDeadlines: z.ZodNumber;
 }, "strip", z.ZodTypeAny, {
     total?: number;
+    upcomingDeadlines?: number;
     byType?: Record<string, number>;
     byCategory?: Record<string, number>;
     byValidationStatus?: Record<string, number>;
     byRelevanceRange?: Record<string, number>;
     averageRelevanceScore?: number;
     recentlyAdded?: number;
-    upcomingDeadlines?: number;
 }, {
     total?: number;
+    upcomingDeadlines?: number;
     byType?: Record<string, number>;
     byCategory?: Record<string, number>;
     byValidationStatus?: Record<string, number>;
     byRelevanceRange?: Record<string, number>;
     averageRelevanceScore?: number;
     recentlyAdded?: number;
-    upcomingDeadlines?: number;
 }>;
 export type OpportunityBase = z.infer<typeof opportunityBaseSchema>;
 export type ScrapedOpportunity = z.infer<typeof scrapedOpportunitySchema>;

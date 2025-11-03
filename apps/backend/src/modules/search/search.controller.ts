@@ -1,13 +1,17 @@
 import { Controller, Get, Post, Body, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { SearchService, SearchQuotaExceededError, SearchCredentialsError, SerperSearchError } from './search.service';
+import { AiService } from '../../shared/services/ai.service';
 
 @ApiTags('search')
 @Controller('search')
 export class SearchController {
   private readonly logger = new Logger(SearchController.name);
 
-  constructor(private readonly searchService: SearchService) {}
+  constructor(
+    private readonly searchService: SearchService,
+    private readonly aiService: AiService,
+  ) {}
 
   @Get('health')
   getHealth() {
@@ -411,6 +415,148 @@ export class SearchController {
         {
           success: false,
           message: 'Search request failed',
+          error: error.message,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  @Post('gpt5')
+  @ApiOperation({ summary: 'AI-enhanced search using GPT-5 for query generation and optimization' })
+  @ApiResponse({ status: 200, description: 'GPT-5 enhanced search results retrieved successfully' })
+  async gpt5Search(
+    @Body() searchDto: {
+      prompt: string;
+      num?: number;
+      location?: string;
+      hl?: string;
+      gl?: string;
+    }
+  ) {
+    try {
+      this.logger.log(`GPT-5 search request with prompt: "${searchDto.prompt}"`);
+
+      // Generate search queries using GPT-5
+      const queryString = await this.aiService.generateGpt5SearchQueries(searchDto.prompt);
+      const searchQueries = queryString.split('\n').filter(q => q.trim());
+
+      this.logger.log(`Generated ${searchQueries.length} search queries using GPT-5`);
+
+      const results = [];
+      let totalResults = 0;
+      let searchTime = 0;
+
+      // Execute each search query
+      for (const query of searchQueries.slice(0, 5)) { // Limit to first 5 queries
+        try {
+          const searchResults = await this.searchService.searchArtOpportunities(
+            query.trim(),
+            {
+              num: Math.ceil((searchDto.num || 50) / searchQueries.length),
+              location: searchDto.location,
+              hl: searchDto.hl || 'en',
+              gl: searchDto.gl || 'us',
+            }
+          );
+          
+          results.push({
+            query: query.trim(),
+            ...searchResults,
+          });
+          totalResults += searchResults.results.length;
+          searchTime = Math.max(searchTime, searchResults.searchTime);
+        } catch (queryError) {
+          this.logger.warn(`GPT-5 search failed for query: "${query}"`, queryError.message);
+          results.push({
+            query: query.trim(),
+            results: [],
+            totalResults: 0,
+            searchTime: 0,
+            error: queryError.message,
+          });
+        }
+      }
+
+      // Combine and deduplicate results
+      const allResults = [];
+      const seenUrls = new Set();
+
+      results.forEach(result => {
+        if (result.results) {
+          result.results.forEach(item => {
+            if (!seenUrls.has(item.link)) {
+              seenUrls.add(item.link);
+              allResults.push({
+                ...item,
+                sourceQuery: result.query,
+              });
+            }
+          });
+        }
+      });
+
+      // Sort by relevance/position
+      allResults.sort((a, b) => a.position - b.position);
+
+      return {
+        success: true,
+        data: {
+          results: allResults.slice(0, searchDto.num || 50),
+          totalResults: allResults.length,
+          searchTime,
+          query: searchDto.prompt,
+          generatedQueries: searchQueries,
+          provider: 'gpt5_enhanced',
+          queriesExecuted: results.length,
+        },
+      };
+
+    } catch (error) {
+      this.logger.error('GPT-5 search request failed', error);
+      
+      // Handle known error types
+      if (error instanceof SearchQuotaExceededError) {
+        throw new HttpException(
+          {
+            success: false,
+            message: error.message,
+            code: 'SEARCH_QUOTA_EXCEEDED',
+            error: 'Search quota exceeded',
+          },
+          HttpStatus.TOO_MANY_REQUESTS
+        );
+      }
+      
+      if (error instanceof SearchCredentialsError) {
+        throw new HttpException(
+          {
+            success: false,
+            message: error.message,
+            code: 'SEARCH_CREDENTIALS_ERROR',
+            error: 'Search service configuration error',
+          },
+          HttpStatus.SERVICE_UNAVAILABLE
+        );
+      }
+
+      if (error instanceof SerperSearchError) {
+        throw new HttpException(
+          {
+            success: false,
+            message: error.message,
+            code: 'SERPER_SEARCH_ERROR',
+            error: 'Serper search service error',
+          },
+          HttpStatus.BAD_GATEWAY
+        );
+      }
+      
+      // Handle other errors
+      throw new HttpException(
+        {
+          success: false,
+          message: 'GPT-5 enhanced search request failed',
           error: error.message,
         },
         HttpStatus.INTERNAL_SERVER_ERROR

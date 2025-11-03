@@ -43,6 +43,10 @@ export class EnvironmentVariables {
   @IsString()
   AI_MODEL_FALLBACK: string = 'gpt-3.5-turbo';
 
+  @IsOptional()
+  @IsString()
+  AI_MODEL_GPT5?: string;
+
   @IsNumber()
   AI_MAX_TOKENS: number = 2000;
 

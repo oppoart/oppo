@@ -3,9 +3,9 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "nest start --watch",
+    "dev": "tsc --watch & sleep 3 && node --watch dist/apps/backend/src/main.js",
     "dev:debug": "nest start --debug --watch",
-    "build": "nest build",
+    "build": "tsc",
     "start": "node dist/apps/backend/src/main",
     "start:prod": "node dist/apps/backend/src/main",
     "test": "jest",

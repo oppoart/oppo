@@ -10,35 +10,35 @@ export declare const startServiceSchema: z.ZodObject<{
         limit: z.ZodDefault<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
         query?: string;
-        sources?: string[];
-        priority?: "low" | "medium" | "high";
-        limit?: number;
         maxQueries?: number;
+        priority?: "high" | "medium" | "low";
+        sources?: string[];
+        limit?: number;
     }, {
         query?: string;
-        sources?: string[];
-        priority?: "low" | "medium" | "high";
-        limit?: number;
         maxQueries?: number;
+        priority?: "high" | "medium" | "low";
+        sources?: string[];
+        limit?: number;
     }>>;
 }, "strip", z.ZodTypeAny, {
     profileId?: string;
     options?: {
         query?: string;
-        sources?: string[];
-        priority?: "low" | "medium" | "high";
-        limit?: number;
         maxQueries?: number;
+        priority?: "high" | "medium" | "low";
+        sources?: string[];
+        limit?: number;
     };
     serviceId?: "SOCIAL_MEDIA" | "WEB_SEARCH" | "LLM_SEARCH" | "NEWSLETTERS" | "QUERY_GENERATION" | "BOOKMARKS";
 }, {
     profileId?: string;
     options?: {
         query?: string;
-        sources?: string[];
-        priority?: "low" | "medium" | "high";
-        limit?: number;
         maxQueries?: number;
+        priority?: "high" | "medium" | "low";
+        sources?: string[];
+        limit?: number;
     };
     serviceId?: "SOCIAL_MEDIA" | "WEB_SEARCH" | "LLM_SEARCH" | "NEWSLETTERS" | "QUERY_GENERATION" | "BOOKMARKS";
 }>;
@@ -46,11 +46,11 @@ export declare const stopServiceSchema: z.ZodObject<{
     serviceId: z.ZodString;
     sessionId: z.ZodString;
 }, "strip", z.ZodTypeAny, {
-    serviceId?: string;
     sessionId?: string;
+    serviceId?: string;
 }, {
-    serviceId?: string;
     sessionId?: string;
+    serviceId?: string;
 }>;
 export declare const exportSchema: z.ZodObject<{
     profileId: z.ZodString;
@@ -85,13 +85,13 @@ export declare const queryGenerationOptionsSchema: z.ZodObject<{
     style: z.ZodDefault<z.ZodEnum<["focused", "diverse", "creative"]>>;
 }, "strip", z.ZodTypeAny, {
     profileId?: string;
-    style?: "focused" | "diverse" | "creative";
     maxQueries?: number;
+    style?: "focused" | "diverse" | "creative";
     sourceTypes?: ("bookmark" | "social" | "websearch" | "newsletter")[];
 }, {
     profileId?: string;
-    style?: "focused" | "diverse" | "creative";
     maxQueries?: number;
+    style?: "focused" | "diverse" | "creative";
     sourceTypes?: ("bookmark" | "social" | "websearch" | "newsletter")[];
 }>;
 export declare const searchOptionsSchema: z.ZodObject<{
@@ -123,19 +123,19 @@ export declare const sessionStatusSchema: z.ZodObject<{
     error?: string;
     updatedAt?: string;
     status?: "RUNNING" | "COMPLETED" | "STOPPED" | "ERROR";
-    serviceId?: string;
     sessionId?: string;
     progress?: number;
     resultsCount?: number;
+    serviceId?: string;
     startedAt?: string;
 }, {
     error?: string;
     updatedAt?: string;
     status?: "RUNNING" | "COMPLETED" | "STOPPED" | "ERROR";
-    serviceId?: string;
     sessionId?: string;
     progress?: number;
     resultsCount?: number;
+    serviceId?: string;
     startedAt?: string;
 }>;
 export declare const resultPaginationSchema: z.ZodObject<{
@@ -164,20 +164,20 @@ export declare const sessionMetadataSchema: z.ZodObject<{
     updatedAt?: Date;
     profileId?: string;
     status?: "RUNNING" | "COMPLETED" | "STOPPED" | "ERROR";
-    serviceId?: string;
-    progress?: number;
-    startedAt?: Date;
     results?: any[];
+    progress?: number;
+    serviceId?: string;
+    startedAt?: Date;
 }, {
     error?: string;
     id?: string;
     updatedAt?: Date;
     profileId?: string;
     status?: "RUNNING" | "COMPLETED" | "STOPPED" | "ERROR";
-    serviceId?: string;
-    progress?: number;
-    startedAt?: Date;
     results?: any[];
+    progress?: number;
+    serviceId?: string;
+    startedAt?: Date;
 }>;
 export declare const llmInsightSchema: z.ZodObject<{
     insight: z.ZodString;
@@ -187,14 +187,14 @@ export declare const llmInsightSchema: z.ZodObject<{
     type: z.ZodOptional<z.ZodEnum<["trend", "opportunity", "analysis", "prediction"]>>;
 }, "strip", z.ZodTypeAny, {
     type?: "opportunity" | "analysis" | "trend" | "prediction";
-    sources?: string[];
     confidence?: number;
+    sources?: string[];
     insight?: string;
     relevantOpportunities?: number;
 }, {
     type?: "opportunity" | "analysis" | "trend" | "prediction";
-    sources?: string[];
     confidence?: number;
+    sources?: string[];
     insight?: string;
     relevantOpportunities?: number;
 }>;
@@ -257,16 +257,16 @@ export declare const newsletterSchema: z.ZodObject<{
     relevanceScore: z.ZodNumber;
 }, "strip", z.ZodTypeAny, {
     content?: string;
-    relevanceScore?: number;
-    opportunities?: number;
     date?: string;
+    opportunities?: number;
+    relevanceScore?: number;
     subject?: string;
     sender?: string;
 }, {
     content?: string;
-    relevanceScore?: number;
-    opportunities?: number;
     date?: string;
+    opportunities?: number;
+    relevanceScore?: number;
     subject?: string;
     sender?: string;
 }>;
@@ -299,23 +299,23 @@ export declare const bulkResearchSchema: z.ZodObject<{
         maxQueries: z.ZodDefault<z.ZodNumber>;
         priority: z.ZodDefault<z.ZodEnum<["low", "medium", "high"]>>;
     }, "strip", z.ZodTypeAny, {
-        priority?: "low" | "medium" | "high";
         maxQueries?: number;
+        priority?: "high" | "medium" | "low";
     }, {
-        priority?: "low" | "medium" | "high";
         maxQueries?: number;
+        priority?: "high" | "medium" | "low";
     }>>;
 }, "strip", z.ZodTypeAny, {
     options?: {
-        priority?: "low" | "medium" | "high";
         maxQueries?: number;
+        priority?: "high" | "medium" | "low";
     };
     services?: string[];
     profileIds?: string[];
 }, {
     options?: {
-        priority?: "low" | "medium" | "high";
         maxQueries?: number;
+        priority?: "high" | "medium" | "low";
     };
     services?: string[];
     profileIds?: string[];
