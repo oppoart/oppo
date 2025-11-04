@@ -10,6 +10,7 @@ const authConfig: BetterAuthOptions = {
     enabled: true,
     requireEmailVerification: false,
     autoSignIn: true,
+    minPasswordLength: 7,
   },
   session: {
     expiresIn: 60 * 60 * 24, // 24 hours

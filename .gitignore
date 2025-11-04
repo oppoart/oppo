@@ -50,3 +50,9 @@ Thumbs.db
 # Temporary files
 .tmp/
 .temp/
+
+# Turbo cache
+.turbo/
+
+# Backup files
+.backups/

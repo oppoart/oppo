@@ -1,22 +1,39 @@
 import { PrismaClient } from '@prisma/client';
+import { auth } from '../src/shared/auth/better-auth';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Seeding database...');
 
-  // Create default user (betterAuth handles passwords differently)
-  const user = await prisma.user.upsert({
-    where: { email: 'artist@oppo.local' },
-    update: {},
-    create: {
-      email: 'artist@oppo.local',
-      name: 'OPPO Artist',
-      emailVerified: true,
-    },
-  });
+  // Create default user with Better Auth (handles password hashing)
+  let user;
+  try {
+    // Try to sign up the user with Better Auth
+    const signUpResult = await auth.api.signUpEmail({
+      body: {
+        email: 'artist@oppo.local',
+        password: '1234bes',
+        name: 'OPPO Artist',
+      },
+    });
 
-  console.log('✅ Created user:', user.email);
+    user = signUpResult.user;
+    console.log('✅ Created user with Better Auth:', user.email);
+    console.log('📧 Email: artist@oppo.local');
+    console.log('🔑 Password: 1234bes');
+  } catch (error) {
+    // If user already exists, just get the user
+    console.log('ℹ️  User already exists, fetching from database...');
+    user = await prisma.user.findUnique({
+      where: { email: 'artist@oppo.local' },
+    });
+
+    if (!user) {
+      throw new Error('Failed to create or find user');
+    }
+    console.log('✅ Found existing user:', user.email);
+  }
 
   // Delete existing profiles for this user to start fresh
   await prisma.artistProfile.deleteMany({
