@@ -1,0 +1,32 @@
+{
+  "name": "@oppo/job-queue",
+  "version": "0.1.0",
+  "description": "Simple BullMQ wrapper for job queue management in OPPO",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "jest",
+    "lint": "eslint src/**/*.ts"
+  },
+  "keywords": [
+    "job-queue",
+    "bullmq",
+    "redis",
+    "queue",
+    "worker"
+  ],
+  "dependencies": {
+    "bullmq": "^5.58.5",
+    "ioredis": "^5.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  },
+  "peerDependencies": {
+    "bullmq": "^5.0.0",
+    "ioredis": "^5.0.0"
+  }
+}
