@@ -16,6 +16,9 @@ dist/
 *.db
 *.sqlite
 
+# Docker volumes
+docker-data/
+
 # Logs
 logs
 *.log

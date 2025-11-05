@@ -19,11 +19,13 @@ Built as a **modular monolith** with five core services:
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18+ 
+- Node.js 18+
 - pnpm 8+
-- PostgreSQL 14+
+- Docker & Docker Compose (recommended) **OR** PostgreSQL 14+ & Redis 7+
 
 ### Development Setup
+
+#### Option 1: Docker Setup (Recommended)
 
 ```bash
 # Install dependencies
@@ -31,7 +33,41 @@ pnpm install
 
 # Set up environment variables
 cp apps/backend/.env.example apps/backend/.env
-cp apps/web/.env.example apps/web/.env.local
+# Edit apps/backend/.env if needed (default Docker config works out of the box)
+
+# One-time: Sync database schema
+pnpm docker:up && pnpm db:push
+
+# Start everything (Docker + Dev servers with TUI)
+pnpm dev:start
+
+# When done, stop everything
+pnpm dev:stop
+```
+
+**Or step by step:**
+```bash
+# Start Docker containers only
+pnpm docker:up
+
+# Sync database schema (first time)
+pnpm db:push
+
+# Start dev servers
+pnpm dev
+```
+
+#### Option 2: Local Installation
+
+```bash
+# Install dependencies
+pnpm install
+
+# Make sure PostgreSQL and Redis are running locally
+
+# Set up environment variables
+cp apps/backend/.env.example apps/backend/.env
+# Edit apps/backend/.env with your local database credentials
 
 # Run database migrations
 cd apps/backend && pnpm db:migrate
@@ -99,8 +135,23 @@ OPPO/
 ## 📦 Monorepo Commands
 
 ```bash
-# Development
-pnpm dev                    # Start all apps
+# Development (with Docker)
+pnpm dev:start              # Start Docker + dev servers (TUI)
+pnpm dev:stop               # Stop Docker + dev servers
+pnpm dev                    # Start dev servers only (without Docker)
+
+# Docker Management
+pnpm docker:up              # Start Docker containers
+pnpm docker:down            # Stop Docker containers
+pnpm docker:logs            # View Docker logs
+pnpm docker:reset           # Reset Docker volumes and restart
+
+# Database
+pnpm db:push                # Sync Prisma schema to database
+pnpm db:migrate             # Run database migrations
+pnpm db:studio              # Open Prisma Studio
+
+# Build & Test
 pnpm build                  # Build all packages
 pnpm test                   # Run all tests
 pnpm lint                   # Lint all code
@@ -136,8 +187,13 @@ pnpm --filter web build     # Build frontend
 
 ### Backend (`apps/backend/.env`)
 ```env
-# Database
-DATABASE_URL=postgresql://user:pass@localhost:5432/oppo_dev
+# Database (Docker setup - default)
+DATABASE_URL=postgresql://oppo_user:oppo_pass@localhost:5432/oppo_dev
+# Or for local PostgreSQL:
+# DATABASE_URL=postgresql://user:pass@localhost:5432/oppo_dev
+
+# Redis (Docker setup - default)
+REDIS_URL=redis://localhost:6379
 
 # Auth
 JWT_SECRET=your-secret-key
