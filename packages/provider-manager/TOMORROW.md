@@ -13,11 +13,11 @@
 **Dosya**: `apps/backend/src/modules/research/research.service.ts`
 
 **Değişiklikler**:
-- [ ] ProviderManager import et
-- [ ] Hardcoded OpenAI calls → ProviderManager.generate()
-- [ ] Hardcoded search calls → ProviderManager.searchMultiple()
-- [ ] UseCase.QUERY_ENHANCEMENT kullan
-- [ ] UseCase.WEB_SEARCH + discovery pattern
+- [x] ProviderManager import et
+- [x] Hardcoded OpenAI calls → ProviderManager.generate()
+- [x] Hardcoded search calls → ProviderManager.searchMultiple()
+- [x] UseCase.QUERY_ENHANCEMENT kullan
+- [x] UseCase.WEB_SEARCH + discovery pattern
 
 **Örnek**:
 ```typescript
@@ -35,17 +35,17 @@ const response = await providerManager.generate(
 **Dosya**: `apps/backend/src/modules/search/search.service.ts`
 
 **Değişiklikler**:
-- [ ] searchArtOpportunities() → ProviderManager.searchMultiple()
-- [ ] Discovery pattern (Serper + Google paralel)
-- [ ] Fallback logic'i kaldır (ProviderManager halleder)
+- [x] searchArtOpportunities() → ProviderManager.searchMultiple()
+- [x] Discovery pattern (Serper + Google paralel)
+- [x] Fallback logic'i kaldır (ProviderManager halleder)
 
 ### 3. Orchestrator Modülü
 **Dosya**: `apps/backend/src/modules/orchestrator/orchestrator.service.ts`
 
 **Değişiklikler**:
-- [ ] ProviderManager inject et
-- [ ] LLM çağrıları → ProviderManager.generate()
-- [ ] Cost tracking aktif et
+- [x] ProviderManager inject et
+- [x] LLM çağrıları → ProviderManager.generate()
+- [x] Cost tracking aktif et
 
 ### 4. Config & Environment
 **Dosyalar**:

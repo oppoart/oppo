@@ -1,17 +1,31 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
+import { ProviderManager, UseCase } from '@oppo/provider-manager';
 
 @Injectable()
 export class OrchestratorService {
   private readonly logger = new Logger(OrchestratorService.name);
+  private providerManager: ProviderManager;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly configService: ConfigService,
   ) {
-    this.logger.log('Orchestrator service initialized (stub implementation)');
+    // Initialize ProviderManager with config from environment
+    this.providerManager = new ProviderManager({
+      openai: {
+        apiKey: this.configService.get<string>('OPENAI_API_KEY'),
+        defaultModel: this.configService.get<string>('AI_MODEL_PRIMARY') || 'gpt-4',
+      },
+      anthropic: {
+        apiKey: this.configService.get<string>('ANTHROPIC_API_KEY'),
+      },
+    });
+    this.logger.log('Orchestrator service initialized with ProviderManager');
   }
 
   // Scheduled tasks
@@ -95,14 +109,46 @@ export class OrchestratorService {
 
   // RAG Agent interaction
   async queryRAGAgent(query: string, context?: any) {
-    this.logger.log('Querying RAG agent', { query });
-    
-    // TODO: Implement RAG agent query
-    return {
-      response: 'RAG agent response stubbed',
-      confidence: 0.5,
-      sources: [],
-    };
+    this.logger.log('Querying RAG agent with ProviderManager', { query });
+
+    try {
+      // Build context-aware prompt
+      const contextInfo = context
+        ? `\n\nContext: ${JSON.stringify(context, null, 2)}`
+        : '';
+
+      const prompt = `You are an AI assistant helping artists find opportunities. Answer the following question based on the provided context.
+
+Question: ${query}${contextInfo}
+
+Please provide a helpful, accurate response.`;
+
+      // Use ProviderManager to generate response
+      const response = await this.providerManager.generate(prompt, UseCase.RAG_QUERY, {
+        temperature: 0.7,
+        maxTokens: 500,
+      });
+
+      this.logger.log(
+        `✅ RAG query completed using ${response.provider} (cost: $${response.cost?.toFixed(4) || 0})`
+      );
+
+      // Log cost tracking
+      if (response.cost) {
+        this.logger.log(`💰 Cost tracking - Provider: ${response.provider}, Cost: $${response.cost.toFixed(4)}`);
+      }
+
+      return {
+        response: response.text,
+        confidence: 0.8, // Can be enhanced with confidence scoring
+        sources: [],
+        provider: response.provider,
+        cost: response.cost,
+      };
+    } catch (error) {
+      this.logger.error(`❌ RAG query failed: ${error.message}`);
+      throw new Error(`RAG agent query failed: ${error.message}`);
+    }
   }
 
   async trainRAGAgent(documents: any[]) {

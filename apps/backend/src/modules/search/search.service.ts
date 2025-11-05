@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
+import { ProviderManager, UseCase, DiscoveryPattern } from '@oppo/provider-manager';
 
 export interface SearchResult {
   title: string;
@@ -50,26 +51,85 @@ export class SerperSearchError extends Error {
 @Injectable()
 export class SearchService {
   private readonly logger = new Logger(SearchService.name);
+  private providerManager: ProviderManager;
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(private readonly configService: ConfigService) {
+    // Initialize ProviderManager with config from environment
+    this.providerManager = new ProviderManager({
+      openai: {
+        apiKey: this.configService.get<string>('OPENAI_API_KEY'),
+        defaultModel: this.configService.get<string>('AI_MODEL_PRIMARY') || 'gpt-4',
+      },
+      anthropic: {
+        apiKey: this.configService.get<string>('ANTHROPIC_API_KEY'),
+      },
+      serper: {
+        apiKey: this.configService.get<string>('SERPER_API_KEY'),
+      },
+      google: {
+        apiKey: this.configService.get<string>('GOOGLE_SEARCH_API_KEY'),
+        searchEngineId: this.configService.get<string>('GOOGLE_SEARCH_ENGINE_ID'),
+      },
+    });
+  }
 
   async searchArtOpportunities(query: string, options: SearchOptions = {}): Promise<SearchResponse> {
     const startTime = Date.now();
-    
+
     // Clean up query - remove extra quotes that might be sent from frontend
     const cleanQuery = query.replace(/^"(.*)"$/, '$1').replace(/^""(.*)""$/, '$1');
     this.logger.log(`🧹 Original query: "${query}" -> Cleaned query: "${cleanQuery}"`);
-    
-    // Try Serper.dev first, then fallback to Google Custom Search
+
     try {
-      this.logger.log(`🚀 Attempting primary search with Serper.dev`);
-      return await this.searchWithSerper(cleanQuery, options, startTime);
-    } catch (serperError) {
-      this.logger.warn(`⚠️  Serper.dev search failed: ${serperError.message}`);
-      this.logger.log(`🔄 Falling back to Google Custom Search`);
-      
-      // If Serper fails, fallback to Google Custom Search
-      return await this.searchWithGoogle(cleanQuery, options, startTime);
+      // Use ProviderManager with discovery pattern to search multiple providers in parallel
+      this.logger.log(`🚀 Searching with ProviderManager (Discovery Pattern: Serper + Google)`);
+
+      const searchResponse = await this.providerManager.searchMultiple(
+        cleanQuery,
+        UseCase.WEB_SEARCH,
+        {
+          pattern: DiscoveryPattern.PARALLEL,
+          targetProviders: ['serper', 'google'],
+          minSuccessful: 1, // At least one provider should succeed
+          maxResults: options.num || 100,
+        }
+      );
+
+      const searchTime = Date.now() - startTime;
+
+      // Transform ProviderManager results to SearchResponse format
+      const results: SearchResult[] = searchResponse.results.map((item, index) => ({
+        title: item.title || 'No title',
+        link: item.url || '',
+        snippet: item.description || 'No description available',
+        position: index + 1,
+        domain: this.extractDomain(item.url),
+        date: item.publishedDate || new Date().toISOString().split('T')[0],
+      }));
+
+      this.logger.log(
+        `✅ Search completed in ${searchTime}ms - found ${results.length} results from ${searchResponse.providersUsed.join(', ')}`
+      );
+
+      return {
+        results,
+        totalResults: results.length,
+        searchTime,
+        query: cleanQuery,
+      };
+    } catch (error) {
+      this.logger.error(`❌ ProviderManager search failed: ${error.message}`);
+
+      // If ProviderManager fails, throw appropriate error
+      if (error.message.includes('quota') || error.message.includes('rate limit')) {
+        throw new SearchQuotaExceededError(error.message);
+      }
+
+      if (error.message.includes('credentials') || error.message.includes('unauthorized')) {
+        throw new SearchCredentialsError(error.message);
+      }
+
+      throw new Error(`Search failed: ${error.message}`);
     }
   }
 
