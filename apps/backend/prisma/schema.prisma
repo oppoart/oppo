@@ -26,6 +26,7 @@ model User {
   queryBuckets        QueryBucket[]
   sessions            Session[]
   activities          UserActivity[]
+  queryTemplates      UserQueryTemplate[]
 
   @@map("users")
 }
@@ -349,4 +350,43 @@ model Feedback {
   @@index([priority])
   @@index([createdAt])
   @@map("feedback")
+}
+
+model QueryTemplateGroup {
+  id          String          @id @default(cuid())
+  name        String
+  description String?
+  order       Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  templates   QueryTemplate[]
+
+  @@map("query_template_groups")
+}
+
+model QueryTemplate {
+  id             String              @id @default(cuid())
+  groupId        String
+  template       String
+  placeholders   String[]            @default([])
+  order          Int                 @default(0)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  group          QueryTemplateGroup  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userSelections UserQueryTemplate[]
+
+  @@map("query_templates")
+}
+
+model UserQueryTemplate {
+  id         String        @id @default(cuid())
+  userId     String
+  templateId String
+  enabled    Boolean       @default(true)
+  createdAt  DateTime      @default(now())
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template   QueryTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, templateId])
+  @@map("user_query_templates")
 }

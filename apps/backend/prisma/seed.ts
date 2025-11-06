@@ -151,7 +151,78 @@ async function main() {
     console.log('✅ Created opportunity:', opportunity.title);
   }
 
-  console.log('🎉 Database seeded successfully with multi-profile structure and sample opportunities!');
+  // Add query template groups and templates
+  console.log('📋 Seeding query templates...');
+
+  const templateGroups = [
+    {
+      name: 'Time-based Queries',
+      description: 'Search queries based on time and deadlines',
+      order: 1,
+      templates: [
+        { template: 'Latest [medium] Open Calls [month] [year]', placeholders: ['medium', 'month', 'year'], order: 1 },
+        { template: '[medium] opportunities deadline [month] [year]', placeholders: ['medium', 'month', 'year'], order: 2 },
+        { template: 'Upcoming [opportunity-type] [month] [year]', placeholders: ['opportunity-type', 'month', 'year'], order: 3 },
+      ]
+    },
+    {
+      name: 'Opportunity Types',
+      description: 'Search by specific opportunity categories',
+      order: 2,
+      templates: [
+        { template: '[medium] [grant/award/exhibition/residency] [year]', placeholders: ['medium', 'opportunity-type', 'year'], order: 1 },
+        { template: 'Open call [medium] [location]', placeholders: ['medium', 'location'], order: 2 },
+        { template: '[opportunity-type] for emerging artists [year]', placeholders: ['opportunity-type', 'year'], order: 3 },
+      ]
+    },
+    {
+      name: 'Geographic Queries',
+      description: 'Location-based opportunity searches',
+      order: 3,
+      templates: [
+        { template: '[medium] opportunities [city/state/country]', placeholders: ['medium', 'location'], order: 1 },
+        { template: 'International [opportunity-type] [medium]', placeholders: ['opportunity-type', 'medium'], order: 2 },
+        { template: '[location] art [grant/competition/exhibition] [year]', placeholders: ['location', 'opportunity-type', 'year'], order: 3 },
+      ]
+    },
+    {
+      name: 'Funding & Prize Queries',
+      description: 'Searches focused on grants and prizes',
+      order: 4,
+      templates: [
+        { template: '[amount]+ [medium] grants [year]', placeholders: ['amount', 'medium', 'year'], order: 1 },
+        { template: 'Large [opportunity-type] [medium] funding', placeholders: ['opportunity-type', 'medium'], order: 2 },
+        { template: '[medium] prize competition [year]', placeholders: ['medium', 'year'], order: 3 },
+      ]
+    },
+    {
+      name: 'Theme & Subject Queries',
+      description: 'Searches based on artistic themes and subjects',
+      order: 5,
+      templates: [
+        { template: '[theme/subject] [medium] [opportunity-type]', placeholders: ['theme', 'medium', 'opportunity-type'], order: 1 },
+        { template: 'Contemporary [medium] [location] opportunities', placeholders: ['medium', 'location'], order: 2 },
+        { template: '[social-issue] art [grant/exhibition] [year]', placeholders: ['theme', 'opportunity-type', 'year'], order: 3 },
+      ]
+    },
+  ];
+
+  for (const groupData of templateGroups) {
+    const { templates, ...groupInfo } = groupData;
+
+    const group = await prisma.queryTemplateGroup.create({
+      data: {
+        ...groupInfo,
+        templates: {
+          create: templates,
+        },
+      },
+    });
+
+    console.log(`✅ Created query template group: ${group.name} (${templates.length} templates)`);
+  }
+
+  console.log('🎉 Database seeded successfully with multi-profile structure, opportunities, and query templates!');
 }
 
 main()
