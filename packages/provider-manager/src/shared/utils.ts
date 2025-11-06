@@ -13,7 +13,7 @@ export function calculateCost(
   promptTokens: number,
   completionTokens: number
 ): number {
-  const modelPricing = PROVIDER_PRICING[provider]?.[model];
+  const modelPricing = (PROVIDER_PRICING as any)[provider]?.[model];
   if (!modelPricing) {
     return 0;
   }

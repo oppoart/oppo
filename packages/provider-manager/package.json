@@ -2,6 +2,7 @@
   "name": "@oppo/provider-manager",
   "version": "0.1.0",
   "description": "Hexagonal architecture-based provider management for LLM, Search, and Social Media services",
+  "type": "commonjs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {

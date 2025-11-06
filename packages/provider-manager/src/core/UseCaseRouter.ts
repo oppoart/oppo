@@ -5,7 +5,7 @@
  * Merges default configurations with custom overrides.
  */
 
-import { UseCase, UseCaseConfig, ProviderManagerConfig } from './types';
+import { UseCase, UseCaseConfig } from './types';
 import { DEFAULT_USE_CASE_CONFIG } from '../config';
 
 export class UseCaseRouter {

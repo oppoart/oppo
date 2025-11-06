@@ -44,7 +44,7 @@ import {
   ProviderTimeoutError,
 } from '../shared/errors';
 
-import { retryWithBackoff, hashString } from '../shared/utils';
+import { hashString } from '../shared/utils';
 import { DEFAULT_TIMEOUTS, DISCOVERY_CONFIG } from '../config';
 
 interface CacheEntry<T> {

@@ -74,12 +74,12 @@ export class AnthropicAdapter implements IExtractionProvider, ITextGenerationPro
       });
 
       const textContent = response.content[0];
-      if (textContent.type !== 'text') {
+      if (!textContent || textContent.type !== 'text') {
         throw new Error('Unexpected response type from Claude');
       }
 
       // Parse JSON response
-      const extracted = this.parseExtractionResponse<T>(textContent.text);
+      const extracted = this.parseExtractionResponse<T>((textContent as any).text);
 
       const cost = calculateCost(
         'anthropic',
@@ -134,7 +134,7 @@ export class AnthropicAdapter implements IExtractionProvider, ITextGenerationPro
       });
 
       const textContent = response.content[0];
-      if (textContent.type !== 'text') {
+      if (!textContent || textContent.type !== 'text') {
         throw new Error('Unexpected response type from Claude');
       }
 
@@ -148,7 +148,7 @@ export class AnthropicAdapter implements IExtractionProvider, ITextGenerationPro
       const latency = Date.now() - startTime;
 
       return {
-        content: textContent.text,
+        content: (textContent as any).text,
         model: response.model,
         usage: {
           promptTokens: response.usage.input_tokens,
@@ -184,7 +184,7 @@ export class AnthropicAdapter implements IExtractionProvider, ITextGenerationPro
       });
 
       const textContent = response.content[0];
-      if (textContent.type !== 'text') {
+      if (!textContent || textContent.type !== 'text') {
         throw new Error('Unexpected response type from Claude');
       }
 
@@ -198,7 +198,7 @@ export class AnthropicAdapter implements IExtractionProvider, ITextGenerationPro
       const latency = Date.now() - startTime;
 
       return {
-        content: textContent.text,
+        content: (textContent as any).text,
         model: response.model,
         usage: {
           promptTokens: response.usage.input_tokens,

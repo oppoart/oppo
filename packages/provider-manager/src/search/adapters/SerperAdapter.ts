@@ -123,7 +123,7 @@ export class SerperAdapter implements ISearchProvider {
     const results: SearchResult[] = [];
 
     if (data.organic && Array.isArray(data.organic)) {
-      data.organic.forEach((item: any, index: number) => {
+      data.organic.forEach((item: any) => {
         results.push({
           title: item.title || 'No title',
           url: item.link || '',

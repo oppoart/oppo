@@ -17,7 +17,7 @@ import { calculatePercentile } from '../shared/utils';
 interface TrackedOperation {
   useCase: UseCase;
   provider: string;
-  model: string;
+  model?: string;
   cost: number;
   latency: number;
   tokens?: number;
@@ -44,12 +44,12 @@ export class CostTracker {
     useCase: UseCase,
     provider: string,
     response: {
-      model: string;
+      model?: string;
       cost?: number;
       latency: number;
       usage?: {
         promptTokens: number;
-        completionTokens: number;
+        completionTokens?: number;
         totalTokens: number;
       };
     },
