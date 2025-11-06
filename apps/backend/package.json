@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "tsc --watch & sleep 3 && node --watch dist/apps/backend/src/main.js",
+    "dev": "nest start --watch",
     "dev:debug": "nest start --debug --watch",
     "build": "tsc",
     "start": "node dist/apps/backend/src/main",
@@ -33,6 +33,7 @@
     "@nestjs/swagger": "^7.4.2",
     "@nestjs/throttler": "^6.2.1",
     "@nestjs/websockets": "^10.4.4",
+    "@oppo/provider-manager": "workspace:*",
     "@oppo/shared": "workspace:*",
     "@prisma/client": "^5.22.0",
     "@sendgrid/mail": "^8.1.5",

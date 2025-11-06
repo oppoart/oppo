@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-import { ProviderManager, UseCase, DiscoveryPattern } from '@oppo/provider-manager';
+import { ProviderManager, UseCase } from '@oppo/provider-manager';
 
 export interface SearchResult {
   title: string;
@@ -56,19 +56,21 @@ export class SearchService {
   constructor(private readonly configService: ConfigService) {
     // Initialize ProviderManager with config from environment
     this.providerManager = new ProviderManager({
-      openai: {
-        apiKey: this.configService.get<string>('OPENAI_API_KEY'),
-        defaultModel: this.configService.get<string>('AI_MODEL_PRIMARY') || 'gpt-4',
-      },
-      anthropic: {
-        apiKey: this.configService.get<string>('ANTHROPIC_API_KEY'),
-      },
-      serper: {
-        apiKey: this.configService.get<string>('SERPER_API_KEY'),
-      },
-      google: {
-        apiKey: this.configService.get<string>('GOOGLE_SEARCH_API_KEY'),
-        searchEngineId: this.configService.get<string>('GOOGLE_SEARCH_ENGINE_ID'),
+      providers: {
+        openai: {
+          apiKey: this.configService.get<string>('OPENAI_API_KEY'),
+          defaultModel: this.configService.get<string>('AI_MODEL_PRIMARY') || 'gpt-4',
+        },
+        anthropic: {
+          apiKey: this.configService.get<string>('ANTHROPIC_API_KEY'),
+        },
+        serper: {
+          apiKey: this.configService.get<string>('SERPER_API_KEY'),
+        },
+        google: {
+          apiKey: this.configService.get<string>('GOOGLE_SEARCH_API_KEY'),
+          searchEngineId: this.configService.get<string>('GOOGLE_SEARCH_ENGINE_ID'),
+        },
       },
     });
   }
@@ -86,12 +88,11 @@ export class SearchService {
 
       const searchResponse = await this.providerManager.searchMultiple(
         cleanQuery,
-        UseCase.WEB_SEARCH,
         {
-          pattern: DiscoveryPattern.PARALLEL,
-          targetProviders: ['serper', 'google'],
-          minSuccessful: 1, // At least one provider should succeed
-          maxResults: options.num || 100,
+          discoveryType: 'searchEngines',
+          maxResultsPerProvider: options.num || 100,
+          enabledProviders: ['serper', 'google'],
+          deduplicateUrls: true,
         }
       );
 
@@ -107,8 +108,13 @@ export class SearchService {
         date: item.publishedDate || new Date().toISOString().split('T')[0],
       }));
 
+      const providersUsed = searchResponse.providerResults
+        .filter(p => p.success)
+        .map(p => p.provider)
+        .join(', ');
+
       this.logger.log(
-        `✅ Search completed in ${searchTime}ms - found ${results.length} results from ${searchResponse.providersUsed.join(', ')}`
+        `✅ Search completed in ${searchTime}ms - found ${results.length} results from ${providersUsed}`
       );
 
       return {

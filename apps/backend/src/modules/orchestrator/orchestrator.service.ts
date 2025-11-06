@@ -17,12 +17,14 @@ export class OrchestratorService {
   ) {
     // Initialize ProviderManager with config from environment
     this.providerManager = new ProviderManager({
-      openai: {
-        apiKey: this.configService.get<string>('OPENAI_API_KEY'),
-        defaultModel: this.configService.get<string>('AI_MODEL_PRIMARY') || 'gpt-4',
-      },
-      anthropic: {
-        apiKey: this.configService.get<string>('ANTHROPIC_API_KEY'),
+      providers: {
+        openai: {
+          apiKey: this.configService.get<string>('OPENAI_API_KEY'),
+          defaultModel: this.configService.get<string>('AI_MODEL_PRIMARY') || 'gpt-4',
+        },
+        anthropic: {
+          apiKey: this.configService.get<string>('ANTHROPIC_API_KEY'),
+        },
       },
     });
     this.logger.log('Orchestrator service initialized with ProviderManager');
@@ -124,25 +126,25 @@ Question: ${query}${contextInfo}
 Please provide a helpful, accurate response.`;
 
       // Use ProviderManager to generate response
-      const response = await this.providerManager.generate(prompt, UseCase.RAG_QUERY, {
+      const response = await this.providerManager.generate(prompt, UseCase.RAG_QA, {
         temperature: 0.7,
         maxTokens: 500,
       });
 
       this.logger.log(
-        `✅ RAG query completed using ${response.provider} (cost: $${response.cost?.toFixed(4) || 0})`
+        `✅ RAG query completed using ${response.model} (cost: $${response.cost?.toFixed(4) || 0})`
       );
 
       // Log cost tracking
       if (response.cost) {
-        this.logger.log(`💰 Cost tracking - Provider: ${response.provider}, Cost: $${response.cost.toFixed(4)}`);
+        this.logger.log(`💰 Cost tracking - Model: ${response.model}, Cost: $${response.cost.toFixed(4)}`);
       }
 
       return {
-        response: response.text,
+        response: response.content,
         confidence: 0.8, // Can be enhanced with confidence scoring
         sources: [],
-        provider: response.provider,
+        provider: response.model,
         cost: response.cost,
       };
     } catch (error) {
