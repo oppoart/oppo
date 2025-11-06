@@ -10,8 +10,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
 export function LoginForm() {
-  const [email, setEmail] = useState('test@oppo.local'); // Default to test user we created
-  const [password, setPassword] = useState('password123'); // Default test password
+  const [email, setEmail] = useState('artist@oppo.local'); // Default to test user we created
+  const [password, setPassword] = useState('1234bes'); // Default test password
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const { toast } = useToast();
@@ -95,7 +95,7 @@ export function LoginForm() {
                 Forgot your access? Request a reset link
               </button>
               <div className="text-sm text-muted-foreground">
-                For testing, use: <code>test@oppo.local</code> / <code>password123</code>
+                For testing, use: <code>artist@oppo.local</code> / <code>1234bes</code>
               </div>
             </div>
           </form>
