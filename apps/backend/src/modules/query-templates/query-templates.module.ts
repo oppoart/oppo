@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { QueryTemplatesController, UserQueryTemplatesController } from './query-templates.controller';
 import { QueryTemplatesService } from './query-templates.service';
-import { PrismaService } from '../../services/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Module({
   controllers: [QueryTemplatesController, UserQueryTemplatesController],

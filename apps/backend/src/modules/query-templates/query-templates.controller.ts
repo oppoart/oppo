@@ -10,7 +10,7 @@ import {
   Request,
 } from '@nestjs/common';
 import { QueryTemplatesService } from './query-templates.service';
-import { AuthGuard } from '../../guards/auth.guard';
+import { AuthGuard } from '../../common/guards/auth.guard';
 
 @Controller('query-templates')
 @UseGuards(AuthGuard)
@@ -59,7 +59,6 @@ export class QueryTemplatesController {
     return this.queryTemplatesService.deleteTemplate(id);
   }
 
-  @Get('groups/create')
   @Post('groups')
   async createGroup(
     @Body()
