@@ -24,6 +24,10 @@ export interface ArtistProfile {
   skills: string[];
   interests: string[];
   website?: string;
+  locations: string[];
+  opportunityTypes: string[];
+  amountRanges: string[];
+  themes: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -41,6 +45,10 @@ export interface UpdateProfileRequest {
   skills?: string[];
   interests?: string[];
   website?: string;
+  locations?: string[];
+  opportunityTypes?: string[];
+  amountRanges?: string[];
+  themes?: string[];
 }
 
 export const ARTIST_CATEGORIES = [

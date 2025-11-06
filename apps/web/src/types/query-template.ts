@@ -12,7 +12,6 @@ export interface QueryTemplate {
 export interface QueryTemplateGroup {
   id: string;
   name: string;
-  description?: string;
   order: number;
   createdAt: string;
   updatedAt: string;

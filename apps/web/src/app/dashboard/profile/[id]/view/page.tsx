@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ArtistProfile } from '@/types/profile';
 import { AnalysisResult, AnalysisStats } from '@/types/analyst';
-import { QueryTemplate, QueryTemplateGroup } from '@/types/query-template';
+import { QueryTemplateGroup } from '@/types/query-template';
 import { profileApi, analystApi, queryTemplatesApi } from '@/lib/api';
 import { generateExample } from '@/lib/query-template-utils';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -29,7 +29,6 @@ export default function ProfileViewPage() {
   const [analysisStats, setAnalysisStats] = useState<AnalysisStats | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [showAnalysisTab, setShowAnalysisTab] = useState('profile'); // 'profile', 'queries'
-  const [userTemplates, setUserTemplates] = useState<QueryTemplate[]>([]);
   const [allGroups, setAllGroups] = useState<QueryTemplateGroup[]>([]);
 
   useEffect(() => {
@@ -63,11 +62,7 @@ export default function ProfileViewPage() {
 
   const loadQueryTemplates = async () => {
     try {
-      const [templates, groups] = await Promise.all([
-        queryTemplatesApi.getProfileTemplates(profileId),
-        queryTemplatesApi.getGroups(),
-      ]);
-      setUserTemplates(templates);
+      const groups = await queryTemplatesApi.getGroups();
       setAllGroups(groups);
     } catch (err) {
       console.error('Error loading query templates:', err);
@@ -318,50 +313,133 @@ export default function ProfileViewPage() {
 
             {showAnalysisTab === 'queries' && (
               <div className="space-y-6">
+                {/* Query Parameters */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Selected Query Templates</CardTitle>
+                    <CardTitle>Query Parameters</CardTitle>
                     <CardDescription>
-                      Query templates you've selected for finding opportunities
+                      Your search preferences for generating targeted queries
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    {userTemplates.length === 0 ? (
-                      <div className="text-center py-8">
+                  <CardContent className="space-y-6">
+                    {/* Locations */}
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-2">Locations</h3>
+                      {profile.locations && profile.locations.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {profile.locations.map((location, index) => (
+                            <Badge key={index} variant="secondary">
+                              {location}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground italic">No locations specified</p>
+                      )}
+                    </div>
+
+                    {/* Opportunity Types */}
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-2">Opportunity Types</h3>
+                      {profile.opportunityTypes && profile.opportunityTypes.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {profile.opportunityTypes.map((type, index) => (
+                            <Badge key={index} variant="secondary">
+                              {type}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground italic">No opportunity types specified</p>
+                      )}
+                    </div>
+
+                    {/* Amount Ranges */}
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-2">Amount Ranges</h3>
+                      {profile.amountRanges && profile.amountRanges.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {profile.amountRanges.map((range, index) => (
+                            <Badge key={index} variant="secondary">
+                              {range}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground italic">No amount ranges specified</p>
+                      )}
+                    </div>
+
+                    {/* Themes */}
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-2">Themes & Subjects</h3>
+                      {profile.themes && profile.themes.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {profile.themes.map((theme, index) => (
+                            <Badge key={index} variant="secondary">
+                              {theme}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground italic">No themes specified</p>
+                      )}
+                    </div>
+
+                    {((!profile.locations || profile.locations.length === 0) &&
+                      (!profile.opportunityTypes || profile.opportunityTypes.length === 0) &&
+                      (!profile.amountRanges || profile.amountRanges.length === 0) &&
+                      (!profile.themes || profile.themes.length === 0)) && (
+                      <div className="text-center py-4">
                         <p className="text-muted-foreground mb-4">
-                          No query templates selected yet
+                          No query parameters configured yet
                         </p>
                         <Button
                           variant="outline"
                           onClick={() => router.push(`/dashboard/profile/${profile.id}?tab=queries`)}
                         >
                           <Edit className="h-4 w-4 mr-2" />
-                          Configure Templates
+                          Configure Parameters
                         </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Query Templates */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Available Query Templates</CardTitle>
+                    <CardDescription>
+                      Search query templates that will use your parameters above
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {allGroups.length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-muted-foreground mb-4">
+                          No query templates available
+                        </p>
                       </div>
                     ) : (
                       <div className="space-y-6">
                         {allGroups.map((group) => {
-                          const groupTemplates = userTemplates.filter(
-                            (t) => t.groupId === group.id
-                          );
-
-                          if (groupTemplates.length === 0) return null;
+                          if (group.templates.length === 0) return null;
 
                           return (
                             <div key={group.id}>
                               <h3 className="text-sm font-semibold text-gray-900 mb-3">
                                 {group.name}
                               </h3>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {groupTemplates.map((template) => {
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {group.templates.map((template) => {
                                   const example = generateExample(template, profile);
                                   return (
                                     <div
                                       key={template.id}
-                                      className="bg-gray-50 p-3 rounded-md"
+                                      className="bg-gray-50 p-3 rounded-md border border-gray-200"
                                     >
-                                      <code className="text-sm block mb-1">
+                                      <code className="text-xs block mb-2 font-mono text-gray-800">
                                         {template.template}
                                       </code>
                                       <p className="text-xs text-gray-600">

@@ -53,6 +53,10 @@ async function main() {
       location: 'New York, NY',
       website: 'https://digitalart.example.com',
       portfolioUrl: 'https://portfolio.digitalart.example.com',
+      locations: ['New York', 'San Francisco', 'Online'],
+      opportunityTypes: ['residency', 'grant', 'exhibition'],
+      amountRanges: ['$5k-10k', '$10k-20k', '$20k+'],
+      themes: ['technology', 'innovation', 'digital culture', 'virtual reality'],
     },
     {
       name: 'Traditional Art Practice',
@@ -65,6 +69,10 @@ async function main() {
       location: 'Brooklyn, NY',
       website: 'https://traditional.example.com',
       portfolioUrl: 'https://portfolio.traditional.example.com',
+      locations: ['Brooklyn', 'New York', 'Northeast US'],
+      opportunityTypes: ['exhibition', 'residency', 'teaching'],
+      amountRanges: ['$1k-5k', '$5k-10k'],
+      themes: ['contemporary art', 'figurative', 'landscape', 'social commentary'],
     },
     {
       name: 'AI Art Experiments',
@@ -77,6 +85,10 @@ async function main() {
       location: 'San Francisco, CA',
       website: 'https://aiart.example.com',
       portfolioUrl: 'https://portfolio.aiart.example.com',
+      locations: ['San Francisco', 'Remote', 'International'],
+      opportunityTypes: ['grant', 'award', 'collaboration'],
+      amountRanges: ['$10k-20k', '$20k+'],
+      themes: ['AI ethics', 'machine learning', 'future of art', 'human-AI collaboration'],
     },
   ];
 
@@ -157,52 +169,62 @@ async function main() {
   const templateGroups = [
     {
       name: 'Time-based Queries',
-      description: 'Search queries based on time and deadlines',
       order: 1,
       templates: [
-        { template: 'Latest [medium] Open Calls [month] [year]', placeholders: ['medium', 'month', 'year'], order: 1 },
+        { template: '[medium] open calls [month] [year]', placeholders: ['medium', 'month', 'year'], order: 1 },
         { template: '[medium] opportunities deadline [month] [year]', placeholders: ['medium', 'month', 'year'], order: 2 },
-        { template: 'Upcoming [opportunity-type] [month] [year]', placeholders: ['opportunity-type', 'month', 'year'], order: 3 },
+        { template: '[opportunity-type] for [medium] artists [month] [year]', placeholders: ['opportunity-type', 'medium', 'month', 'year'], order: 3 },
+        { template: 'upcoming [medium] [opportunity-type] [year]', placeholders: ['medium', 'opportunity-type', 'year'], order: 4 },
       ]
     },
     {
-      name: 'Opportunity Types',
-      description: 'Search by specific opportunity categories',
+      name: 'Location-based Queries',
       order: 2,
       templates: [
-        { template: '[medium] [grant/award/exhibition/residency] [year]', placeholders: ['medium', 'opportunity-type', 'year'], order: 1 },
-        { template: 'Open call [medium] [location]', placeholders: ['medium', 'location'], order: 2 },
-        { template: '[opportunity-type] for emerging artists [year]', placeholders: ['opportunity-type', 'year'], order: 3 },
+        { template: '[medium] opportunities in [location]', placeholders: ['medium', 'location'], order: 1 },
+        { template: '[medium] [opportunity-type] in [location]', placeholders: ['medium', 'opportunity-type', 'location'], order: 2 },
+        { template: '[location] [opportunity-type] for [medium] artists', placeholders: ['location', 'opportunity-type', 'medium'], order: 3 },
+        { template: '[location] art [opportunity-type] [year]', placeholders: ['location', 'opportunity-type', 'year'], order: 4 },
+        { template: '[medium] residency [location] [year]', placeholders: ['medium', 'location', 'year'], order: 5 },
       ]
     },
     {
-      name: 'Geographic Queries',
-      description: 'Location-based opportunity searches',
+      name: 'Funding & Amount Queries',
       order: 3,
       templates: [
-        { template: '[medium] opportunities [city/state/country]', placeholders: ['medium', 'location'], order: 1 },
-        { template: 'International [opportunity-type] [medium]', placeholders: ['opportunity-type', 'medium'], order: 2 },
-        { template: '[location] art [grant/competition/exhibition] [year]', placeholders: ['location', 'opportunity-type', 'year'], order: 3 },
+        { template: '[amount] [medium] grants [year]', placeholders: ['amount', 'medium', 'year'], order: 1 },
+        { template: '[amount] [opportunity-type] for [medium] artists', placeholders: ['amount', 'opportunity-type', 'medium'], order: 2 },
+        { template: '[opportunity-type] funding [amount] [location]', placeholders: ['opportunity-type', 'amount', 'location'], order: 3 },
+        { template: '[medium] [opportunity-type] [amount] funding [year]', placeholders: ['medium', 'opportunity-type', 'amount', 'year'], order: 4 },
       ]
     },
     {
-      name: 'Funding & Prize Queries',
-      description: 'Searches focused on grants and prizes',
+      name: 'Theme-based Queries',
       order: 4,
       templates: [
-        { template: '[amount]+ [medium] grants [year]', placeholders: ['amount', 'medium', 'year'], order: 1 },
-        { template: 'Large [opportunity-type] [medium] funding', placeholders: ['opportunity-type', 'medium'], order: 2 },
-        { template: '[medium] prize competition [year]', placeholders: ['medium', 'year'], order: 3 },
+        { template: '[theme] [medium] opportunities', placeholders: ['theme', 'medium'], order: 1 },
+        { template: '[theme] art [opportunity-type] [year]', placeholders: ['theme', 'opportunity-type', 'year'], order: 2 },
+        { template: '[medium] [opportunity-type] for [theme] artists', placeholders: ['medium', 'opportunity-type', 'theme'], order: 3 },
+        { template: '[theme] [medium] [opportunity-type] [location]', placeholders: ['theme', 'medium', 'opportunity-type', 'location'], order: 4 },
       ]
     },
     {
-      name: 'Theme & Subject Queries',
-      description: 'Searches based on artistic themes and subjects',
+      name: 'Combined Specific Queries',
       order: 5,
       templates: [
-        { template: '[theme/subject] [medium] [opportunity-type]', placeholders: ['theme', 'medium', 'opportunity-type'], order: 1 },
-        { template: 'Contemporary [medium] [location] opportunities', placeholders: ['medium', 'location'], order: 2 },
-        { template: '[social-issue] art [grant/exhibition] [year]', placeholders: ['theme', 'opportunity-type', 'year'], order: 3 },
+        { template: '[opportunity-type] for [medium] artists in [location]', placeholders: ['opportunity-type', 'medium', 'location'], order: 1 },
+        { template: '[amount] [opportunity-type] [theme] [location]', placeholders: ['amount', 'opportunity-type', 'theme', 'location'], order: 2 },
+        { template: '[theme] [medium] [opportunity-type] [amount] [year]', placeholders: ['theme', 'medium', 'opportunity-type', 'amount', 'year'], order: 3 },
+        { template: '[location] [opportunity-type] [theme] artists [month] [year]', placeholders: ['location', 'opportunity-type', 'theme', 'month', 'year'], order: 4 },
+      ]
+    },
+    {
+      name: 'Career Stage Queries',
+      order: 6,
+      templates: [
+        { template: 'emerging [medium] artists [opportunity-type] [year]', placeholders: ['medium', 'opportunity-type', 'year'], order: 1 },
+        { template: '[opportunity-type] for early career [medium] artists', placeholders: ['opportunity-type', 'medium'], order: 2 },
+        { template: 'established [medium] artists [opportunity-type] [location]', placeholders: ['medium', 'opportunity-type', 'location'], order: 3 },
       ]
     },
   ];

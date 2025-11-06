@@ -77,24 +77,27 @@ model PasswordResetToken {
 }
 
 model ArtistProfile {
-  id              String                 @id @default(cuid())
-  userId          String
-  name            String
-  mediums         String[]               @default(["other"])
-  bio             String?
-  artistStatement String?
-  skills          String[]
-  interests       String[]
-  experience      String?
-  location        String?
-  website         String?
-  portfolioUrl    String?
-  preferences     Json?
-  settings        Json?
-  createdAt       DateTime               @default(now())
-  updatedAt       DateTime               @updatedAt
-  user            User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  queryTemplates  ProfileQueryTemplate[]
+  id               String                 @id @default(cuid())
+  userId           String
+  name             String
+  mediums          String[]               @default(["other"])
+  bio              String?
+  artistStatement  String?
+  skills           String[]
+  interests        String[]
+  experience       String?
+  location         String?
+  website          String?
+  portfolioUrl     String?
+  preferences      Json?
+  settings         Json?
+  locations        String[]               @default([])
+  opportunityTypes String[]               @default([])
+  amountRanges     String[]               @default([])
+  themes           String[]               @default([])
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  user             User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("artist_profiles")
 }
@@ -353,40 +356,26 @@ model Feedback {
 }
 
 model QueryTemplateGroup {
-  id          String          @id @default(cuid())
-  name        String
-  description String?
-  order       Int             @default(0)
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  templates   QueryTemplate[]
+  id        String          @id @default(cuid())
+  name      String
+  order     Int             @default(0)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  templates QueryTemplate[]
 
   @@map("query_template_groups")
 }
 
 model QueryTemplate {
-  id                String                 @id @default(cuid())
-  groupId           String
-  template          String
-  placeholders      String[]               @default([])
-  order             Int                    @default(0)
-  createdAt         DateTime               @default(now())
-  updatedAt         DateTime               @updatedAt
-  group             QueryTemplateGroup     @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  profileSelections ProfileQueryTemplate[]
+  id           String             @id @default(cuid())
+  groupId      String
+  template     String
+  placeholders String[]           @default([])
+  order        Int                @default(0)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  group        QueryTemplateGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
   @@map("query_templates")
 }
 
-model ProfileQueryTemplate {
-  id         String        @id @default(cuid())
-  profileId  String
-  templateId String
-  enabled    Boolean       @default(true)
-  createdAt  DateTime      @default(now())
-  profile    ArtistProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  template   QueryTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
-
-  @@unique([profileId, templateId])
-  @@map("profile_query_templates")
-}

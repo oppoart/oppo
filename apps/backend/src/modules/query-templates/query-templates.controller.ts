@@ -89,38 +89,3 @@ export class QueryTemplatesController {
     return this.queryTemplatesService.deleteGroup(id);
   }
 }
-
-@Controller('profiles/:profileId/query-templates')
-@UseGuards(AuthGuard)
-export class ProfileQueryTemplatesController {
-  constructor(private readonly queryTemplatesService: QueryTemplatesService) {}
-
-  @Get()
-  async getProfileTemplates(@Param('profileId') profileId: string) {
-    return this.queryTemplatesService.getProfileTemplates(profileId);
-  }
-
-  @Post()
-  async updateProfileTemplates(
-    @Param('profileId') profileId: string,
-    @Body() body: { templateIds: string[] },
-  ) {
-    return this.queryTemplatesService.updateProfileTemplates(
-      profileId,
-      body.templateIds,
-    );
-  }
-
-  @Get('search-queries')
-  async generateSearchQueries(
-    @Param('profileId') profileId: string,
-    @Body()
-    body?: {
-      mediums?: string[];
-      location?: string;
-      interests?: string[];
-    },
-  ) {
-    return this.queryTemplatesService.generateSearchQueries(profileId, body);
-  }
-}

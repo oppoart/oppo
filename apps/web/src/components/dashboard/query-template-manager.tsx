@@ -29,7 +29,6 @@ export function QueryTemplateManager({ open, onOpenChange, onUpdate }: QueryTemp
 
   // New group state
   const [newGroupName, setNewGroupName] = useState('');
-  const [newGroupDescription, setNewGroupDescription] = useState('');
 
   // Editing state
   const [editingTemplate, setEditingTemplate] = useState<QueryTemplate | null>(null);
@@ -37,7 +36,6 @@ export function QueryTemplateManager({ open, onOpenChange, onUpdate }: QueryTemp
 
   const [editingGroup, setEditingGroup] = useState<QueryTemplateGroup | null>(null);
   const [editedGroupName, setEditedGroupName] = useState('');
-  const [editedGroupDescription, setEditedGroupDescription] = useState('');
 
   useEffect(() => {
     if (open) {
@@ -128,12 +126,10 @@ export function QueryTemplateManager({ open, onOpenChange, onUpdate }: QueryTemp
     try {
       await queryTemplatesApi.createGroup({
         name: newGroupName,
-        description: newGroupDescription || undefined,
         order: groups.length + 1,
       });
 
       setNewGroupName('');
-      setNewGroupDescription('');
       await loadGroups();
       onUpdate();
     } catch (err) {
@@ -144,7 +140,6 @@ export function QueryTemplateManager({ open, onOpenChange, onUpdate }: QueryTemp
   const handleStartEditGroup = (group: QueryTemplateGroup) => {
     setEditingGroup(group);
     setEditedGroupName(group.name);
-    setEditedGroupDescription(group.description || '');
   };
 
   const handleSaveEditGroup = async () => {
@@ -153,12 +148,10 @@ export function QueryTemplateManager({ open, onOpenChange, onUpdate }: QueryTemp
     try {
       await queryTemplatesApi.updateGroup(editingGroup.id, {
         name: editedGroupName,
-        description: editedGroupDescription || undefined,
       });
 
       setEditingGroup(null);
       setEditedGroupName('');
-      setEditedGroupDescription('');
       await loadGroups();
       onUpdate();
     } catch (err) {
@@ -169,7 +162,6 @@ export function QueryTemplateManager({ open, onOpenChange, onUpdate }: QueryTemp
   const handleCancelEditGroup = () => {
     setEditingGroup(null);
     setEditedGroupName('');
-    setEditedGroupDescription('');
   };
 
   const handleDeleteGroup = async (groupId: string) => {
@@ -207,23 +199,16 @@ export function QueryTemplateManager({ open, onOpenChange, onUpdate }: QueryTemp
           <div className="space-y-3">
             <h3 className="text-sm font-semibold">Add New Group</h3>
             <div className="flex gap-2">
-              <div className="flex-1 space-y-2">
-                <Input
-                  placeholder="Group name (e.g., Time-based Queries)"
-                  value={newGroupName}
-                  onChange={(e) => setNewGroupName(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAddGroup()}
-                />
-                <Input
-                  placeholder="Description (optional)"
-                  value={newGroupDescription}
-                  onChange={(e) => setNewGroupDescription(e.target.value)}
-                />
-              </div>
+              <Input
+                placeholder="Group name (e.g., Time-based Queries)"
+                value={newGroupName}
+                onChange={(e) => setNewGroupName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddGroup()}
+                className="flex-1"
+              />
               <Button
                 onClick={handleAddGroup}
                 disabled={!newGroupName.trim()}
-                className="self-start"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Group

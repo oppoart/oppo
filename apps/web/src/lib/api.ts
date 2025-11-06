@@ -1092,20 +1092,6 @@ export const queryTemplatesApi = {
   deleteGroup: async (id: string) => {
     await api.delete(`/api/query-templates/groups/${id}`);
   },
-
-  // Profile template selections
-  getProfileTemplates: async (profileId: string) => {
-    const response = await api.get(`/api/profiles/${profileId}/query-templates`);
-    return response.data;
-  },
-
-  // Update profile template selections
-  updateProfileTemplates: async (profileId: string, templateIds: string[]) => {
-    const response = await api.post(`/api/profiles/${profileId}/query-templates`, {
-      templateIds,
-    });
-    return response.data;
-  },
 };
 
 export default api;

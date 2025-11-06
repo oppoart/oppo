@@ -33,6 +33,10 @@ export const createProfileSchema = z.object({
   location: z.string().max(100, 'Location must be less than 100 characters').optional(),
   website: z.string().url('Invalid website URL').optional().or(z.literal('')),
   portfolioUrl: z.string().url('Invalid portfolio URL').optional().or(z.literal('')),
+  locations: z.array(z.string()).max(10, 'Maximum 10 locations allowed').default([]),
+  opportunityTypes: z.array(z.string()).max(10, 'Maximum 10 opportunity types allowed').default([]),
+  amountRanges: z.array(z.string()).max(10, 'Maximum 10 amount ranges allowed').default([]),
+  themes: z.array(z.string()).max(20, 'Maximum 20 themes allowed').default([]),
 });
 
 export const updateProfileSchema = createProfileSchema.partial();
@@ -57,6 +61,10 @@ export const profileResponseSchema = z.object({
   portfolioUrl: z.string().nullable(),
   preferences: z.any().nullable(),
   settings: z.any().nullable(),
+  locations: z.array(z.string()),
+  opportunityTypes: z.array(z.string()),
+  amountRanges: z.array(z.string()),
+  themes: z.array(z.string()),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
