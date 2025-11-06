@@ -1,102 +1,143 @@
-# todo
+# TODO
 
-`275b6593145ba7a36c3d10cb5d9e50b9415079b0`
+Last commit: `7ec7714` (2025-11-06)
 
-## high priority
+## 🔥 High Priority
 
-### Query Types Refactor (Dynamic Parameters)
+### 1. Profile Analysis Feature
+**Amaç**: "Analyze Profile" butonu profile quality scoring ve improvement suggestions göstermek.
 
-**Amaç**: Query Templates'i statik checkbox listesinden **parametrik query generator'a** dönüştürmek.
+Backend:
+- [ ] Profile quality scoring endpoint (`POST /profiles/:id/analyze`)
+- [ ] Completeness calculation (0-100%)
+- [ ] Text quality metrics (length, vocabulary richness)
+- [ ] Return actionable recommendations
 
-**Backend Changes:**
-- [ ] Prisma Schema:
-  - [ ] `QueryTemplateGroup.description` field'ini kaldır (nullable olduğu için migration kolay)
-  - [ ] `ArtistProfile` modeline yeni fields ekle:
-    ```prisma
-    locations        String[]  @default([])  // ["New York", "Europe", "Los Angeles"]
-    opportunityTypes String[]  @default([])  // ["grant", "residency", "exhibition", "award"]
-    amountRanges     String[]  @default([])  // ["$1k-5k", "$5k-10k", "$10k+", "any"]
-    themes           String[]  @default([])  // ["sustainability", "identity", "technology"]
-    ```
-  - [ ] Migration oluştur ve çalıştır
+Frontend:
+- [ ] Display completeness score and semantic strength
+- [ ] Show missing/weak areas (statement, bio, skills, interests, parameters)
+- [ ] Display improvement suggestions with examples
+- [ ] Add visual indicators (progress bars, badges)
 
-**Frontend Changes:**
-- [ ] Query Types UI Redesign:
-  - [ ] Group description görünümünü kaldır (management'tan da)
-  - [ ] Profile edit > Query Types tab'ı yeniden tasarla:
-    - [ ] Üstte: "Query Parameters" section
-      - [ ] Location tags input (Skills gibi ekle/çıkar)
-      - [ ] Opportunity Types tags input
-      - [ ] Amount Ranges tags input
-      - [ ] Themes & Subjects tags input
-    - [ ] Altta: "Query Templates" (3 sütunlu liste, checkboxlar kalksın)
-      - [ ] Template text
-      - [ ] Placeholder'lar highlight edilmiş göster
-      - [ ] Example preview (parameters ile doldurulmuş)
-  - [ ] Query Template Manager modal'ı güncelle (description field kaldır)
+### 2. Job Queue Integration
+**Amaç**: Async job processing for discovery, scraping, analysis.
 
-**Query Generation Logic:**
-- [ ] Backend'de query expansion implementasyonu:
-  - [ ] Template'deki placeholder'ları tespit et
-  - [ ] Profile parameters ile cartesian product oluştur
-  - [ ] Örn: `[opportunity-type] in [location]` + 2 types × 3 locations = 6 query
+Backend:
+- [ ] Add @oppo/job-queue to backend dependencies
+- [ ] Create JobQueue NestJS module
+- [ ] Implement job handlers (discovery, scraping, analysis)
+- [ ] Connect SearchService to job queue
+- [ ] Add job monitoring endpoints (stats, status, retry)
 
-**Benefits:**
-- ✓ Profile data zenginleşir (structured + semantic)
-- ✓ Query'ler profile-specific ve targeted olur
-- ✓ Aynı template farklı profiller için farklı query'ler üretir
-- ✓ Geographic, opportunity type, budget preferences capture edilir
-- ✓ Semantic matching için daha fazla context
+Config:
+- [ ] Redis connection configuration
+- [ ] Job queue settings (concurrency, timeouts)
+
+### 3. Query Expansion Logic
+**Amaç**: Template'lerdeki placeholder'ları profile parametreleri ile expand etmek.
+
+Backend:
+- [ ] Create query expansion service
+- [ ] Implement cartesian product generator
+- [ ] Add `/profiles/:id/expanded-queries` endpoint
+- [ ] Handle placeholder replacement ([location], [opportunity-type], [amount], [theme])
+- [ ] Support automatic placeholders ([medium], [month], [year])
+
+Example: `[opportunity-type] in [location]` + 2 types × 3 locations = 6 queries
 
 ---
 
-### Profile Analysis Feature
+## 📋 Medium Priority
 
-**Amaç**: Profile view sayfasındaki "Analyze Profile" butonuna basınca, profile quality ve semantic matching için öneriler göstermek.
+### Profile Edit Validation Improvements
+- [ ] Artist Statement: required, min 200 chars
+- [ ] Bio: required, min 100 chars
+- [ ] Skills: min 3 required
+- [ ] Interests: min 3 required
+- [ ] Real-time completeness indicator in edit UI
 
-**Frontend:**
-- [ ] Profile view page'de analyze sonuçları için UI
-  - [ ] Profile Completeness Score (0-100%)
-  - [ ] Semantic Strength Indicator
-  - [ ] Missing/Weak Areas:
-    - [ ] Artist Statement quality (min 200 char)
-    - [ ] Bio quality (min 100 char)
-    - [ ] Skills count (min 3)
-    - [ ] Interests count (min 3)
-    - [ ] Query parameters completeness
-  - [ ] Suggestions:
-    - [ ] "Add more details to artist statement"
-    - [ ] "Add location preferences for better targeting"
-    - [ ] "Select opportunity types you're interested in"
-  - [ ] Real examples:
-    - [ ] "Profiles with statements over 500 chars get 40% more matches"
-    - [ ] "Adding 3+ themes improves relevance by 35%"
+### NestJS Configuration
+- [ ] Create ProviderManager NestJS module (singleton)
+- [ ] Validate all required environment variables
+- [ ] Add config validation on startup
+- [ ] Document required ENV vars in README
 
-**Backend:**
-- [ ] Analyst API için profile quality scoring endpoint
-  - [ ] Completeness calculation
-  - [ ] Text quality metrics (length, vocabulary richness)
-  - [ ] Structured data coverage
-  - [ ] Return actionable recommendations
+---
 
-**Learning Benefit:**
-- ✓ Kullanıcı profile'ın nasıl değerlendirildiğini görür
-- ✓ AI matching mekanizmasını anlar
-- ✓ Ne yazarsa daha iyi match alacağını öğrenir
-- ✓ Profile'ını iterative olarak iyileştirir
+## 💡 Low Priority
 
+### Provider Manager Improvements
+- [ ] Add Firecrawl adapter
+- [ ] Add Tavily search adapter
+- [ ] Implement LLM streaming support
+- [ ] Add provider health monitoring
+- [ ] Fine-tune retry strategies
 
-## medium priority
+### Job Queue Enhancements
+- [ ] Add BullMQ Board (UI dashboard)
+- [ ] Implement job cleanup cron
+- [ ] Add job priority support
+- [ ] Write unit tests for @oppo/job-queue
+- [ ] Write integration tests with backend
 
-- [ ] Profile edit validation improvements:
-  - [ ] Artist Statement: required, min 200 chars
-  - [ ] Bio: required, min 100 chars
-  - [ ] Skills: min 3 required
-  - [ ] Interests: min 3 required
-  - [ ] Show real-time completeness indicator
+### System Improvements
+- [ ] Cost tracking dashboard
+- [ ] Provider performance metrics
+- [ ] Rate limiting implementation
+- [ ] Caching strategy (embeddings, search results)
+- [ ] End-to-end integration tests
 
-## completed
+---
 
-- [x] Query Types: Profile-level query template selections
-- [x] Profile delete modal: AlertDialog with confirmation
-- [x] Profile save: Loading states, toast notifications
+## ✅ Completed
+
+### Phase 3: Integration (Completed 2025-11-04)
+- [x] Provider Manager package (@oppo/provider-manager)
+- [x] 4 adapters: OpenAI, Anthropic, Serper, Google
+- [x] 35 real API tests (85% success rate)
+- [x] Search module integration (parallel discovery)
+- [x] Orchestrator module integration (RAG + cost tracking)
+- [x] Research module automatic integration
+- [x] Job Queue package (@oppo/job-queue)
+- [x] Docker setup (PostgreSQL 16 + Redis 7)
+- [x] Turbo v2 upgrade + TUI mode
+
+### Query Templates System (Completed 2025-11-06)
+- [x] Transform from checkbox-based to parametric system
+- [x] Remove ProfileQueryTemplate model
+- [x] Add query parameters to ArtistProfile (locations, types, amounts, themes)
+- [x] Redesign Query Types tab UI (tag-based inputs)
+- [x] Update profile view to show parameters
+- [x] Create 24 realistic, searchable templates across 6 groups
+- [x] Clean seed data with example parameters
+
+### Profile Edit UX (Completed 2025-11-06)
+- [x] Add AlertDialog for delete confirmation
+- [x] Add toast notifications (save/delete)
+- [x] Add loading states and spinners
+- [x] URL-based tab navigation (?tab=queries)
+- [x] "Configure Templates" button direct navigation
+
+### Bug Fixes (Completed 2025-11-06)
+- [x] Fix Query Templates module import paths
+- [x] Add missing Accordion component
+- [x] Fix provider-manager TypeScript errors
+- [x] Fix job-queue generic type errors
+- [x] Update login form default credentials
+- [x] Enable webpack mode in NestJS
+
+---
+
+## 📝 Notes
+
+**Login**: `artist@oppo.local` / `1234bes`
+
+**Documentation**:
+- Profile purpose: `.backups/tr/profile-amaci.md`
+- Provider Manager: `packages/provider-manager/README.md`
+- Job Queue: `packages/job-queue/README.md`
+
+**Development**:
+- Start: `pnpm dev`
+- Database: `pnpm db:seed`
+- Docker: `pnpm dev:start` / `pnpm dev:stop`
