@@ -5,11 +5,13 @@ import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Trash2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArtistProfile } from '@/types/profile';
 import { profileApi } from '@/lib/api';
 import { ProfileBasicInfoForm } from '@/components/dashboard/profile-basic-info-form';
 import { ProfileSkillsForm } from '@/components/dashboard/profile-skills-form';
 import { ProfileStatementForm } from '@/components/dashboard/profile-statement-form';
+import { ProfileQueryTypesForm } from '@/components/dashboard/profile-query-types-form';
 import { Badge } from '@/components/ui/badge';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 
@@ -131,24 +133,43 @@ export default function ProfileEditPage() {
       title={profile.name}
       action={actionButtons}
     >
-      <div className="w-full space-y-6">
-        {/* Basic Information */}
-        <ProfileBasicInfoForm 
-          profile={profile} 
-          onProfileUpdate={handleProfileUpdate}
-        />
+      <div className="w-full">
+        <Tabs defaultValue="basic" className="w-full">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
+            <TabsTrigger value="basic">Basic Information</TabsTrigger>
+            <TabsTrigger value="skills">Skills & Interests</TabsTrigger>
+            <TabsTrigger value="statement">Artist Statement</TabsTrigger>
+            <TabsTrigger value="queries">Query Types</TabsTrigger>
+          </TabsList>
 
-        {/* Skills */}
-        <ProfileSkillsForm 
-          profile={profile} 
-          onProfileUpdate={handleProfileUpdate}
-        />
+          <TabsContent value="basic">
+            <ProfileBasicInfoForm
+              profile={profile}
+              onProfileUpdate={handleProfileUpdate}
+            />
+          </TabsContent>
 
-        {/* Statement */}
-        <ProfileStatementForm 
-          profile={profile} 
-          onProfileUpdate={handleProfileUpdate}
-        />
+          <TabsContent value="skills">
+            <ProfileSkillsForm
+              profile={profile}
+              onProfileUpdate={handleProfileUpdate}
+            />
+          </TabsContent>
+
+          <TabsContent value="statement">
+            <ProfileStatementForm
+              profile={profile}
+              onProfileUpdate={handleProfileUpdate}
+            />
+          </TabsContent>
+
+          <TabsContent value="queries">
+            <ProfileQueryTypesForm
+              profile={profile}
+              onProfileUpdate={handleProfileUpdate}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );

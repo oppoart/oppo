@@ -1021,4 +1021,91 @@ export const liaisonApi = {
   }
 };
 
+// Query Templates API
+export const queryTemplatesApi = {
+  // Get all template groups with templates
+  getGroups: async () => {
+    const response = await api.get('/api/query-templates/groups');
+    return response.data;
+  },
+
+  // Get single template
+  getTemplate: async (id: string) => {
+    const response = await api.get(`/api/query-templates/${id}`);
+    return response.data;
+  },
+
+  // Create new template
+  createTemplate: async (data: {
+    groupId: string;
+    template: string;
+    placeholders: string[];
+    order?: number;
+  }) => {
+    const response = await api.post('/api/query-templates', data);
+    return response.data;
+  },
+
+  // Update template
+  updateTemplate: async (
+    id: string,
+    data: {
+      template?: string;
+      placeholders?: string[];
+      order?: number;
+      groupId?: string;
+    }
+  ) => {
+    const response = await api.put(`/api/query-templates/${id}`, data);
+    return response.data;
+  },
+
+  // Delete template
+  deleteTemplate: async (id: string) => {
+    await api.delete(`/api/query-templates/${id}`);
+  },
+
+  // Create group
+  createGroup: async (data: {
+    name: string;
+    description?: string;
+    order?: number;
+  }) => {
+    const response = await api.post('/api/query-templates/groups', data);
+    return response.data;
+  },
+
+  // Update group
+  updateGroup: async (
+    id: string,
+    data: {
+      name?: string;
+      description?: string;
+      order?: number;
+    }
+  ) => {
+    const response = await api.put(`/api/query-templates/groups/${id}`, data);
+    return response.data;
+  },
+
+  // Delete group
+  deleteGroup: async (id: string) => {
+    await api.delete(`/api/query-templates/groups/${id}`);
+  },
+
+  // User template selections
+  getUserTemplates: async () => {
+    const response = await api.get('/api/users/me/query-templates');
+    return response.data;
+  },
+
+  // Update user template selections
+  updateUserTemplates: async (templateIds: string[]) => {
+    const response = await api.post('/api/users/me/query-templates', {
+      templateIds,
+    });
+    return response.data;
+  },
+};
+
 export default api;

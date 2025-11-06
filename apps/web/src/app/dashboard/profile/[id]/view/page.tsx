@@ -9,7 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ArtistProfile } from '@/types/profile';
 import { AnalysisResult, AnalysisStats } from '@/types/analyst';
-import { profileApi, analystApi } from '@/lib/api';
+import { QueryTemplate, QueryTemplateGroup } from '@/types/query-template';
+import { profileApi, analystApi, queryTemplatesApi } from '@/lib/api';
+import { generateExample } from '@/lib/query-template-utils';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { SystemPromptPreview } from '@/components/dashboard/system-prompt-preview';
 import { AnalysisResults } from '@/components/dashboard/analysis-results';
@@ -27,10 +29,13 @@ export default function ProfileViewPage() {
   const [analysisStats, setAnalysisStats] = useState<AnalysisStats | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [showAnalysisTab, setShowAnalysisTab] = useState('profile'); // 'profile', 'queries'
+  const [userTemplates, setUserTemplates] = useState<QueryTemplate[]>([]);
+  const [allGroups, setAllGroups] = useState<QueryTemplateGroup[]>([]);
 
   useEffect(() => {
     loadProfile();
     loadAnalysisStats();
+    loadQueryTemplates();
   }, [profileId]);
 
   const loadProfile = async () => {
@@ -53,6 +58,19 @@ export default function ProfileViewPage() {
     } catch (err) {
       console.error('Error loading analysis stats:', err);
       // Don't set error state for stats failure - it's not critical
+    }
+  };
+
+  const loadQueryTemplates = async () => {
+    try {
+      const [templates, groups] = await Promise.all([
+        queryTemplatesApi.getUserTemplates(),
+        queryTemplatesApi.getGroups(),
+      ]);
+      setUserTemplates(templates);
+      setAllGroups(groups);
+    } catch (err) {
+      console.error('Error loading query templates:', err);
     }
   };
 
@@ -302,106 +320,62 @@ export default function ProfileViewPage() {
               <div className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Query Types & Syntax</CardTitle>
+                    <CardTitle>Selected Query Templates</CardTitle>
                     <CardDescription>
-                      Pre-defined search query templates for finding art opportunities
+                      Query templates you've selected for finding opportunities
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    {/* Time-based Queries */}
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-900 mb-3">Time-based Queries</h3>
-                      <div className="space-y-2">
-                        <div className="bg-gray-50 p-3 rounded-md">
-                          <code className="text-sm">Latest [medium] Open Calls [month] [year]</code>
-                          <p className="text-xs text-gray-600 mt-1">Example: "Latest painting Open Calls December 2024"</p>
-                        </div>
-                        <div className="bg-gray-50 p-3 rounded-md">
-                          <code className="text-sm">[medium] opportunities deadline [month] [year]</code>
-                          <p className="text-xs text-gray-600 mt-1">Example: "sculpture opportunities deadline January 2025"</p>
-                        </div>
-                        <div className="bg-gray-50 p-3 rounded-md">
-                          <code className="text-sm">Upcoming [opportunity-type] [month] [year]</code>
-                          <p className="text-xs text-gray-600 mt-1">Example: "Upcoming exhibitions March 2025"</p>
-                        </div>
+                  <CardContent>
+                    {userTemplates.length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-muted-foreground mb-4">
+                          No query templates selected yet
+                        </p>
+                        <Button
+                          variant="outline"
+                          onClick={() => router.push(`/dashboard/profile/${profile.id}`)}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Configure Templates
+                        </Button>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {allGroups.map((group) => {
+                          const groupTemplates = userTemplates.filter(
+                            (t) => t.groupId === group.id
+                          );
 
-                    {/* Opportunity Type Queries */}
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-900 mb-3">Opportunity Types</h3>
-                      <div className="space-y-2">
-                        <div className="bg-gray-50 p-3 rounded-md">
-                          <code className="text-sm">[medium] [grant/award/exhibition/residency] [year]</code>
-                          <p className="text-xs text-gray-600 mt-1">Example: "digital art grants 2025"</p>
-                        </div>
-                        <div className="bg-gray-50 p-3 rounded-md">
-                          <code className="text-sm">Open call [medium] [location]</code>
-                          <p className="text-xs text-gray-600 mt-1">Example: "Open call photography New York"</p>
-                        </div>
-                        <div className="bg-gray-50 p-3 rounded-md">
-                          <code className="text-sm">[opportunity-type] for emerging artists [year]</code>
-                          <p className="text-xs text-gray-600 mt-1">Example: "Residencies for emerging artists 2025"</p>
-                        </div>
-                      </div>
-                    </div>
+                          if (groupTemplates.length === 0) return null;
 
-                    {/* Geographic Queries */}
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-900 mb-3">Geographic Queries</h3>
-                      <div className="space-y-2">
-                        <div className="bg-gray-50 p-3 rounded-md">
-                          <code className="text-sm">[medium] opportunities [city/state/country]</code>
-                          <p className="text-xs text-gray-600 mt-1">Example: "ceramic opportunities California"</p>
-                        </div>
-                        <div className="bg-gray-50 p-3 rounded-md">
-                          <code className="text-sm">International [opportunity-type] [medium]</code>
-                          <p className="text-xs text-gray-600 mt-1">Example: "International residencies printmaking"</p>
-                        </div>
-                        <div className="bg-gray-50 p-3 rounded-md">
-                          <code className="text-sm">[location] art [grant/competition/exhibition] [year]</code>
-                          <p className="text-xs text-gray-600 mt-1">Example: "European art grants 2025"</p>
-                        </div>
+                          return (
+                            <div key={group.id}>
+                              <h3 className="text-sm font-semibold text-gray-900 mb-3">
+                                {group.name}
+                              </h3>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {groupTemplates.map((template) => {
+                                  const example = generateExample(template, profile);
+                                  return (
+                                    <div
+                                      key={template.id}
+                                      className="bg-gray-50 p-3 rounded-md"
+                                    >
+                                      <code className="text-sm block mb-1">
+                                        {template.template}
+                                      </code>
+                                      <p className="text-xs text-gray-600">
+                                        Example: "{example}"
+                                      </p>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                    </div>
-
-                    {/* Funding Amount Queries */}
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-900 mb-3">Funding & Prize Queries</h3>
-                      <div className="space-y-2">
-                        <div className="bg-gray-50 p-3 rounded-md">
-                          <code className="text-sm">[amount]+ [medium] grants [year]</code>
-                          <p className="text-xs text-gray-600 mt-1">Example: "$5000+ painting grants 2025"</p>
-                        </div>
-                        <div className="bg-gray-50 p-3 rounded-md">
-                          <code className="text-sm">Large [opportunity-type] [medium] funding</code>
-                          <p className="text-xs text-gray-600 mt-1">Example: "Large residency sculpture funding"</p>
-                        </div>
-                        <div className="bg-gray-50 p-3 rounded-md">
-                          <code className="text-sm">[medium] prize competition [year]</code>
-                          <p className="text-xs text-gray-600 mt-1">Example: "photography prize competition 2025"</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Theme-based Queries */}
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-900 mb-3">Theme & Subject Queries</h3>
-                      <div className="space-y-2">
-                        <div className="bg-gray-50 p-3 rounded-md">
-                          <code className="text-sm">[theme/subject] [medium] [opportunity-type]</code>
-                          <p className="text-xs text-gray-600 mt-1">Example: "environmental sculpture exhibitions"</p>
-                        </div>
-                        <div className="bg-gray-50 p-3 rounded-md">
-                          <code className="text-sm">Contemporary [medium] [location] opportunities</code>
-                          <p className="text-xs text-gray-600 mt-1">Example: "Contemporary ceramics London opportunities"</p>
-                        </div>
-                        <div className="bg-gray-50 p-3 rounded-md">
-                          <code className="text-sm">[social-issue] art [grant/exhibition] [year]</code>
-                          <p className="text-xs text-gray-600 mt-1">Example: "climate change art grants 2025"</p>
-                        </div>
-                      </div>
-                    </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
