@@ -1093,15 +1093,15 @@ export const queryTemplatesApi = {
     await api.delete(`/api/query-templates/groups/${id}`);
   },
 
-  // User template selections
-  getUserTemplates: async () => {
-    const response = await api.get('/api/users/me/query-templates');
+  // Profile template selections
+  getProfileTemplates: async (profileId: string) => {
+    const response = await api.get(`/api/profiles/${profileId}/query-templates`);
     return response.data;
   },
 
-  // Update user template selections
-  updateUserTemplates: async (templateIds: string[]) => {
-    const response = await api.post('/api/users/me/query-templates', {
+  // Update profile template selections
+  updateProfileTemplates: async (profileId: string, templateIds: string[]) => {
+    const response = await api.post(`/api/profiles/${profileId}/query-templates`, {
       templateIds,
     });
     return response.data;

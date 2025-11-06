@@ -44,13 +44,13 @@ export function ProfileQueryTypesForm({ profile, onProfileUpdate }: ProfileQuery
   const loadData = async () => {
     try {
       setLoading(true);
-      const [groupsData, userTemplates] = await Promise.all([
+      const [groupsData, profileTemplates] = await Promise.all([
         queryTemplatesApi.getGroups(),
-        queryTemplatesApi.getUserTemplates(),
+        queryTemplatesApi.getProfileTemplates(profile.id),
       ]);
 
       setGroups(groupsData);
-      setSelectedTemplateIds(userTemplates.map((t: any) => t.id));
+      setSelectedTemplateIds(profileTemplates.map((t: any) => t.id));
     } catch (err) {
       console.error('Error loading query templates:', err);
       setError('Failed to load query templates');
@@ -73,7 +73,7 @@ export function ProfileQueryTypesForm({ profile, onProfileUpdate }: ProfileQuery
       setError(null);
       setSuccess(false);
 
-      await queryTemplatesApi.updateUserTemplates(selectedTemplateIds);
+      await queryTemplatesApi.updateProfileTemplates(profile.id, selectedTemplateIds);
 
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);

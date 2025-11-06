@@ -90,30 +90,30 @@ export class QueryTemplatesController {
   }
 }
 
-@Controller('users/me/query-templates')
+@Controller('profiles/:profileId/query-templates')
 @UseGuards(AuthGuard)
-export class UserQueryTemplatesController {
+export class ProfileQueryTemplatesController {
   constructor(private readonly queryTemplatesService: QueryTemplatesService) {}
 
   @Get()
-  async getUserTemplates(@Request() req) {
-    return this.queryTemplatesService.getUserTemplates(req.user.id);
+  async getProfileTemplates(@Param('profileId') profileId: string) {
+    return this.queryTemplatesService.getProfileTemplates(profileId);
   }
 
   @Post()
-  async updateUserTemplates(
-    @Request() req,
+  async updateProfileTemplates(
+    @Param('profileId') profileId: string,
     @Body() body: { templateIds: string[] },
   ) {
-    return this.queryTemplatesService.updateUserTemplates(
-      req.user.id,
+    return this.queryTemplatesService.updateProfileTemplates(
+      profileId,
       body.templateIds,
     );
   }
 
   @Get('search-queries')
   async generateSearchQueries(
-    @Request() req,
+    @Param('profileId') profileId: string,
     @Body()
     body?: {
       mediums?: string[];
@@ -121,6 +121,6 @@ export class UserQueryTemplatesController {
       interests?: string[];
     },
   ) {
-    return this.queryTemplatesService.generateSearchQueries(req.user.id, body);
+    return this.queryTemplatesService.generateSearchQueries(profileId, body);
   }
 }

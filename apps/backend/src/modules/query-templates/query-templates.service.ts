@@ -93,11 +93,11 @@ export class QueryTemplatesService {
   }
 
   /**
-   * Get user's selected templates
+   * Get profile's selected templates
    */
-  async getUserTemplates(userId: string) {
-    const selections = await this.prisma.userQueryTemplate.findMany({
-      where: { userId },
+  async getProfileTemplates(profileId: string) {
+    const selections = await this.prisma.profileQueryTemplate.findMany({
+      where: { profileId },
       include: {
         template: {
           include: { group: true },
@@ -109,26 +109,26 @@ export class QueryTemplatesService {
   }
 
   /**
-   * Update user's template selections (bulk)
+   * Update profile's template selections (bulk)
    */
-  async updateUserTemplates(userId: string, templateIds: string[]) {
+  async updateProfileTemplates(profileId: string, templateIds: string[]) {
     // Delete existing selections
-    await this.prisma.userQueryTemplate.deleteMany({
-      where: { userId },
+    await this.prisma.profileQueryTemplate.deleteMany({
+      where: { profileId },
     });
 
     // Create new selections
     if (templateIds.length > 0) {
-      await this.prisma.userQueryTemplate.createMany({
+      await this.prisma.profileQueryTemplate.createMany({
         data: templateIds.map((templateId) => ({
-          userId,
+          profileId,
           templateId,
           enabled: true,
         })),
       });
     }
 
-    return this.getUserTemplates(userId);
+    return this.getProfileTemplates(profileId);
   }
 
   /**
@@ -179,10 +179,10 @@ export class QueryTemplatesService {
   }
 
   /**
-   * Generate search queries from user's selected templates with placeholder replacement
+   * Generate search queries from profile's selected templates with placeholder replacement
    */
   async generateSearchQueries(
-    userId: string,
+    profileId: string,
     context?: PlaceholderContext,
   ): Promise<
     Array<{
@@ -192,7 +192,7 @@ export class QueryTemplatesService {
       placeholders: string[];
     }>
   > {
-    const templates = await this.getUserTemplates(userId);
+    const templates = await this.getProfileTemplates(profileId);
 
     const now = new Date();
     const month = now.toLocaleString('en', { month: 'long' });

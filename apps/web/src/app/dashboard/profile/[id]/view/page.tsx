@@ -64,7 +64,7 @@ export default function ProfileViewPage() {
   const loadQueryTemplates = async () => {
     try {
       const [templates, groups] = await Promise.all([
-        queryTemplatesApi.getUserTemplates(),
+        queryTemplatesApi.getProfileTemplates(profileId),
         queryTemplatesApi.getGroups(),
       ]);
       setUserTemplates(templates);
