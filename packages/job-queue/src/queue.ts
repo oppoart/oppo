@@ -73,7 +73,7 @@ export class JobQueue<T extends BaseJobData = BaseJobData> {
     data: T,
     options?: JobsOptions
   ): Promise<Job<T>> {
-    return this.queue.add(jobName, data, options);
+    return this.queue.add(jobName as any, data as any, options) as Promise<Job<T>>;
   }
 
   /**
@@ -82,7 +82,7 @@ export class JobQueue<T extends BaseJobData = BaseJobData> {
   async addBulk(
     jobs: Array<{ name: string; data: T; opts?: JobsOptions }>
   ): Promise<Job<T>[]> {
-    return this.queue.addBulk(jobs);
+    return this.queue.addBulk(jobs as any) as Promise<Job<T>[]>;
   }
 
   /**
