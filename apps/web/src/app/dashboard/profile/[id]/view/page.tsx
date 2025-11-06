@@ -333,7 +333,7 @@ export default function ProfileViewPage() {
                         </p>
                         <Button
                           variant="outline"
-                          onClick={() => router.push(`/dashboard/profile/${profile.id}`)}
+                          onClick={() => router.push(`/dashboard/profile/${profile.id}?tab=queries`)}
                         >
                           <Edit className="h-4 w-4 mr-2" />
                           Configure Templates

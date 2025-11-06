@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Save, Trash2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,12 +18,16 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 export default function ProfileEditPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const profileId = params.id as string;
-  
+
   const [profile, setProfile] = useState<ArtistProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // Get tab from URL parameter, default to 'basic'
+  const activeTab = searchParams.get('tab') || 'basic';
 
   useEffect(() => {
     loadProfile();
@@ -134,7 +138,7 @@ export default function ProfileEditPage() {
       action={actionButtons}
     >
       <div className="w-full">
-        <Tabs defaultValue="basic" className="w-full">
+        <Tabs value={activeTab} onValueChange={(value) => router.push(`/dashboard/profile/${profileId}?tab=${value}`)} className="w-full">
           <TabsList className="grid w-full grid-cols-4 mb-6">
             <TabsTrigger value="basic">Basic Information</TabsTrigger>
             <TabsTrigger value="skills">Skills & Interests</TabsTrigger>
