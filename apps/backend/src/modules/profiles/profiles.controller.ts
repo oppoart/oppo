@@ -18,6 +18,7 @@ import { CreateProfileDto, UpdateProfileDto } from './dto';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { AiService } from '../../shared/services/ai.service';
 import { QueryGenerationService } from '../query-generation/query-generation.service';
+import { QueryExpansionService } from '../query-generation/services/query-expansion.service';
 import { QueryGenerationRequest, QueryType, QueryStrategy } from '../../types/query-generation';
 
 @ApiTags('profiles')
@@ -29,6 +30,7 @@ export class ProfilesController {
     private readonly profilesService: ProfilesService,
     private readonly aiService: AiService,
     private readonly queryGenerationService: QueryGenerationService,
+    private readonly queryExpansionService: QueryExpansionService,
   ) {}
 
   @Post()
@@ -185,19 +187,135 @@ export class ProfilesController {
     @Param('id') id: string,
   ) {
     const userId = (request as any).user.id;
-    
+
     // Verify profile exists and belongs to user
     await this.profilesService.findOne(id, userId);
-    
+
     const queryRequest: QueryGenerationRequest = {
       profileId: id,
       strategy: 'semantic',
       maxQueries: 10,
     };
-    
+
     const result = await this.queryGenerationService.generateQueries(queryRequest);
-    
+
     return result;
+  }
+
+  @Get(':id/expanded-queries')
+  @ApiOperation({ summary: 'Get all expanded queries for a profile based on its parameters' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Expanded queries generated successfully' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Profile not found' })
+  async getExpandedQueries(
+    @Req() request: Request,
+    @Param('id') id: string,
+    @Body() body: {
+      groupId?: string;
+      limit?: number;
+      includeIncomplete?: boolean;
+    } = {},
+  ) {
+    const userId = (request as any).user.id;
+
+    // Verify profile exists and belongs to user
+    await this.profilesService.findOne(id, userId);
+
+    const result = await this.queryExpansionService.expandQueriesForProfile(id, body);
+
+    return result;
+  }
+
+  @Get(':id/expansion-preview')
+  @ApiOperation({ summary: 'Get a preview of how many queries would be generated' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Preview generated successfully' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Profile not found' })
+  async getExpansionPreview(
+    @Req() request: Request,
+    @Param('id') id: string,
+  ) {
+    const userId = (request as any).user.id;
+
+    // Verify profile exists and belongs to user
+    await this.profilesService.findOne(id, userId);
+
+    const preview = await this.queryExpansionService.getExpansionPreview(id);
+
+    return {
+      success: true,
+      message: 'Preview generated successfully',
+      data: preview,
+    };
+  }
+
+  @Post(':id/analyze')
+  @ApiOperation({ summary: 'Analyze profile completeness and provide recommendations' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Profile analyzed successfully' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Profile not found' })
+  async analyzeProfile(
+    @Req() request: Request,
+    @Param('id') id: string,
+  ) {
+    const userId = (request as any).user.id;
+
+    // Verify profile exists and belongs to user
+    const profile = await this.profilesService.findOne(id, userId);
+
+    // Calculate completeness score
+    const requiredFields = ['locations', 'opportunityTypes', 'amountRanges', 'themes'];
+    const filledFields = requiredFields.filter(field =>
+      profile[field] && Array.isArray(profile[field]) && profile[field].length > 0
+    );
+
+    const completenessScore = Math.round((filledFields.length / requiredFields.length) * 100);
+
+    // Get missing fields
+    const missingFields = requiredFields.filter(field =>
+      !profile[field] || !Array.isArray(profile[field]) || profile[field].length === 0
+    );
+
+    // Get expansion preview
+    const preview = await this.queryExpansionService.getExpansionPreview(id);
+
+    // Generate recommendations
+    const recommendations: string[] = [];
+
+    if (missingFields.includes('locations')) {
+      recommendations.push('Add locations to target specific geographic areas');
+    }
+    if (missingFields.includes('opportunityTypes')) {
+      recommendations.push('Add opportunity types (e.g., grants, residencies, exhibitions)');
+    }
+    if (missingFields.includes('amountRanges')) {
+      recommendations.push('Add funding amount ranges to filter relevant opportunities');
+    }
+    if (missingFields.includes('themes')) {
+      recommendations.push('Add thematic interests to refine search results');
+    }
+
+    if (!profile.artistStatement || profile.artistStatement.length < 200) {
+      recommendations.push('Expand your artist statement to at least 200 characters for better matching');
+    }
+
+    if (!profile.bio || profile.bio.length < 100) {
+      recommendations.push('Add a bio of at least 100 characters to improve profile completeness');
+    }
+
+    return {
+      success: true,
+      message: 'Profile analyzed successfully',
+      data: {
+        profileId: id,
+        completenessScore,
+        missingFields,
+        recommendations,
+        queryGenerationPotential: {
+          current: preview.estimatedQueries,
+          withAllParameters: preview.totalTemplates * Math.max(1,
+            (missingFields.length === 0 ? 1 : 2) * preview.totalCombinations
+          ),
+        },
+      },
+    };
   }
 
   @Delete(':id')

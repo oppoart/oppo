@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, X, Settings, Loader2 } from 'lucide-react';
+import { Plus, X, Settings, Loader2, Sparkles, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ArtistProfile, UpdateProfileRequest } from '@/types/profile';
 import { QueryTemplateGroup } from '@/types/query-template';
 import { queryTemplatesApi, profileApi } from '@/lib/api';
@@ -26,6 +27,24 @@ export function ProfileQueryTypesForm({ profile, onProfileUpdate }: ProfileQuery
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [showManager, setShowManager] = useState(false);
+
+  // Query expansion preview state
+  const [expansionPreview, setExpansionPreview] = useState<{
+    totalTemplates: number;
+    totalCombinations: number;
+    estimatedQueries: number;
+    parameterBreakdown: Record<string, number>;
+  } | null>(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+
+  // Profile analysis state
+  const [analysis, setAnalysis] = useState<{
+    completenessScore: number;
+    missingFields: string[];
+    recommendations: string[];
+    queryGenerationPotential: { current: number; withAllParameters: number };
+  } | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
 
   // Query parameters state
   const [locations, setLocations] = useState<string[]>(profile.locations || []);
@@ -59,11 +78,38 @@ export function ProfileQueryTypesForm({ profile, onProfileUpdate }: ProfileQuery
       setLoading(true);
       const groupsData = await queryTemplatesApi.getGroups();
       setGroups(groupsData);
+      // Load expansion preview when data loads
+      loadExpansionPreview();
     } catch (err) {
       console.error('Error loading query templates:', err);
       setError('Failed to load query templates');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadExpansionPreview = async () => {
+    try {
+      setLoadingPreview(true);
+      const preview = await profileApi.getExpansionPreview(profile.id);
+      setExpansionPreview(preview);
+    } catch (err) {
+      console.error('Error loading expansion preview:', err);
+    } finally {
+      setLoadingPreview(false);
+    }
+  };
+
+  const handleAnalyze = async () => {
+    try {
+      setAnalyzing(true);
+      const result = await profileApi.analyzeProfile(profile.id);
+      setAnalysis(result);
+    } catch (err) {
+      console.error('Error analyzing profile:', err);
+      setError('Failed to analyze profile');
+    } finally {
+      setAnalyzing(false);
     }
   };
 
@@ -112,6 +158,9 @@ export function ProfileQueryTypesForm({ profile, onProfileUpdate }: ProfileQuery
       onProfileUpdate(updatedProfile);
       setSuccess(true);
 
+      // Reload expansion preview after saving
+      loadExpansionPreview();
+
       // Hide success message after 3 seconds
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
@@ -140,6 +189,125 @@ export function ProfileQueryTypesForm({ profile, onProfileUpdate }: ProfileQuery
   return (
     <>
       <div className="space-y-6">
+        {/* Query Expansion Preview Card */}
+        {expansionPreview && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                    Query Generation Preview
+                  </CardTitle>
+                  <CardDescription>
+                    Based on your current parameters, you can generate {expansionPreview.estimatedQueries} unique queries
+                  </CardDescription>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAnalyze}
+                  disabled={analyzing}
+                >
+                  {analyzing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Analyze Profile
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-xs text-gray-600 mb-1">Templates</p>
+                  <p className="text-2xl font-bold text-gray-900">{expansionPreview.totalTemplates}</p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-xs text-gray-600 mb-1">Combinations</p>
+                  <p className="text-2xl font-bold text-gray-900">{expansionPreview.totalCombinations}</p>
+                </div>
+                <div className="bg-primary/10 p-3 rounded-lg col-span-2">
+                  <p className="text-xs text-primary mb-1">Total Queries</p>
+                  <p className="text-2xl font-bold text-primary">{expansionPreview.estimatedQueries}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                <div>
+                  <p className="text-gray-600 mb-1">Locations</p>
+                  <Badge variant="secondary">{expansionPreview.parameterBreakdown.locations}</Badge>
+                </div>
+                <div>
+                  <p className="text-gray-600 mb-1">Opportunity Types</p>
+                  <Badge variant="secondary">{expansionPreview.parameterBreakdown.opportunityTypes}</Badge>
+                </div>
+                <div>
+                  <p className="text-gray-600 mb-1">Amount Ranges</p>
+                  <Badge variant="secondary">{expansionPreview.parameterBreakdown.amountRanges}</Badge>
+                </div>
+                <div>
+                  <p className="text-gray-600 mb-1">Themes</p>
+                  <Badge variant="secondary">{expansionPreview.parameterBreakdown.themes}</Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Profile Analysis Results */}
+        {analysis && (
+          <Alert>
+            <Sparkles className="h-4 w-4" />
+            <AlertDescription>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold">Profile Completeness</span>
+                  <Badge variant={analysis.completenessScore >= 75 ? 'default' : 'secondary'}>
+                    {analysis.completenessScore}%
+                  </Badge>
+                </div>
+
+                {analysis.missingFields.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium mb-1">Missing Fields:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {analysis.missingFields.map((field) => (
+                        <Badge key={field} variant="outline" className="text-xs">
+                          {field}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {analysis.recommendations.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium mb-1">Recommendations:</p>
+                    <ul className="text-sm space-y-1 list-disc list-inside">
+                      {analysis.recommendations.map((rec, idx) => (
+                        <li key={idx}>{rec}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <div className="bg-gray-50 p-2 rounded text-xs">
+                  <p className="font-medium mb-1">Query Generation Potential:</p>
+                  <p>Current: <span className="font-semibold">{analysis.queryGenerationPotential.current}</span> queries</p>
+                  <p>With all parameters: <span className="font-semibold text-primary">{analysis.queryGenerationPotential.withAllParameters}</span> queries</p>
+                </div>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Query Parameters Section */}
         <Card>
           <CardHeader>

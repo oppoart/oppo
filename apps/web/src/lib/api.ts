@@ -87,6 +87,54 @@ export const profileApi = {
     const response = await api.post(`/api/profiles/${id}/enhance-prompt`);
     return response.data.data; // Backend returns { success: true, data: { originalPrompt, enhancedPrompt } }
   },
+
+  // Get expanded queries for profile
+  getExpandedQueries: async (
+    id: string,
+    options?: { groupId?: string; limit?: number; includeIncomplete?: boolean }
+  ): Promise<{
+    queries: Array<{
+      id: string;
+      template: string;
+      expanded: string;
+      groupName: string;
+      placeholders: Record<string, string>;
+    }>;
+    stats: {
+      totalQueries: number;
+      totalTemplates: number;
+      queriesByGroup: Record<string, number>;
+      coverageScore: number;
+    };
+  }> => {
+    const response = await api.get(`/api/profiles/${id}/expanded-queries`, { params: options });
+    return response.data.data;
+  },
+
+  // Get expansion preview
+  getExpansionPreview: async (id: string): Promise<{
+    totalTemplates: number;
+    totalCombinations: number;
+    estimatedQueries: number;
+    parameterBreakdown: Record<string, number>;
+  }> => {
+    const response = await api.get(`/api/profiles/${id}/expansion-preview`);
+    return response.data.data;
+  },
+
+  // Analyze profile completeness
+  analyzeProfile: async (id: string): Promise<{
+    completenessScore: number;
+    missingFields: string[];
+    recommendations: string[];
+    queryGenerationPotential: {
+      current: number;
+      withAllParameters: number;
+    };
+  }> => {
+    const response = await api.post(`/api/profiles/${id}/analyze`);
+    return response.data.data;
+  },
 };
 
 // User preferences API

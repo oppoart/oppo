@@ -21,11 +21,10 @@ import {
   validateQueryGenerationRequest,
   validateGeneratedQuery,
 } from '../../types/query-generation';
-import { 
-  QUERY_TYPES, 
-  QUERY_STRATEGIES, 
+import {
+  QUERY_TYPES,
+  QUERY_STRATEGIES,
   QUERY_PRIORITIES,
-  QUERY_TEMPLATES,
   QUERY_GENERATION_DEFAULTS,
   LOCATION_MODIFIERS,
   CAREER_STAGE_MODIFIERS,
@@ -235,23 +234,39 @@ export class QueryGenerationService {
     }
   }
 
+  /**
+   * Get all query templates from database
+   * Templates are now stored in QueryTemplateGroup and QueryTemplate models
+   */
   async getQueryTemplates(): Promise<QueryTemplate[]> {
+    const groups = await this.prismaService.queryTemplateGroup.findMany({
+      include: {
+        templates: {
+          orderBy: { order: 'asc' },
+        },
+      },
+      orderBy: { order: 'asc' },
+    });
+
     const templates: QueryTemplate[] = [];
-    
-    Object.entries(QUERY_TEMPLATES).forEach(([type, templateStrings]) => {
-      (templateStrings as readonly string[]).forEach((template, index) => {
+
+    groups.forEach(group => {
+      group.templates.forEach(template => {
         templates.push({
-          id: `${type}_${index}`,
-          type: type as QueryType,
-          template,
-          variables: this.templateEngine.extractTemplateVariables(template),
+          id: template.id,
+          type: 'custom' as QueryType, // Database templates don't have fixed types
+          template: template.template,
+          variables: this.templateEngine.extractTemplateVariables(template.template),
           priority: QUERY_PRIORITIES.MEDIUM,
-          description: `Template for ${type} queries`,
+          description: `${group.name}: ${template.template}`,
           active: true,
+          groupId: group.id,
+          groupName: group.name,
+          placeholders: template.placeholders,
         });
       });
     });
-    
+
     return templates;
   }
 

@@ -61,6 +61,8 @@ export const generatedQuerySchema = z.object({
   }),
   metadata: z.record(z.any()).optional(),
   createdAt: z.date().optional(),
+  templateId: z.string().optional(),
+  groupName: z.string().optional(),
 });
 
 export type GeneratedQuery = z.infer<typeof generatedQuerySchema>;
@@ -97,7 +99,10 @@ export const queryTemplateSchema = z.object({
   variables: z.array(z.string()),
   priority: z.number().min(1).max(3),
   description: z.string().optional(),
-  active: z.boolean().default(true)
+  active: z.boolean().default(true),
+  groupId: z.string().optional(),
+  groupName: z.string().optional(),
+  placeholders: z.array(z.string()).optional()
 });
 
 export type QueryTemplate = z.infer<typeof queryTemplateSchema>;
