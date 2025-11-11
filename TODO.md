@@ -1,6 +1,6 @@
 # TODO
 
-Last commit: `339bd5f` (2025-01-11)
+Last commit: `504352f` (2025-01-11)
 
 ## 🔥 High Priority
 
@@ -17,18 +17,6 @@ Backend:
 Config:
 - [ ] Redis connection configuration
 - [ ] Job queue settings (concurrency, timeouts)
-
-### 2. Query Expansion Logic
-**Amaç**: Template'lerdeki placeholder'ları profile parametreleri ile expand etmek.
-
-Backend:
-- [ ] Create query expansion service
-- [ ] Implement cartesian product generator
-- [ ] Add `/profiles/:id/expanded-queries` endpoint
-- [ ] Handle placeholder replacement ([location], [opportunity-type], [amount], [theme])
-- [ ] Support automatic placeholders ([medium], [month], [year])
-
-Example: `[opportunity-type] in [location]` + 2 types × 3 locations = 6 queries
 
 ---
 
@@ -75,6 +63,21 @@ Example: `[opportunity-type] in [location]` + 2 types × 3 locations = 6 queries
 ---
 
 ## ✅ Completed
+
+### Query Expansion Logic & UI (Completed 2025-01-11)
+- [x] Query expansion service with cartesian product generator
+- [x] Placeholder replacement system ([location], [opportunity-type], [amount], [theme])
+- [x] Automatic placeholders ([month], [year], [medium])
+- [x] `/profiles/:id/expanded-queries` endpoint (returns expanded queries)
+- [x] `/profiles/:id/expansion-preview` endpoint (estimates count)
+- [x] Reusable QueryGenerationWidget component
+- [x] Method selection: Template (fast, systematic) vs AI (creative, semantic)
+- [x] Ultra-minimalist UI with hover interactions
+- [x] Detailed tooltip explaining estimation vs actual count
+- [x] Profile switching: preview updates, bucket filters by profileId
+- [x] Query bucket auto-remove from generated list
+- [x] Generated queries and bucket clear on profile change
+- [x] Dynamic profile dropdown width for long names
 
 ### Profile Analysis Feature (Completed 2025-01-11)
 - [x] Profile quality scoring endpoint (`POST /analyst/analyze`)
