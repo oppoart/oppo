@@ -48,12 +48,22 @@ export function QueryGenerationWidget({
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const { toast } = useToast();
 
-  // Load preview when template method is selected
+  // Load preview when template method is selected or profile changes
   useEffect(() => {
     if (method === 'template' && profileId) {
       loadPreview();
     }
   }, [method, profileId]);
+
+  // Reload preview when profileId changes
+  useEffect(() => {
+    if (profileId) {
+      setPreview(null); // Clear previous preview
+      if (method === 'template') {
+        loadPreview();
+      }
+    }
+  }, [profileId]);
 
   const loadPreview = async () => {
     setIsLoadingPreview(true);

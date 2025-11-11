@@ -61,18 +61,18 @@ export function ServiceLayout({
               <ChevronDown className="h-4 w-4 ml-2" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56">
+          <DropdownMenuContent align="start" className="w-auto min-w-56 max-w-md">
             {profiles.map((profile) => (
               <DropdownMenuItem
                 key={profile.id}
                 onClick={() => onProfileChange(profile)}
                 className={selectedProfile.id === profile.id ? 'bg-accent' : ''}
               >
-                <User className="h-4 w-4 mr-2" />
+                <User className="h-4 w-4 mr-2 flex-shrink-0" />
                 <div className="flex flex-col">
                   <span className="font-medium">{profile.name}</span>
                   {profile.bio && (
-                    <span className="text-xs text-muted-foreground truncate">{profile.bio}</span>
+                    <span className="text-xs text-muted-foreground">{profile.bio}</span>
                   )}
                 </div>
               </DropdownMenuItem>

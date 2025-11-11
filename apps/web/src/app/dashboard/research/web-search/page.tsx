@@ -17,25 +17,6 @@ export default function WebSearchPage() {
   const [queryBucket, setQueryBucket] = useState<string[]>([]);
   const { toast } = useToast();
 
-  // Load query bucket from database on mount
-  useEffect(() => {
-    const loadQueryBucket = async () => {
-      try {
-        const queries = await queryBucketApi.getQueries();
-        setQueryBucket(queries.map(q => q.query));
-      } catch (error) {
-        console.error('Failed to load query bucket from database:', error);
-        toast({
-          title: "Failed to Load Queries",
-          description: "Could not load your saved queries. Please refresh the page.",
-          variant: "destructive"
-        });
-      }
-    };
-
-    loadQueryBucket();
-  }, []);
-
   const serviceIds = ['query-generation', 'web-search', 'llm-search', 'social-media'];
   const serviceNames = {
     'query-generation': 'Query Generation',
@@ -58,6 +39,39 @@ export default function WebSearchPage() {
     handleRefreshAll,
     handleExportResults,
   } = useResearchServices({ serviceIds, serviceNames });
+
+  // Load query bucket from database on mount and when profile changes
+  useEffect(() => {
+    const loadQueryBucket = async () => {
+      if (!selectedProfile?.id) {
+        setQueryBucket([]);
+        return;
+      }
+
+      try {
+        const queries = await queryBucketApi.getQueries();
+        // Filter queries by current profile
+        const profileQueries = queries
+          .filter(q => q.profileId === selectedProfile.id)
+          .map(q => q.query);
+        setQueryBucket(profileQueries);
+      } catch (error) {
+        console.error('Failed to load query bucket from database:', error);
+        toast({
+          title: "Failed to Load Queries",
+          description: "Could not load your saved queries. Please refresh the page.",
+          variant: "destructive"
+        });
+      }
+    };
+
+    loadQueryBucket();
+  }, [selectedProfile?.id]); // Reload when profile changes
+
+  // Clear generated queries when profile changes
+  useEffect(() => {
+    setGeneratedQueries([]);
+  }, [selectedProfile?.id]);
 
   const handleQueriesGenerated = (queries: string[], metadata?: GenerationMetadata) => {
     setGeneratedQueries(queries);
