@@ -31,10 +31,9 @@ export function QueryGeneratorWidget({
       setError(null);
       
       const result = await analystApi.generateQueries(profileId, { maxQueries });
-      
+
       setGeneratedQueries(result.queries);
-      setMetadata(result.metadata || null);
-      
+
       onQueriesGenerated?.(result.queries);
       
       toast({

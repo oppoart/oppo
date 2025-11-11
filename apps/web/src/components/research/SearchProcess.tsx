@@ -543,7 +543,7 @@ export function SearchProcess({ queryBucket }: SearchProcessProps) {
     }
 
     if (schedule.scheduleEnabled && queryBucket.length > 0) {
-      const nextRun = schedule.calculateNextRun(schedule.scheduleFrequency, schedule.lastRunTime);
+      const nextRun = schedule.calculateNextRun(schedule.scheduleFrequency, schedule.lastRunTime ?? undefined);
       schedule.setNextScheduledRun(nextRun);
       
       if (nextRun) {
@@ -741,7 +741,7 @@ export function SearchProcess({ queryBucket }: SearchProcessProps) {
 
     } catch (error) {
       console.error('❌ Scraping and analysis error:', error);
-      alert(`Scraping failed: ${error.message || 'Unknown error'}`);
+      alert(`Scraping failed: ${(error as any)?.message || 'Unknown error'}`);
     } finally {
       setIsPipelineRunning(false);
     }

@@ -1,6 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import { ArtistProfile, CreateProfileRequest, UpdateProfileRequest } from '@/types/profile';
-import { AnalysisResult, AnalysisStats, OpportunityScore, Opportunity } from '@/types/analyst';
+import { AnalysisResult, AnalysisStats, OpportunityScore, Opportunity, ProfileQualityAnalysis } from '@/types/analyst';
 import { handleApiError, isAuthError } from './error-handler';
 
 const api = axios.create({
@@ -161,7 +161,7 @@ export const userApi = {
 // Analyst API
 export const analystApi = {
   // Run complete analysis for a profile
-  analyze: async (profileId: string): Promise<AnalysisResult> => {
+  analyze: async (profileId: string): Promise<ProfileQualityAnalysis> => {
     const response = await api.post('/api/analyst/analyze', { artistProfileId: profileId });
     return response.data.data;
   },

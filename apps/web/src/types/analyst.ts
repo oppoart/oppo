@@ -63,3 +63,28 @@ export const OPPORTUNITY_TYPES = [
   { value: 'fellowship', label: 'Fellowship' },
   { value: 'other', label: 'Other' },
 ] as const;
+
+export interface ProfileQualityRecommendation {
+  priority: 'high' | 'medium' | 'low';
+  area: string;
+  message: string;
+  action: string;
+}
+
+export interface ProfileQualityMetrics {
+  bioLength: number;
+  statementLength: number;
+  skillsCount: number;
+  interestsCount: number;
+  queryParamsCount: number;
+}
+
+export interface ProfileQualityAnalysis {
+  profileId: string;
+  completenessScore: number;
+  strengths: string[];
+  weaknesses: string[];
+  recommendations: ProfileQualityRecommendation[];
+  metrics: ProfileQualityMetrics;
+  analyzedAt: string;
+}

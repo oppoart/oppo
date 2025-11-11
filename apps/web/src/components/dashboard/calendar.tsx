@@ -11,7 +11,7 @@ interface CalendarEvent {
   id: string;
   title: string;
   date: Date;
-  type: 'deadline' | 'meeting' | 'exhibition' | 'submission' | 'other';
+  type: 'deadline' | 'meeting' | 'exhibition' | 'submission' | 'task' | 'other';
   description?: string;
 }
 
@@ -29,6 +29,7 @@ const eventTypeColors = {
   meeting: 'bg-blue-100 text-blue-800 border-blue-200',
   exhibition: 'bg-green-100 text-green-800 border-green-200',
   submission: 'bg-purple-100 text-purple-800 border-purple-200',
+  task: 'bg-yellow-100 text-yellow-800 border-yellow-200',
   other: 'bg-gray-100 text-gray-800 border-gray-200',
 };
 

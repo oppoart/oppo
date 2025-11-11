@@ -15,11 +15,11 @@ export interface SettingsState {
   // API Settings
   apiKey: string;
   webhookUrl: string;
-  
+
   // Notification Settings
   emailNotifications: boolean;
   pushNotifications: boolean;
-  notificationFrequency: keyof typeof NOTIFICATION_FREQUENCIES;
+  notificationFrequency: typeof NOTIFICATION_FREQUENCIES[keyof typeof NOTIFICATION_FREQUENCIES];
   
   // Opportunity Preferences
   minFunding: string;
@@ -28,17 +28,17 @@ export interface SettingsState {
   opportunityTypes: string[];
   minimumMatchScore: number;
   enableAutoApplication: boolean;
-  applicationStyle: keyof typeof APPLICATION_STYLES;
+  applicationStyle: typeof APPLICATION_STYLES[keyof typeof APPLICATION_STYLES];
   includePortfolioLinks: boolean;
 
   // AI Configuration Settings
-  aiProvider: keyof typeof AI_PROVIDERS;
+  aiProvider: typeof AI_PROVIDERS[keyof typeof AI_PROVIDERS];
   aiModel: string;
   aiTemperature: number;
   aiMaxTokens: number;
   enableQueryCache: boolean;
   enableAnalysisCache: boolean;
-  queryGenerationStyle: keyof typeof QUERY_GENERATION_STYLES;
+  queryGenerationStyle: typeof QUERY_GENERATION_STYLES[keyof typeof QUERY_GENERATION_STYLES];
 }
 
 export function useSettings() {

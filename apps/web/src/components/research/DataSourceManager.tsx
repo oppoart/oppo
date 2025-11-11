@@ -261,9 +261,9 @@ export function DataSourceManager() {
           <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
             <h3 className="text-sm font-medium text-orange-800 mb-2">Queue Status</h3>
             <div className="text-2xl font-bold text-orange-600">
-              {Object.values(pipelineStats.queueStats).reduce((acc: any, queue: any) => 
+              {(Object.values(pipelineStats.queueStats) as any[]).reduce((acc: number, queue: any) =>
                 acc + queue.waiting + queue.active, 0
-              )}
+              ) as number}
             </div>
             <div className="text-xs text-orange-600">Jobs in progress</div>
           </div>

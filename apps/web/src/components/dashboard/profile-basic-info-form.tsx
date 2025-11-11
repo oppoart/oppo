@@ -36,7 +36,7 @@ export function ProfileBasicInfoForm({ profile, onProfileUpdate }: ProfileBasicI
   const [success, setSuccess] = useState(false);
   
   // Medium management state
-  const [mediums, setMediums] = useState(ARTIST_CATEGORIES);
+  const [mediums, setMediums] = useState<Array<{value: string, label: string}>>([...ARTIST_CATEGORIES]);
   const [showMediumManager, setShowMediumManager] = useState(false);
   const [newMedium, setNewMedium] = useState('');
   const [editingMedium, setEditingMedium] = useState<{value: string, label: string} | null>(null);

@@ -1,5 +1,5 @@
 import { userApi } from '@/lib/api';
-import { UseToastReturn } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 interface SaveSettingsParams {
   [key: string]: any;
@@ -7,7 +7,7 @@ interface SaveSettingsParams {
 
 export function useSettingsApi(
   setLoading: (loading: boolean) => void,
-  toast: UseToastReturn['toast']
+  toast: ReturnType<typeof useToast>['toast']
 ) {
   const saveSettings = async (
     params: SaveSettingsParams,

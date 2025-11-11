@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
-  currentPage?: 'dashboard' | 'profiles' | 'opportunities' | 'settings' | 'research' | 'research-search' | 'research-bookmarks' | 'research-newsletter' | 'calendar' | 'tasks';
+  currentPage?: 'dashboard' | 'profiles' | 'opportunities' | 'settings' | 'research' | 'research-web-search' | 'research-llm-search' | 'research-sm-search' | 'research-bookmarks' | 'research-newsletter' | 'calendar' | 'tasks';
   title?: string;
   subtitle?: string;
   action?: React.ReactNode;

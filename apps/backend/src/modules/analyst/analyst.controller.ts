@@ -3,13 +3,17 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { Request } from 'express';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { QueryGenerationService } from '../query-generation/query-generation.service';
+import { AnalystService } from './analyst.service';
 
 @ApiTags('analyst')
 @Controller('analyst')
 export class AnalystController {
   private readonly logger = new Logger(AnalystController.name);
 
-  constructor(private readonly queryGenerationService: QueryGenerationService) {}
+  constructor(
+    private readonly queryGenerationService: QueryGenerationService,
+    private readonly analystService: AnalystService,
+  ) {}
 
   @Get('health')
   getHealth() {
@@ -54,6 +58,41 @@ export class AnalystController {
         {
           success: false,
           message: 'Failed to generate queries',
+          error: error.message,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  @Post('analyze')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Analyze profile quality and completeness' })
+  @ApiResponse({ status: 200, description: 'Profile analyzed successfully' })
+  async analyzeProfile(
+    @Req() request: Request,
+    @Body() body: { artistProfileId: string }
+  ) {
+    try {
+      const userId = (request as any).user?.id;
+      if (!userId) {
+        throw new HttpException('User not authenticated', HttpStatus.UNAUTHORIZED);
+      }
+
+      const result = await this.analystService.analyzeProfileQuality(body.artistProfileId);
+
+      return {
+        success: true,
+        message: 'Profile analyzed successfully',
+        data: result,
+      };
+    } catch (error) {
+      this.logger.error('Failed to analyze profile', error);
+      throw new HttpException(
+        {
+          success: false,
+          message: 'Failed to analyze profile',
           error: error.message,
         },
         HttpStatus.INTERNAL_SERVER_ERROR

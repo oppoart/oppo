@@ -72,13 +72,13 @@ export function ProfileSelector({
                     "w-2 h-2 rounded-full",
                     selectedProfile?.id === profile.id ? "bg-primary-foreground" : "bg-muted-foreground"
                   )} />
-                  <span className="font-medium">{profile.artistName}</span>
-                  {profile.medium && (
-                    <Badge 
-                      variant="secondary" 
+                  <span className="font-medium">{profile.name}</span>
+                  {profile.mediums && profile.mediums.length > 0 && (
+                    <Badge
+                      variant="secondary"
                       className="ml-1 text-xs px-1.5 py-0.5 hidden sm:inline-flex"
                     >
-                      {profile.medium}
+                      {profile.mediums[0]}
                     </Badge>
                   )}
                 </div>
@@ -103,10 +103,10 @@ export function ProfileSelector({
                     <Palette className="h-6 w-6 text-primary" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-base">{selectedProfile.artistName}</h4>
-                    {selectedProfile.medium && (
+                    <h4 className="font-semibold text-base">{selectedProfile.name}</h4>
+                    {selectedProfile.mediums && selectedProfile.mediums.length > 0 && (
                       <Badge variant="outline" className="mt-1">
-                        {selectedProfile.medium}
+                        {selectedProfile.mediums.join(', ')}
                       </Badge>
                     )}
                   </div>
@@ -159,8 +159,8 @@ export function ProfileSelector({
                 Active research context:
               </span>
               <span className="font-medium">
-                {selectedProfile.artistName}
-                {selectedProfile.medium && ` (${selectedProfile.medium})`}
+                {selectedProfile.name}
+                {selectedProfile.mediums && selectedProfile.mediums.length > 0 && ` (${selectedProfile.mediums[0]})`}
               </span>
             </div>
             <div className="flex items-center gap-1">

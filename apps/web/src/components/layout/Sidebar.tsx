@@ -37,6 +37,21 @@ interface SidebarProps {
   onToggleCollapse?: (collapsed: boolean) => void;
 }
 
+interface NavigationItem {
+  name: string;
+  href: string;
+  icon: any;
+  current: boolean;
+  badge?: string;
+  hasSubmenu?: boolean;
+  submenu?: Array<{
+    name: string;
+    href: string;
+    icon: any;
+    current: boolean;
+  }>;
+}
+
 export function Sidebar({ 
   currentPage = 'dashboard', 
   isCollapsed = false, 
@@ -48,14 +63,14 @@ export function Sidebar({
     currentPage === 'research' || currentPage === 'research-web-search' || currentPage === 'research-llm-search' || currentPage === 'research-sm-search' || currentPage === 'research-bookmarks' || currentPage === 'research-newsletter'
   );
 
-  const navigation = [
+  const navigation: NavigationItem[] = [
     { name: 'Dashboard', href: '/dashboard', icon: Home, current: currentPage === 'dashboard' },
     { name: 'Profiles', href: '/dashboard/profiles', icon: User, current: currentPage === 'profiles' },
     { name: 'Portfolio', href: '/dashboard/portfolio', icon: Briefcase, current: false, badge: 'Soon' },
-    { 
-      name: 'Research', 
-      href: '#', 
-      icon: BookOpen, 
+    {
+      name: 'Research',
+      href: '#',
+      icon: BookOpen,
       current: currentPage === 'research-web-search' || currentPage === 'research-llm-search' || currentPage === 'research-sm-search' || currentPage === 'research-bookmarks' || currentPage === 'research-newsletter',
       hasSubmenu: true,
       submenu: [

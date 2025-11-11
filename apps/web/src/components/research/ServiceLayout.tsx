@@ -21,7 +21,7 @@ interface ServiceSession {
 }
 
 interface ServiceLayoutProps {
-  currentPage: 'research-search-old' | 'research-web-search' | 'research-llm-search' | 'research-sm-search' | 'research-bookmarks' | 'research-newsletter';
+  currentPage: 'research-web-search' | 'research-llm-search' | 'research-sm-search' | 'research-bookmarks' | 'research-newsletter';
   title: string;
   profiles: ArtistProfile[];
   selectedProfile: ArtistProfile | null;
@@ -71,8 +71,8 @@ export function ServiceLayout({
                 <User className="h-4 w-4 mr-2" />
                 <div className="flex flex-col">
                   <span className="font-medium">{profile.name}</span>
-                  {profile.description && (
-                    <span className="text-xs text-muted-foreground truncate">{profile.description}</span>
+                  {profile.bio && (
+                    <span className="text-xs text-muted-foreground truncate">{profile.bio}</span>
                   )}
                 </div>
               </DropdownMenuItem>

@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-  Play, 
-  Square, 
+import {
+  Play,
+  Square,
   RotateCcw,
   AlertCircle,
   CheckCircle2,
@@ -18,7 +18,8 @@ import {
   Calendar,
   Tag,
   Rss,
-  Bookmark
+  Bookmark,
+  Star
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
