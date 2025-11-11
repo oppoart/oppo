@@ -185,10 +185,10 @@ export function StatCard({
   const sizeClasses = getSizeClasses();
 
   return (
-    <Card 
+    <Card
       className={cn(
         "transition-all duration-200",
-        colorClasses.bg,
+        'bg' in colorClasses ? colorClasses.bg : '',
         onClick && "cursor-pointer hover:shadow-md",
         loading && "animate-pulse",
         error && "border-destructive/20 bg-destructive/5",

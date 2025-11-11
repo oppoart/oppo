@@ -1,5 +1,5 @@
 export interface ErrorInfo {
-  componentStack?: string;
+  componentStack?: string | null;
   errorBoundary?: string;
   eventId?: string;
 }
@@ -44,6 +44,7 @@ export enum ErrorSeverity {
 export interface ErrorContext {
   url: string;
   component?: string;
+  componentStack?: string | null;
   action?: string;
   feature?: string;
   route?: string;
@@ -551,8 +552,10 @@ export class ErrorReporter {
     const originalXHROpen = XMLHttpRequest.prototype.open;
     const originalXHRSend = XMLHttpRequest.prototype.send;
 
+    // @ts-ignore - XMLHttpRequest.prototype.open signature mismatch
     XMLHttpRequest.prototype.open = function(method, url, ...args) {
       (this as any)._errorReporter = { method, url, startTime: Date.now() };
+      // @ts-ignore - args type mismatch
       return originalXHROpen.apply(this, [method, url, ...args]);
     };
 
@@ -656,6 +659,5 @@ export class ErrorReporter {
   }
 }
 
-// Export singleton instance and types
+// Export singleton instance
 export const errorReporter = ErrorReporter.getInstance();
-export type { ErrorInfo };

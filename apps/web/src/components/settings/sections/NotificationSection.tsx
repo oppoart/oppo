@@ -74,9 +74,9 @@ export function NotificationSection({
 
       <div className="space-y-2">
         <Label htmlFor="notification-frequency">Notification Frequency</Label>
-        <Select 
-          value={settings.notificationFrequency} 
-          onValueChange={(value: keyof typeof NOTIFICATION_FREQUENCIES) => updateSetting('notificationFrequency', value)}
+        <Select
+          value={settings.notificationFrequency}
+          onValueChange={(value: keyof typeof NOTIFICATION_FREQUENCIES) => updateSetting('notificationFrequency', value.toLowerCase() as 'immediate' | 'daily' | 'weekly')}
         >
           <SelectTrigger>
             <SelectValue />

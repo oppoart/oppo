@@ -54,9 +54,9 @@ export function AiConfigSection({
       {/* AI Provider Selection */}
       <div className="space-y-4">
         <Label className="text-base font-medium">AI Provider</Label>
-        <Select 
-          value={settings.aiProvider} 
-          onValueChange={(value: keyof typeof AI_PROVIDERS) => updateSetting('aiProvider', value)}
+        <Select
+          value={settings.aiProvider}
+          onValueChange={(value: keyof typeof AI_PROVIDERS) => updateSetting('aiProvider', value.toLowerCase() as 'openai' | 'anthropic')}
         >
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Select AI Provider" />
@@ -144,9 +144,9 @@ export function AiConfigSection({
 
         <div className="space-y-2">
           <Label className="text-base font-medium">Query Generation Style</Label>
-          <Select 
-            value={settings.queryGenerationStyle} 
-            onValueChange={(value: keyof typeof QUERY_GENERATION_STYLES) => updateSetting('queryGenerationStyle', value)}
+          <Select
+            value={settings.queryGenerationStyle}
+            onValueChange={(value: keyof typeof QUERY_GENERATION_STYLES) => updateSetting('queryGenerationStyle', value.toLowerCase() as 'focused' | 'diverse' | 'creative')}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select Generation Style" />

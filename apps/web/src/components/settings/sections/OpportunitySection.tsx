@@ -132,7 +132,7 @@ export function OpportunitySection({
           icon={<Filter className="h-4 w-4 text-muted-foreground" />}
         >
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {OPPORTUNITY_TYPES.map((type) => (
+            {Object.values(OPPORTUNITY_TYPES).map((type) => (
               <div key={type} className="flex items-center space-x-2">
                 <Checkbox
                   id={`type-${type}`}
@@ -190,9 +190,9 @@ export function OpportunitySection({
 
         <div className="space-y-2">
           <Label htmlFor="application-style">Application Style</Label>
-          <Select 
-            value={settings.applicationStyle} 
-            onValueChange={(value: keyof typeof APPLICATION_STYLES) => updateSetting('applicationStyle', value)}
+          <Select
+            value={settings.applicationStyle}
+            onValueChange={(value: keyof typeof APPLICATION_STYLES) => updateSetting('applicationStyle', value.toLowerCase() as 'formal' | 'casual' | 'artistic')}
           >
             <SelectTrigger>
               <SelectValue />
