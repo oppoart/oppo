@@ -1,25 +1,10 @@
 # TODO
 
-Last commit: `7ec7714` (2025-11-06)
+Last commit: `339bd5f` (2025-01-11)
 
 ## 🔥 High Priority
 
-### 1. Profile Analysis Feature
-**Amaç**: "Analyze Profile" butonu profile quality scoring ve improvement suggestions göstermek.
-
-Backend:
-- [ ] Profile quality scoring endpoint (`POST /profiles/:id/analyze`)
-- [ ] Completeness calculation (0-100%)
-- [ ] Text quality metrics (length, vocabulary richness)
-- [ ] Return actionable recommendations
-
-Frontend:
-- [ ] Display completeness score and semantic strength
-- [ ] Show missing/weak areas (statement, bio, skills, interests, parameters)
-- [ ] Display improvement suggestions with examples
-- [ ] Add visual indicators (progress bars, badges)
-
-### 2. Job Queue Integration
+### 1. Job Queue Integration
 **Amaç**: Async job processing for discovery, scraping, analysis.
 
 Backend:
@@ -33,7 +18,7 @@ Config:
 - [ ] Redis connection configuration
 - [ ] Job queue settings (concurrency, timeouts)
 
-### 3. Query Expansion Logic
+### 2. Query Expansion Logic
 **Amaç**: Template'lerdeki placeholder'ları profile parametreleri ile expand etmek.
 
 Backend:
@@ -91,6 +76,20 @@ Example: `[opportunity-type] in [location]` + 2 types × 3 locations = 6 queries
 
 ## ✅ Completed
 
+### Profile Analysis Feature (Completed 2025-01-11)
+- [x] Profile quality scoring endpoint (`POST /analyst/analyze`)
+- [x] Weighted scoring algorithm (0-100%):
+  * Artist Statement (25%), Query Parameters (20%)
+  * Bio, Skills, Interests (15% each), Mediums (10%)
+- [x] Completeness calculation with component breakdown
+- [x] Strengths and weaknesses detection
+- [x] Priority-based recommendations (high/medium/low)
+- [x] Frontend: ProfileQualityAnalysisDisplay component
+- [x] Visual indicators (progress bars, badges, icons)
+- [x] Integration with profile view page (new tab)
+- [x] Comprehensive algorithm documentation
+- [x] TypeScript compilation fixes (12+ files)
+
 ### Phase 3: Integration (Completed 2025-11-04)
 - [x] Provider Manager package (@oppo/provider-manager)
 - [x] 4 adapters: OpenAI, Anthropic, Serper, Google
@@ -134,6 +133,7 @@ Example: `[opportunity-type] in [location]` + 2 types × 3 locations = 6 queries
 
 **Documentation**:
 - Profile purpose: `.backups/tr/profile-amaci.md`
+- Profile analysis algorithm: `docs/architecture/profile-analysis-algorithm.md`
 - Provider Manager: `packages/provider-manager/README.md`
 - Job Queue: `packages/job-queue/README.md`
 
