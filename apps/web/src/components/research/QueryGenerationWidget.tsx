@@ -195,9 +195,9 @@ export function QueryGenerationWidget({
           <div className="flex items-center gap-1.5">
             <span className="font-medium flex items-center gap-1">
               {preview.totalTemplates} templates • ~{preview.estimatedQueries} queries
-              <span className="inline-flex items-center cursor-help group relative z-[100]">
+              <span className="inline-flex items-center cursor-help group relative">
                 <Info className="h-3 w-3 text-muted-foreground/60 hover:text-muted-foreground transition-colors" />
-                <div className="invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity absolute left-0 top-full mt-1 w-64 bg-popover text-popover-foreground text-[11px] leading-relaxed p-2.5 rounded-md shadow-lg border z-[100]">
+                <div className="invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity absolute left-full ml-2 top-0 w-64 bg-popover text-popover-foreground text-[11px] leading-relaxed p-2.5 rounded-md shadow-xl border z-50">
                   <div className="font-semibold mb-1">Estimated Maximum</div>
                   <div className="space-y-1">
                     <div>• Based on {preview.totalTemplates} templates × {preview.totalCombinations} parameter combinations</div>

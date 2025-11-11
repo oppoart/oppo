@@ -155,9 +155,9 @@ export default function WebSearchPage() {
     >
       <div className="absolute inset-0 -mx-4 sm:-mx-6 lg:-mx-8 -my-8 flex">
         {/* Left side - Query Generation and Bucket */}
-        <div className="w-1/4 border-r-2 border-border flex flex-col overflow-hidden">
+        <div className="w-1/4 border-r-2 border-border flex flex-col">
           {/* Query Generation Widget */}
-          <div className="px-4 pt-3 pb-2 border-b border-border">
+          <div className="px-4 pt-3 pb-2 border-b border-border overflow-visible">
             {selectedProfile ? (
               <QueryGenerationWidget
                 profileId={selectedProfile.id}
